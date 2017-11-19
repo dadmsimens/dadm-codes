@@ -1,0 +1,148 @@
+%% LyX 2.2.1 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass{aghdpl}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+\usepackage{verbatim}
+\usepackage[unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=3,
+ breaklinks=false,pdfborder={0 0 1},backref=false,colorlinks=false]
+ {hyperref}
+\usepackage{breakurl}
+
+\makeatletter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+%% Because html converters don't know tabularnewline
+\providecommand{\tabularnewline}{\\}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+\usepackage{polski} 
+
+
+
+\usepackage{mathtools}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amsthm}
+
+\usepackage[
+style=numeric,
+sorting=none,
+language=autobib,
+autolang=other,
+urldate=iso8601,
+backref=false,
+isbn=true,
+url=false,
+maxbibnames=3,
+backend=biber,
+]{biblatex}
+\usepackage{csquotes} 
+\DeclareQuoteAlias{croatian}{polish} 
+
+
+\addbibresource{bibliografia.bib}
+
+\AtBeginDocument{
+
+}
+
+\author{SIMENS Healthkare}
+\shortauthor{SIMENS}
+\titlePL{DADM project documentation}
+\titleEN{}
+\shorttitlePL{DADM project documentation}
+\shorttitleEN{DADM project documentation}
+\thesistype{}
+\supervisor{dr inż. Tomasz Pięciak}
+\degreeprogramme{Biomedical engineering}
+\date{2017}
+\department{Katedra Automatyki i Inżynierii Biomedycznej}
+\faculty{Wydział Elektrotechniki, Automatyki,\protect\\[-1mm] Informatyki i Inżynierii Biomedycznej}
+\acknowledgements{}
+\setlength{\cftsecnumwidth}{10mm}
+
+
+
+\makeatother
+
+\usepackage[english]{babel}
+\begin{document}
+\titlepages
+
+\fancypagestyle{plain} {
+	\fancyhf{}
+	\renewcommand{\headrulewidth}{0pt}
+	\renewcommand{\footrulewidth}{0pt}
+}
+
+\setcounter{tocdepth}{2}
+
+\tableofcontents{}
+
+\clearpage{}
+
+\chapter{List of changes}
+
+\begin{tabular}{|c|c|c|}
+\hline 
+Name & Date & Details\tabularnewline
+\hline 
+\hline 
+Sylwia Mól & 19-Nov-2017 & Document created\tabularnewline
+\hline 
+ &  & \tabularnewline
+\hline 
+ &  & \tabularnewline
+\hline 
+ &  & \tabularnewline
+\hline 
+\end{tabular}
+
+\chapter{Assumptions}
+
+do czego ma byc apka - ogolny opis
+
+\chapter{Structure}
+
+-drzewo oraz opis modulow
+
+\chapter{Requirements}
+
+-opis bibliotek, pakietow? czy opis co trzeba miec zeby uruchomic
+apke? 
+
+\chapter{Module 1 }
+
+\section{Description}
+
+-opis pierwszego modulu
+
+\section{Implementation}
+
+-kod
+
+\section{Tests}
+
+-testy
+
++gdzie powinien znalezc się opis gui czyli jak korzystać z apki? w
+każdym module czy osobny rozdzial? jesli tak to jaki?
+
+\chapter{Tests}
+
+-testy calej apki 
+
+\newpage{}
+
+\listoffigures
+
+\begin{comment}
+\bibliographystyle{plain}
+\bibliography{bibliografia}
+\end{comment}
+
+\end{document}
