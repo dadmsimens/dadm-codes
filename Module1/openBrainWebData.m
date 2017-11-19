@@ -1,15 +1,5 @@
 % Open BrainWeb dataset
 %
-% Created: 19/11/2014
-% Revisited: 14/10/2016
-% 
-% Tomasz Pieciak
-% 1) ETS Ingenieros de Telecomunicacion, Universidad de Valladolid, Spain
-% 2) AGH University of Science and Technology, Krakow, Poland
-%
-% e-mail: pieciak@agh.edu.pl
-% www: http://home.agh.edu.pl/pieciak/
-%
 % INPUTS
 %   filename - filename to open
 %   xspace, yspace, zspace - dataset size in x, y and z dimension, respectively
