@@ -6,8 +6,6 @@
 %
 % OUTPUTS:
 %         x_space_subsampled - data for reconstruction.
-%
-%LATER: work on subsampling scheme
 
 function x_space_subsampled = data_preparation(data_simulated, nc, r)
 
