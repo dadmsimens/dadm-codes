@@ -12,9 +12,6 @@
 %        n_coils - number of coils
 % OUTPUTS:
 %        k-space subsampled data
-%
-% NOTE: change the scheme for subsampling - for now r can be only 2,4,8
-%       later: 3,5 etc.
 
 function [k_space_subsampled, locations] = subsampling(k_space_data, r, n_coils)
 
