@@ -1,5 +1,12 @@
 % Open BrainWeb dataset
 %
+% Tomasz Pieciak
+% 1) ETS Ingenieros de Telecomunicacion, Universidad de Valladolid, Spain
+% 2) AGH University of Science and Technology, Krakow, Poland
+%
+% e-mail: pieciak@agh.edu.pl
+% www: http://home.agh.edu.pl/pieciak/
+%
 % INPUTS
 %   filename - filename to open
 %   xspace, yspace, zspace - dataset size in x, y and z dimension, respectively
@@ -7,7 +14,7 @@
 %
 % OUTPUTS
 %   dataset_rotated - single dataset (3D volume)
-%
+
 function [dataset_rotated] = openBrainWebData(filename_data, xspace, yspace, zspace, resize_volume)
 
 % MRI data
