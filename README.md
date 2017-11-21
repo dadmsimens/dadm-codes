@@ -22,5 +22,5 @@ To be continued by Jacek
 
 # Contributing
 Every member of Developers and Organizational teams has the rights to push and pull - please be careful! <br />
-Please add your code as "modulethe number of the module.py" (e.g. module1.py). If you have more than one file create your own folder (e.g. Module1)
+Please add your code as "modulethe number of the module.py" (e.g. module1.py). If you have more than one file create your own folder (e.g. Module1). If you want to add your files to github in progress (not only final version), please create new branch for changes. 
   
