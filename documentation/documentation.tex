@@ -99,9 +99,11 @@ Sylwia Mól & 19-Nov-2017 & Document created\tabularnewline
 \hline 
  Sylwia Mól &  21-Nov-2017 & Chapter "Authors" added, in-out table added\tabularnewline
 \hline 
-Malwina Molendowska &  26-Nov-2017 & Description of module 1st added\tabularnewline
+Malwina Molendowska  & 26-Nov-2017  & Description of 1st module added\tabularnewline
 \hline 
-Eliza Kowalczyk &  27-Nov-2017 & Description of module 9th added\tabularnewline
+Eliza Kowalczyk  & 27-Nov-2017  & Description of 9th module added\tabularnewline
+\hline 
+Karolina Gajewska & 27-Nov-2017  & Description of 10th module added\tabularnewline
 \hline 
  &  & \tabularnewline
 \hline 
@@ -136,7 +138,7 @@ Module & Input  & Output & Before that module\tabularnewline
 \hline 
 9& 320x240 image & 640x480 image & denoised data \tabularnewline
 \hline    
-10&  & &\tabularnewline
+10 & 1)segmentated image 2)defined plane, image & 1)3D model (e.g. vtkPolyData) 2)cross-section image & 1)segmentation 2) denoised data\tabularnewline
 \hline 
  11&  & &\tabularnewline
 \hline  
@@ -255,10 +257,53 @@ The most biggest problem is that to find High Resolution data from the Low Resol
 \newline \indent The aim of this module is to increase MRI image resolution by upsampling. The input data is a single 320x240 image. After the processing it is going to be twice as big. To be more specific 640x480 pixels. The process can be named as double upsampling.
 \newline \indent The first step of the algorithm will be to divide every pixel of LR image into more pixels. Then the patch will be designed. It will be a rectangle which will be the area of interest. The pixels that are inside the area will be taken into account during calculation the values of new points. After that an appropriate estimator will be used to correctly calculate the values of new pixels. Every pixel has to be classified into one of three groups (grey substance, white substance or cerebral spinal fluid).
 
-
 \section{Module 10}
 
--detailed description of module, algorithm etc, NO CODES, only theoretical!
+\indent To prepare tree dimension visualization of the cerebral cortex
+is used algorithm of marching cubes.\\
+\indent The input data is multiple 2D slices of MR image. The marching
+cubes algorithm create a polygonal representation of constant density
+surfaces from a 3D array of data. To select the cerebral cortex is
+used output data from segmentation made in module 8. The space of
+the image is divided into a regular grid of cubes. In each iteration
+one cube is considered. At each vertex of cube is determined how the
+surface intersects this cube. The density value and compared with
+the limit value - surface constant. If the data value is bigger than
+suface constant, one is assinged to a cube's vertex. There are 256
+combinations of cube orientation relative to the surface, but we can
+distinguish 15 basic patterns, that repeat as symmetrical reflections,
+produces all possibilities (Fig. \ref{fig:Marching cubes}). If all
+values \LyXZeroWidthSpace \LyXZeroWidthSpace are less than the constant
+value, then the cube does not form any polygon. Otherwise, the edges
+of the polygon are defined (by linear interpolation) at the edges
+that intersect the surface. Using central differences, a unit normal
+at each cube vertex is calculated and then normal to each trangle
+vertex is interpolated. The output of the algorithm is the triangle
+vertices and vertex normals.
+
+\begin{figure}
+\centering{}\includegraphics[scale=0.7]{figures/MarchingCubes}\caption{Triangulation for the 15 patterns. \label{fig:Marching cubes}}
+\end{figure}
+\indentTo visualization the model, obtained by marching cubes, the
+VTK library is used, which enables building the three-dimension model.
+\\
+\indent The second part of this module includes visualization of the
+brain's cross-section on arbitrarily defined plane. \\
+\indent
+
+There are three primary imaging planes that are performed in medical
+imaging:
+\begin{itemize}
+\item axial plane, which is any plane that divides the body into superior
+and inferior parts, roughly perpendicular to spine.
+\item sagittal plane, which is any imaginary plane parallel to median plane.
+\item coronal plane, which is any vertical plane that divides the body into
+anterior and posterior sections.
+\end{itemize}
+The MRI produces two-dimensional images that consist of slices of
+brain's and is usually performed in axial plane. To receive images
+in the remaining planes, linear interpolation is used 
+
 \section{Module 11}
 
 -detailed description of module, algorithm etc, NO CODES, only theoretical!
