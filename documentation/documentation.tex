@@ -57,11 +57,12 @@ backend=biber,
 \shorttitlePL{DADM project documentation}
 \shorttitleEN{DADM project documentation}
 \thesistype{}
-\supervisor{dr inż. Tomasz Pięciak}
+\supervisor{PhD. Tomasz Pięciak}
 \degreeprogramme{Biomedical engineering}
 \date{2017}
-\department{Katedra Automatyki i Inżynierii Biomedycznej}
-\faculty{Wydział Elektrotechniki, Automatyki,\protect\\[-1mm] Informatyki i Inżynierii Biomedycznej}
+\department{Department of  Automatics and Biomedical Engineering}
+\faculty{AGH University of Science and Technology\protect\\[-2mm]
+Faculty of Electrical Engineering, Automatics,\protect\\[-2mm] Computer Science and Biomedical Engineering}
 \acknowledgements{}
 \setlength{\cftsecnumwidth}{10mm}
 
@@ -98,6 +99,8 @@ Sylwia Mól & 19-Nov-2017 & Document created\tabularnewline
 \hline 
  Sylwia Mól &  21-Nov-2017 & Chapter "Authors" added, in-out table added\tabularnewline
 \hline 
+Malwina Molendowska &  26-Nov-2017 & Description of module 1 added\tabularnewline
+\hline 
  &  & \tabularnewline
 \hline 
 \end{tabular}
@@ -115,7 +118,7 @@ dependences (tree), modules` descriptions
 Module & Input  & Output & Before that module\tabularnewline
 \hline 
 \hline 
-1& e.g. raw signal & e.g. JPEG image 320x240 & e.g. modules 3,4\tabularnewline
+1& e.g. raw (subsampled) \textbf{k}-space signals & e.g. \textbf{x}-space fully reconstructed data  & --------\tabularnewline
 \hline 
 2& & &\tabularnewline
 \hline 
@@ -150,7 +153,86 @@ instructions for user - GUI screens etc
 
 \section{Module 1}
 
--detailed description of module, algorithm etc, NO CODES, only theoretical!
+The aim of this module is to formulate and verify mathematical algorithm, which enables proper
+data reconstruction for images obtained with parallel MRI scans. The reconstruction is performed with use of Sensitivity Encoding (SENSE) algorithm in least squares (LS) solution context and Tikhonov regularization method. 
+
+Generally, parallel MRI acquisitions are targeted to diminish time needed for data sampling. The usage of multiple coils enabled simultaneous acquisition of signals. A further step, which is acquiring partial data from \textbf{k}-space, leads to craved time savings, meanwhile diminishing inconsistencies introduced by magnetic fields switching and maintaining full spatial resolution as well as contrast at the same time. However, the approach of omitting lines in acquisition step results in data aliasing, i.e. folded images that need further data processing.
+
+To clearly mark how data is processed in this module, we list following reconstruction steps:
+
+\begin{enumerate}
+\item The application of 2D Fourier Transform transform (2D FFT) to \textbf{k}-space data (acquired raw signals) from multiple coils. The result is a set of \textbf{x}-space images with folded pixels.
+\item The sensitivity maps estimation of coils profiles (the information is needed to properly unfold subsampled data).
+\item Afterwards, the proper unfolding data process with usage of SENSE reconstruction algorithm and its alterations.
+\end{enumerate}
+
+The most crucial step in processing is estimation of sensitivity coil profiles as a successful image reconstruction with use of pMRI algorithms highly depends on accurate sensitivity coil assessment. As sensitivity information varies from scan to scan it is impossible to obtain absolute maps. To obtain reliable knowledge, reference
+scans have to be conducted each time an examination is performed. These low-resolution information helps to estimate coil profiles with use of the subsequent methods:
+ 
+\begin{itemize}
+\item [$\circ$] dividing each component coil image by a 'sum of squares' image,
+\item [$\circ$] relative mapping - dividing each component coil image by one (chosen) component coil
+image,
+\item [$\circ$] an adaptive assessment based on correlation between the multireceiver channels.
+\end{itemize}
+
+It basic formulation, SENSE algorithm is applied to Cartesian MRI data undersampled uniformly by a factor $r$ (i.e. it $r = 2$ it means that every other line in \textbf{k}-space is skipped). After Fourier transformation, each pixel in \textbf{x}-space image received in \textit{l}-th coil can be seen as weighted sum of $r$ pixels from full FOV, each multiplied by corresponding localized values of maps. The distance between those `aliased' points in the full FOV is always equal to the desired FOVy value divided by subsampling rate. Obviously, depending on subsampling rate the number of folded pixels changes. Nevertheless, a single pixel in reduced FOV image is always a sum of equidistantly distributed pixels in total FOV and the aliased image FOVy size is decreased. Thus, the signal in one pixel at a certain location $(x,y)$ received from $l$-th component coil image $D_{l}^{S}$ with chosen subsampling rate $r$ can be written as:
+
+\begin{equation}
+D_{l}^{S} (x,y) =  S_{l}(x,y_{1})D^{R}(x,y_{1}) + S_{l}(x,y_{2})D^{R}(x,y_{2}) + ... + S_{l}(x,y_{r})D^{R}(x,y_{r}),
+\label{Eq:wzor1}
+\end{equation}
+where index $l$ counts from 1 to $L$ (number of coils) and index $i$ counts from 1 to $r$. Eq.(\ref{Eq:wzor1}) can be rewritten as:
+
+\begin{equation}
+D_{l}^{S} (x,y) = \sum_{i=1}^{r} S_{l}(x,y_{i})D^{R}(x,y_{i}) \quad     \text{for}  \quad  l = 1, ..., L.
+\label{Eq:wzor2}
+\end{equation}
+
+Including all $L$ coils the above equation can be rewritten in a matrix form:
+
+\begin{equation}
+\textbf{D}^{S} (\textbf{x}) =  \textbf{S}(\textbf{x})\textbf{D}^{R} (\textbf{x}),
+\label{Eq:wzor3}
+\end{equation}
+
+The vector $\textbf{D}^{S} (\textbf{x})$ denotes the aliased coil image values at a specific location \textbf{x} = $(x,y_{i})$ and has a length of $L$, $\textbf{S}(\textbf{x})$ is a $L$x$R$ matrix and represents the sensitivities values for each coil at the $r$~superimposed positions and $\textbf{D}^{R} (\textbf{x})$ lists the $r$ pixels from full FOV image to be reconstructed. The closed-form solution of the problem is as follows:
+\begin{equation}
+\widehat{\textbf{D}^{R}(\textbf{x})}= (\textbf{S}^{H}(\textbf{x})\textbf{S}(\textbf{x}))^{-1}\textbf{S}^{H}(\textbf{x})\textbf{D}^{S}(\textbf{x}),
+\label{Eq:wzor4}
+\end{equation}
+where $\widehat{\textbf{D}^{R} (\textbf{x})} =  [\widehat{D^{R} (x,y_{1})}, ..., \widehat{D^{R} (x,y_{r})}]^{T}$ and $\textbf{S}^{H}(\textbf{x})$ is the conjugate transpose of the $\textbf{S}(\textbf{x})$ matrix. The final reconstruction image is defined as:
+\begin{equation}
+M(\textbf{x}) = \left |\widehat{\textbf{D}^{R}(\textbf{x})}  \right |.
+\label{Eq:wzor5}
+\end{equation}
+
+The `unfolding' process can be performed as long as inversion of $\textbf{S}(\textbf{x})$ matrix is possible. Therefore, we cannot set the value of subsampling rate exceeding the number of coils $L$. To restore full FOV data, SENSE algorithm has to be recalled for each pixel in aliased \textbf{x}--space image.
+
+A regularization approach is defined as an~inversion method that introduces additional  information in order to stabilize the solution. This method is beneficial as it roughly matches the desired solution (low bias) and is less sensitive to perturbations of the data (low variance). 
+Tikhonov regularization is a common approach to obtain an inexact solution to a~linear system of equations. In particular, the Tikhonov regularized estimate objective function with an additional constraint reads as follows:
+
+\begin{equation}
+\widehat{\textbf{D}^{R}_{reg}} = \text{arg}\underset{\textbf{D}^{R}}{\text{min}}
+\left \{ \left \|\textbf{D}^{S}-\textbf{S}\textbf{D}^{R}\right \|^{2}+\lambda ^{2}\left \|\textbf{A}(\textbf{D}^{R} - \textbf{D} )  \right \|^{2} \right \},
+\label{Eq:wzor6}
+\end{equation}
+
+where $\lambda$ is a regularization parameter ($\lambda > 0$) and $\textbf{D}$ is a~prior image known as a regularization image. Selection of the parameter $\lambda$ and $\textbf{D}$ can be performed using different procedures. In this module $\textbf{A}$~is assumed to be an identity matrix.
+The first term provides fidelity to the data and the second introduces prior knowledge (e.x. median filtered initial guess of LS SENSE) about the expected behaviour of $\textbf{D}^{R}$. The Tikhonov regularization problem is given by:
+
+\begin{equation}
+\widehat{\textbf{D}^{R}_{reg}} = \textbf{D}  +  (\textbf{S}^{H}\textbf{S} + \lambda \textbf{A}^{H}\textbf{A})^{-1} \textbf{S}^{H}(\textbf{D}^{S} - \textbf{S}\textbf{D}).
+\label{Eq:wzor7}
+\end{equation}
+
+A reasonable value for $\lambda$~can be picked using following techniques: the discrepancy principle (i.e., some knowledge about noise is used), the L-curve criterion (i.e., evaluation of graphical plot, which presents residual norm versus the side constraint norm,  is done),  generalized cross-validation (i.e., minimization of prediction error).
+
+\emph{\textbf{Module input}}:
+Synthetic MR images are brain MRI slices coming from BrainWeb (http://brainweb.bic.mni.mcgill.ca/cgi/brainweb1) are normalized to [0-255] (all with intensity non-uniformity INU=0). Only T1- and T2-weighted data is used. The dataset is free of noise and the background areas are set to zero. The slice thickness equals 1 mm. These images are used then to simulate synthetic noisy accelerated parallel Cartesian SENSE MRI data according to following steps (the data simulation is performed with use of eight receiver coils ($L = 8$)): I) simulated sensitivity maps (divided into the ratio 3:1 for real and imaginary parts, respectively) are added to fully-sampled \textbf{x}-space data, II) correlated complex Gaussian noise with different values of standard deviations is added to each coil image, III) 2D FFT and data subsampling with chosen reduction factor $r$ is performed and IV) 2D iFFT is applied to recover data in \textbf{x}-space. Then, data reconstruction process is conducted.\\
+\textit{> know nothing now whether \textit{in vivo} diffusion data will be used, I think it won't but who knows...} \\
+\emph{\textbf{Module output}}: The output is full resolution reconstructed data performed with two different algorithms: SENSE (LSE) and Tikhonov regularization. \\ 
+
 \section{Module 2}
 
 -detailed description of module, algorithm etc, NO CODES, only theoretical!
