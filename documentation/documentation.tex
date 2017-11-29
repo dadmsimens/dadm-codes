@@ -124,6 +124,8 @@ Jacek Fidos  & 29-Nov-2017  & Tools description added\tabularnewline
 \hline
 Anna Grzywa  & 29-Nov-2017  & Description of 8th module added\tabularnewline
 \hline 
+Magdalena Rychlik & 29-Nov-2017 & Description of 4th module \tabularnewline
+\hline 
  &  & \tabularnewline
 \hline 
 \end{tabular}
@@ -147,7 +149,7 @@ Module  & Input  & Output  & Before that module\tabularnewline
 \hline 
 3  &  &  & \tabularnewline
 \hline 
-4 &  &  & \tabularnewline
+4 & reconstructed, normalized image & Rician noise-free image & intensity correction \tabularnewline
 \hline 
 5 & reconstructed, normalized image & Rician noise-free image & reconstruction \tabularnewline
 \hline 
@@ -402,7 +404,52 @@ This estimator is only vaild over the background pixels. However, no segmentatio
 
 \section{Module 4}
 
--detailed description of module, algorithm etc, NO CODES, only theoretical! 
+The aim of this module is to remove Rician noise from MR images. If both real and imaginary parts of signal are corrupted with zero-mean uncorrelated Gaussian noise with equal variance, the envelope of magnitude signal will follow a Rician distribution. Many processes allow to remove noise, here the method is used to denoise MR images is the linear minimum square error estimator (LMMSE). The main purpose of LMMSE is to find a closed-form estimator for a signal that follows a Rician distributions. It is more efficient than optimization-based solutions. The estimator uses information of the sample distribution of local statistics of the image such as the local mean, the local variance and the local mean square value. In this method, the true value for each noisy pixel is estimated by a set of pixels selected from a local neighborhood. 
+
+The LMMSE estimator for a 2-D signal with Rician distribution is defined: 
+
+\begin{equation}
+\begin{aligned}
+\widehat{A_{ij}^2} = E\{A_{ij}^2\} + C_{A_{ij}^2M_{ij}^2}C_{M_{ij}^2M_{ij}^2}^{-1}(M_{ij}^2 - E\{M_{ij}^2\} )
+\end{aligned}
+\label{m4eq1}
+\end{equation}
+where $A_{ij}$ is the unknown intensity value in pixel $ij$, $M_ij$ the observation vector, $C_{A_{ij}^2M_{ij}^2}$ the cross-covarience vector and $C_{M_{ij}^2M_{ij}^2}$ the covarience matrix. If the estimator is simplified to be pointwise, vectors and matrics become scalar values. Then the assuming local ergodicity with a square nighbourhood around the pixel $ij$, the finally equation for LMMSE is defined: 
+\begin{equation}
+\begin{aligned}
+\widehat{A_{ij}^2} = \langle M_ij^2 \rangle - 2\sigma_n^2 + K_{ij}  (M_{ij}^2 - \langle M_{ij}^2\rangle )
+\end{aligned}
+\label{m4eq2}
+\end{equation} 
+with $K_{ij}$
+\begin{equation}
+\begin{aligned}
+K_{ij}^2 =1 - \frac{ 4\sigma_n^2( \langle M_ij^2 \rangle - 2\sigma_n^2)}{\langle M_ij^4 \rangle - {\langle M_ij^2 \rangle}^2}
+\end{aligned}
+\label{m4eq3}
+\end{equation}
+
+The LMMSE estimator is related to the quality of the estimate of the noise variance $\sigma_n^2$. For the noise estimation the mode of the sample mean is used:
+
+\begin{equation}
+\begin{aligned}
+\widehat{\sigma_n}=\sqrt{\frac{2}{\pi}}mode(\widehat{\mu_1}_{ij})
+\end{aligned}
+\label{m4eq4}
+\end{equation}
+ where $\widehat{\mu_1}_{ij}$
+\begin{equation}
+\begin{aligned}
+\widehat{\mu_1}_{ij} = \frac{1}{|\eta_{ij}}\sum_{p\colon\eta_{ij}} I_p
+\end{aligned}
+\label{m4eq5}
+\end{equation}
+
+The use of the LMMSE method should makes the filtering process computationally far more efficient and easier to implement. Also the use of local statistics should decrease estimator dependent of parameters such as the size of window.
+
+\emph{\textbf{Module input}}: Reconstructed, normalized and corrected data.
+
+\emph{\textbf{Module output}}: Image without Rician noise.
 
 \section{Module 5}
 Magnetic Resonance images are endangered of being corrupted by noise and artifacts. Since they are used as a basis for medical diagnosis their quality has to be at highest possible level. Noise can be dealt with by changing the parameters of images acquisition, however it increases the scanning time, which is undesirable in medical imaging. To overcome this obstacle, post-processing methods like filtering are employed for denoising. In domain of MRI denoising many filters may be used, though here emphasis is put on Unbiased Non-Local Means (UNLM) filter, which is an extension of NLM filter. In order to understand Unbiased version of this algorithm, the basic one has to be presented.
