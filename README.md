@@ -32,8 +32,9 @@ conda env create -f DADM_env.yml
 ```
 The enviroment can be used in terminal by typing
 ```sh
-source activate
+source activate DADM
 ```
+Run the python scripts from terminal window with activated source.
 
 # Contributing
 Every member of Developers and Organizational teams has the rights to push and pull - please be careful! <br />
