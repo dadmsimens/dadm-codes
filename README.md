@@ -18,7 +18,22 @@ The aim of this project is to create the system for MRI data pre-processing and 
 # Prerequisites
 Please add libraries you are using in your module
 # Installing
-To be continued by Jacek
+Follow the steps below to establish enviroment for running this application
+## Install Anaconda
+Please follow the instructions from [official conda documentation](https://conda.io/docs/user-guide/install/index.html). I recommend you to let the installer change your path file (IDK: what's the risk of interference with other python packages?).
+## Create Anaconda env
+Once you have installed Anaconda, run in terminal:
+```sh
+conda create -n DADM python=3.5 pyqt vtk cython -c menpo
+```
+Alternatively, you can navigate to this repo folder in terminal and run:
+```sh
+conda env create -f DADM_env.yml
+```
+The enviroment can be used in terminal by typing
+```sh
+source activate
+```
 
 # Contributing
 Every member of Developers and Organizational teams has the rights to push and pull - please be careful! <br />
