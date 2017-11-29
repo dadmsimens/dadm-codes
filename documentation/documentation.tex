@@ -121,6 +121,8 @@ Alicja Martinek  & 28-Nov-2017  & Description of 5th module changed\tabularnewli
 Mateusz Pabian  & 29-Nov-2017  & Description of 6th module changed\tabularnewline
 \hline
 Jacek Fidos  & 29-Nov-2017  & Tools description added\tabularnewline
+\hline
+Anna Grzywa  & 29-Nov-2017  & Description of 8th module added\tabularnewline
 \hline 
  &  & \tabularnewline
 \hline 
@@ -151,7 +153,7 @@ Module  & Input  & Output  & Before that module\tabularnewline
 \hline 
 6 &  &  & \tabularnewline
 \hline 
-8 &  &  & \tabularnewline
+8 & image & image without non-brain tissues & \tabularnewline
 \hline 
 9 & 320x240 image  & 640x480 image  & denoised data \tabularnewline
 \hline 
@@ -563,7 +565,26 @@ In order to improve diffusion tensor estimation it is imperative to remove artif
 
 \section{Module 8}
 
--detailed description of module, algorithm etc, NO CODES, only theoretical! 
+The aim of this module is to remove pieces of skull from MRI Image using at pleasure chosen algorithm from the literature. Skull stripping is performed with use of hybrid approach that combines watershed algorithms and deformable surface models.
+
+Preliminary processing to isolate the brain form extra-cranial or non-brain tissues such as e.g. the eye sockets, skin from MRI head scans is commonly referred as skull stripping. Skull stripping methods which are available in the literature are broadly classified into five categories: mathematical morphology-based metods, intensity-based methods, deformable surface-based methods, atlas-based methods, and hybrid methods. Each skull stripping method has their own merits and limitations. 
+
+In this module is proposed a hybrid approach to robustly and automatically segment brain from non-brain tissues in T1-weighted MR image. The skull stripping consists of series of sequential steps:
+
+\begin{enumerate}
+    \item{Some relevant parameters are estimated from the input image (the coordinates of the brain COG, the average brain radius BR, an upper bound for the intensity of the cerebrospinal fluid CFS – white matter parameters).}
+    \item{Watershed algorithm is performed on the intensity image, with global minimum initialized within the cerebral white matter.}
+    \item{Deformable surface procedure to recover parts of cortex that may have been erroneously removed in watershed algorithm, using smoothness constraints on the shape of the skull and atlas information.}
+\end{enumerate}
+
+Watershed algorithms are based on image intensities. Typically, they attempt to locate the local maxima/minima of the norm of the image intensity gradient to segment the image into different  connected components. The algorithm proceeds in two steps:
+
+\begin{itemize}  
+\item{Watershed transform - the sorting all of voxels (of the gray level inverted image) according to their intensity.}
+\item{Post-watershed correction - assessment the validity of the watershed segmentation and retrospectively correct it, because the result image is often inaccurate and nonsmooth, with extracerebral tissues and CSF frequently remaining.}
+\end{itemize}
+
+Deformable surface algorithm used the watershed segmentation outputs a segmented volume with most of non-brain tissues removed. A deformable balloon-like template employes this brain volume. An initial template deformation is first completed using global parameters regarding the brain/non-brain border to roughly match the boundary of the brain. Next, the correctness of resulting surface is verified by an atlas-based analysis, and if important structures have been removed, it is modified.
 
 \section{Module 9}
 
