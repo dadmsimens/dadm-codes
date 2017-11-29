@@ -45,7 +45,7 @@ backref=false,
 isbn=true,
 url=false,
 maxbibnames=3,
-backend=biber,
+backend=bibtex8,
 ]{biblatex}
 \usepackage{csquotes}
 \DeclareQuoteAlias{croatian}{polish} 
@@ -77,7 +77,7 @@ Faculty of Electrical Engineering, Automatics,\protect\\[-2mm] Computer Science 
 
 
 
-\usepackage[english]{babel}
+
 
 \makeatother
 
@@ -117,6 +117,8 @@ Karolina Gajewska  & 27-Nov-2017  & Description of 10th module added\tabularnewl
 Eliza Kowalczyk  & 28-Nov-2017  & Description of 9th module changed\tabularnewline
 \hline
 Alicja Martinek  & 28-Nov-2017  & Description of 5th module changed\tabularnewline
+\hline 
+Mateusz Pabian  & 29-Nov-2017  & Description of 6th module changed\tabularnewline
 \hline 
  &  & \tabularnewline
 \hline 
@@ -399,7 +401,83 @@ It is worth mentioning that UNLM filter's performance is highly dependent on par
 
 \section{Module 6}
 
--detailed description of module, algorithm etc, NO CODES, only theoretical! 
+The aim of this module is to estimate brain tissue diffusion tensor from Diffusion Weighted Images (DWI). DWI are obtained using a different pulse sequence than anatomical MRI images and as such differ in their information content. Concretely, Diffusion Tensor Imaging (DTI) gives an insight into tissue microstructure, probing it using gradient-pulse excited water molecules. This enables indirect measurements of structural orientation and the degree of anisotropy as water molecules diffuse differs between tissues.
+
+In DTI-MRI the measured signal is defined as:
+\begin{equation}
+S\left(b,\boldsymbol{g}\right) =  S_{0} exp\left(-b\boldsymbol{g^TDg}\right)
+\label{Eq:dti_eq_1}
+\end{equation}
+
+where $S\left(b,\boldsymbol{g}\right)$ is the measured signal, $S_{0}$ is the reference signal without diffusion gradient attenuation, $b$ is the diffusion weight scalar, $\boldsymbol{g}$ is the diffusion encoding gradient vector of unit length and $\boldsymbol{D}$ is the diffusion tensor. 
+
+The diffusion tensor $\boldsymbol{D}$ is symmetric and describes molecular mobility along each direction:
+\begin{equation}
+\boldsymbol{D}=
+\begin{bmatrix}
+D_{xx} & D_{xy} & D_{xz} \\
+D_{yx} & D_{yy} & D_{yz} \\
+D_{zx} & D_{zy} & D_{zz} 
+\end{bmatrix}
+\label{Eq:dti_eq_2}
+\end{equation}
+
+Furthermore, the Eq. (\ref{Eq:dti_eq_1}) can be rewritten as:
+\begin{equation}
+ln\left(\dfrac{S\left(b,\boldsymbol{g}\right)}{S_{0}}\right) = -b\boldsymbol{g^TDg}
+\label{Eq:dti_eq_3}
+\end{equation}
+
+Estimating $\boldsymbol{D}$ from the above equation can be done using Weighted Least Squares (WLS) or Nonlinear Least Squares (NLS) algorithms. In order to correctly estimate the diffusion tensor it is necessary to acquire at least seven DWI - one for each direction of diffusion and one in the absence of diffusion gradient.
+
+There exists a couple of strategies of visualizing this high-dimmensional output array containing the estimated tensor in each voxel of the analyzed slice. One of the approaches is to $\boldsymbol{D}$ and project the main eigenvector direction into color space, where customarily $x$ = red, $y$ = green and $b$ = blue. This 2D visualization also allows to perform a sanity check by viewing the main direction of diffusion of white matter, corresponding to fiber longitudal axis, in corpus callosum.
+
+Diagnoalized estimated diffusion tensor can be used to extract additional information about tissue microstructure. This module calculates the following biomarker images:
+\begin{enumerate}
+	\item MD (Mean Diffusivity) is the mean of tensor eigenvalues. MD is an inverse measure of membrane density and is very similar for both gray (GM) and white matter (WM) and is higher for corticospinal fluid (CSF). MD is sensitive to cellularity, edema and necrosis.
+	\begin{equation}
+	MD = \dfrac{\lambda_{1}+\lambda_{2}+\lambda_{3}}{3}
+	\label{Eq:dti_eq_4}
+	\end{equation}
+	\item RA (Relative Anisotropy) exhibits high degree of contrast between anisotropic (WM) and isotropic tissues.
+	\begin{equation}
+	RA = \sqrt{\dfrac{\left(\lambda_{1}-MD\right)^2+\left(\lambda_{2}-MD\right)^2+\left(\lambda_{3}-MD\right)^2}{3\,MD}}
+	\label{Eq:dti_eq_5}
+	\end{equation}
+	\item FA (Fractional Anisotropy) is a summary measure of microstructural integrity. It is highly sensitive to microstructural changes without considering the type of change.
+	\begin{equation}
+	FA = \sqrt{\dfrac{3}{2}}\sqrt{\dfrac{\left(\lambda_{1}-MD\right)^2+\left(\lambda_{2}-MD\right)^2+\left(\lambda_{3}-MD\right)^2}{\lambda_{1}^2+\lambda_{2}^2+\lambda_{3}^2}}
+	\label{Eq:dti_eq_6}
+	\end{equation}
+	\item VR (Volume Ratio)
+	\begin{equation}
+	VR = \frac{\lambda_{1}\lambda_{2}\lambda_{3}}{MD\,^3}
+	\label{Eq:dti_eq_7}
+	\end{equation}
+\end{enumerate}
+
+\hfill\newline
+\textbf{DTI pre-processing pipeline}\footnote{Scientific articles enumerated by Mr Pięciak mention these pre-processing steps as necessary for proper diffusion tensor estimation.}
+
+In order to improve diffusion tensor estimation it is imperative to remove artifacts. In addition to standard MRI pre-processing, one needs to correct for artifacts arising from using of diffusion-gradient pulse sequences and longer acquisition time. While hardware manufacturers try to proactively diminish some of these effects, software processing is still mandatory.
+\begin{enumerate}
+	\item Eddy currents and subject motion removal.\newline
+	This step attempts to realign (register) all images obtained during diffusion-gradient sequences to one $T_2$-weighted reference image by finding an affine transform for all diffusion-weighted images.
+	\item Magnetic susceptibility (local $B_0$ inhomogeneity) correction.\newline
+	This step attempts to map the real $B_0$ field map using pairs of gradient-weighted images obtained from gradient sequences along the same direction but opposite polarity. The estimated field map can be used to reconstruct images without distortions.
+	\item Skull stripping (Module 8).
+\end{enumerate}
+
+\hfill\newline
+\textbf{Module I/O}
+\begin{itemize}
+	\item \textbf{Input} - DiffusionData object instance containing 3D \textbf{\emph{slice}} (image pixel intensity varying in time with gradient sequence or lack thereof), \textbf{\emph{bvalue}} vector corresponding to used diffusion-gradient sequence intensity for each image, \textbf{\emph{bvector}} array containing diffusion-gradient sequence unit vector corresponding to \textbf{\emph{bvalue}} and \textbf{\emph{other}} with general information obtained from data format (most importantly: voxel physical dimensions and time between subsequent echo pulses).
+	\item \textbf{Output} - same as input DiffusionData object instance with a new field \textbf{\emph{tensor}} containing estimated diffusion tensor data. Biomarker images (MD, RA, FA, VR) can be calculated from \textbf{\emph{tensor}} using implemented methods and then displayed on a 2x2 grid.
+\end{itemize}
+
+\hfill\newline
+\textbf{List of References}\newline
+\cite{6_dti_1}, \cite{6_dti_2}, \cite{6_dti_3}, \cite{6_dti_4}, \cite{6_dti_5}, \cite{6_dti_6}, \cite{6_dti_7}, \cite{6_dti_8}, \cite{6_dti_9}, \cite{6_dti_10}
 
 \section{Module 8}
 
@@ -627,6 +705,8 @@ Michał Kotarba  & 11th module developer \tabularnewline
 \newpage{}
 
 \listoffigures
+
+\printbibliography
 
 \begin{comment}
  \bibliographystyle{plain}
