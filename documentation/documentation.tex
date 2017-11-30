@@ -642,13 +642,11 @@ Deformable surface algorithm used the watershed segmentation outputs a segmented
 Brain MRI segmentation is an essential task in many clinical applications because it influences the entire analysis. This is because different processing steps rely on accurate segmentation of anatomical regions. For example, MRI segmentation is commonly used for measuring and visualizing different brain structures, for delineating lesions, for analysing brain development, and for image-guided interventions and surgical planning. 
 
 \textit{MRI Processing}
-To prepare brain MRI for segmentation, it is necessary to  perform several preprocessing steps. 
+To prepare brain MRI for segmentation, it is necessary to  perform several preprocessing steps. (Fig. \ref{fig:Preprocessing}). 
 
-% (Fig. \ref{fig:Preprocessing steps})
-
-%\begin{figure}[H]
-%\centering{}\includegraphics[scale=0.7]{figures/9Preprocessing.png}\caption{Preprocessing steps: (a) the original T 1 -W MR image of the adult brain; (b) the brain tissue image after removing nonbrain structures; (c) the bias field; (d) the brain tissue image after bias field correction. \label{fig:Preprocessing steps}}
-%\end{figure}
+\begin{figure}[H]
+\centering{}\includegraphics[scale=0.7]{figures/9Preprocessing}\caption{Triangulation for the 15 patterns. \label{fig:Preprocessing}}
+\end{figure}
 
 The most important steps are: MRI bias field correction, image registration and brain extraction. 
 
@@ -657,13 +655,11 @@ An image for segmentation can be defined in 2D space (pixels) or in 3D space (vo
 
 The goal of image segmentation is to divide an image into a set of semantically meaningful, homogeneous, and nonoverlapping regions of similar attributes such as intensity, depth, color, or texture. Thesegmentation result is either an image of labels identifying each homogeneous region or a set of contours which describe the region boundaries.
 
-Fundamental components of structural brain MRI analysis include the classification of MRI data into specific tissue types and the identification and description of specific anatomical structures. The problems of segmentation and classification are interlinked because segmentation implies a classification, while a classifier implicitly segments an image. In the case of brain MRI, image elements are typically classified into three main tissue types: white matter (WM), gray matter (GM), and cerebrospinal fluid (CSF)
+Fundamental components of structural brain MRI analysis include the classification of MRI data into specific tissue types and the identification and description of specific anatomical structures. The problems of segmentation and classification are interlinked because segmentation implies a classification, while a classifier implicitly segments an image. In the case of brain MRI, image elements are typically classified into three main tissue types: white matter (WM), gray matter (GM), and cerebrospinal fluid (CSF) (Fig. \ref{fig:Segment}).
 
-%(Fig. \ref{fig:Brain segmentation}).
-
-%\begin{figure}[H]
-%\centering{}\includegraphics[scale=0.7]{figures/9Segmentation.png}\caption{An example of the brain MRI segmentation with an original MR image (a) and segmented image with three labels: WM, GM, and CSF (b). \label{fig:Brain segmentation}
-%\end{figure}
+\begin{figure}[H]
+\centering{}\includegraphics[scale=0.7]{figures/9Segmentation}\caption{Triangulation for the 15 patterns. \label{fig:Segment}}
+\end{figure}
 
 One of the most important features for brain MRI segmentation is the intensity of brain tissue. However, intensity-based segmentation algorithms will lead to wrong results when intensity value are corrupted by MRI artifacts. 
 
@@ -681,7 +677,7 @@ The segmentation methods, with application to brain MRI, may be grouped as follo
 
 \hfill\newline
 \textbf{List of References}\newline
-\cite{09a1}
+\cite{09a1} 
 
 \section{Module 9}
 
