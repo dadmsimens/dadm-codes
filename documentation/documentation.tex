@@ -119,6 +119,14 @@ Eliza Kowalczyk  & 28-Nov-2017  & Description of 9th module changed\tabularnewli
 Alicja Martinek  & 28-Nov-2017  & Description of 5th module changed\tabularnewline
 \hline 
 Mateusz Pabian  & 29-Nov-2017  & Description of 6th module changed\tabularnewline
+\hline
+Jacek Fidos  & 29-Nov-2017  & Tools description added\tabularnewline
+\hline
+Anna Grzywa  & 29-Nov-2017  & Description of 8th module added\tabularnewline
+\hline 
+Magdalena Rychlik & 29-Nov-2017 & Description of 4th module \tabularnewline
+\hline 
+Magdalena Kucharska & 29-Nov-2017 & Description of 9th module added\tabularnewline
 \hline 
  &  & \tabularnewline
 \hline 
@@ -133,6 +141,7 @@ about the app - the aim, what you can do here etc.
 dependences (tree), modules` descriptions \\
  %
 \begin{tabular}{|c|c|c|c|}
+
 \hline 
 Module  & Input  & Output  & Before that module\tabularnewline
 \hline 
@@ -143,13 +152,16 @@ Module  & Input  & Output  & Before that module\tabularnewline
 \hline 
 3  &  &  & \tabularnewline
 \hline 
-4 &  &  & \tabularnewline
+4 & reconstructed, normalized image & Rician noise-free image & intensity correction \tabularnewline
 \hline 
 5 & reconstructed, normalized image & Rician noise-free image & reconstruction \tabularnewline
 \hline 
-6 &  &  & \tabularnewline
+6 & reconstructed, normalized image; gradient-sequence vectors & estimated diffusion tensor 3D 6-channel image & modules 1-5, 8*
+\tabularnewline
 \hline 
-8 &  &  & \tabularnewline
+8 & image & image without non-brain tissues & \tabularnewline
+\hline 
+9 & image without non-brain tissues & segmentated image & \tabularnewline
 \hline 
 9 & 320x240 image  & 640x480 image  & denoised data \tabularnewline
 \hline 
@@ -310,15 +322,143 @@ regularization. \\
 
 \section{Module 2}
 
--detailed description of module, algorithm etc, NO CODES, only theoretical! 
+The Intensity inhomogeneity of the same tissue varies with the location of the tissue within the image. In other words it refers to the slow, nonanatomic intensity variations of the same tissue over the image domain. It can be due to imaging instrumentation (such as radio-frequency nonuniformity, static field inhomogeneity, etc.) or the patient movement. This artifact is particularly severe in MR images captured by surface coils.  Although intensity inhomogeneity is usually hardly noticeable to a human observer, many medical image analysis methods, such as segmentation and registration, are highly sensitive to the spurious variations of image intensities.
+
+The aim of this module is correction of intensity inhomogeneity in MR image using gradient based, surface fitting method. The methods fit a parametric surface to a set of image features that contain information on intensity inhomogeneity. The resulting surface, which is usually polynomial or spline based, represents the multiplicative inhomogeneity field that is used to correct the input image.
+
 
 \section{Module 3}
 
--detailed description of module, algorithm etc, NO CODES, only theoretical! 
+Magnetic Resonance Imaging (MRI) is known to be affected by several sources of quality deterioration, due to limitations in the hardware, scanning times, movement of patients, or even the motion of molecules in the scanning subject. Among them, noise is one source of degradation that affects acquisitions. The presence of noise over the acquired MR signal is a problem that affects not only the visual quality of the images, but also may interfere with further processing techniques such as registration or tensor estimation in Diffusion Tensor MRI.
+
+The aim of this module is to estimate the spatial dependent pattern of the variance of noise in SENSE reconstructed images. For this to work some additional information must be known beforehand, such as the sensitivity maps of each receiver coil. In the background of a SENSE MR image, where the SNR is zero, the Rician PDF (Probability density function) simplifies to a (non-stationary) Rayleigh distribution, whose second order moment is defined as:
+
+\begin{equation}
+\begin{aligned}
+E\left \{ M^{2}\left ( x \right ) \right \}= 2\cdot \sigma_R^{2}\cdot \left ( x \right )
+\end{aligned}
+\end{equation}
+
+Since $\sigma_R^{2}$ is \textit{x}-dependent, $E\left \{ M^{2}\left ( x \right ) \right \}$ will also show a different value for each \textit{x} position.
+
+Let us assume that each coil in the \textit{x} -space is initially corrupted with uncorrelated Gaussian noise with the same variance $\sigma_n^{2}$ and there
+is a correlation between coils $\rho$ so that matrix $\sigma$ becomes:
+
+\begin{equation}
+\begin{aligned}
+\Sigma= \sigma_n^{2}\begin{pmatrix}
+1 & \rho & \cdots & \rho \\ 
+\rho & 1 & \cdots & \rho \\ 
+\vdots & \vdots & \ddots & \vdots \\ 
+\rho & \rho & \cdots & 1
+\end{pmatrix}= \sigma_n^{2}\left ( I+\rho\left [ 1-I \right ] \right )
+\end{aligned}
+\end{equation}
+with \textit{I} the $L\times L$ identity matrix and \textit{1} a $L\times L$ matrix of 1's. For each \textit{x} value, we define the global map
+
+\begin{equation}
+\begin{aligned}
+G_{w_i}=W_i^{*}\left ( I-\rho\left [ 1-I \right ] \right )W_i, \quad i=1,\cdots ,r
+\end{aligned}
+\end{equation}
+
+Global map $G_w(x)$ can be easily inferred from $G_{w_i}$ values. Note that $G_w(x)$ is strongly related fo the g-factor, so the first equation becomes
+
+\begin{equation}
+\begin{aligned}
+E\left \{ M^{2}\left ( x \right ) \right \}= 2\cdot \sigma_n^{2}G_w \left ( x \right )
+\end{aligned}
+\end{equation}
+
+and
+
+\begin{equation}
+\begin{aligned}
+\sigma_n^{2}=\frac{E\left \{ M^{2}\left ( x \right ) \right \}}{2G_w \left ( x \right )}
+\end{aligned}
+\end{equation}
+
+By using this regularization we can assure a single $\sigma_n^{2}$ value for all the points in the image. We can now define a noise estimator based on the local sample estimation of the second order moment:
+
+\begin{equation}
+\begin{aligned}
+\left \langle M^2(x) \right \rangle_x= \frac{1}{\left | \eta(x) \right |}\sum_{p \in \eta(x)}M^2(p)
+\end{aligned}
+\end{equation}
+with $\eta(x)$ a neighborhood centered in x. $\left \langle M^2(x) \right \rangle_x$ is know to follow a Gamma distribution whose mode is $\sigma_n^{2}(\left | \eta(x) \right |-1)/\left | \eta(x) \right |$. Then
+
+\begin{equation}
+\begin{aligned}
+mode\left \{ \frac{\left \langle M_L^2 \right \rangle_x}{G_w(x)} \right \}=2\sigma_n^2\frac{\left | \eta(x) \right |-1}{\left | \eta(x) \right |}\approx 2\sigma_n^2
+\end{aligned}
+\end{equation}
+when $\left | \eta(x) \right |\gg 1$. The estimator is the defined as
+
+\begin{equation}
+\begin{aligned}
+\widehat{\sigma_n^2}=\frac{1}{2}mode\left \{ \frac{\left \langle M_L^2(x) \right \rangle_x}{G_w(x)} \right \}
+\end{aligned}
+\end{equation}
+and consequently the noise in each pixel is estimated as
+
+\begin{equation}
+\begin{aligned}
+\widehat{\sigma_R^2}=\frac{1}{2}mode\left \{ \frac{\left \langle M_L^2(x) \right \rangle_x}{G_w(x)} \right \}G_w(x)
+\end{aligned}
+\end{equation}
+
+This estimator is only vaild over the background pixels. However, no segmentation of these pixels is needed: the use of the mode allows us to work with the whole image. On the other hand, to carry out the estimation, the sensitivity map of each coil and the correlation between coils must be known beforhand. These parameters are needed for the SENSE encoding, and thus, they can be easily obtained.
+
+
 
 \section{Module 4}
 
--detailed description of module, algorithm etc, NO CODES, only theoretical! 
+The aim of this module is to remove Rician noise from MR images. If both real and imaginary parts of signal are corrupted with zero-mean uncorrelated Gaussian noise with equal variance, the envelope of magnitude signal will follow a Rician distribution. Many processes allow to remove noise, here the method is used to denoise MR images is the linear minimum square error estimator (LMMSE). The main purpose of LMMSE is to find a closed-form estimator for a signal that follows a Rician distributions. It is more efficient than optimization-based solutions. The estimator uses information of the sample distribution of local statistics of the image such as the local mean, the local variance and the local mean square value. In this method, the true value for each noisy pixel is estimated by a set of pixels selected from a local neighborhood. 
+
+The LMMSE estimator for a 2-D signal with Rician distribution is defined: 
+
+\begin{equation}
+\begin{aligned}
+\widehat{A_{ij}^2} = E\{A_{ij}^2\} + C_{A_{ij}^2M_{ij}^2}C_{M_{ij}^2M_{ij}^2}^{-1}(M_{ij}^2 - E\{M_{ij}^2\} )
+\end{aligned}
+\label{m4eq1}
+\end{equation}
+where $A_{ij}$ is the unknown intensity value in pixel $ij$, $M_ij$ the observation vector, $C_{A_{ij}^2M_{ij}^2}$ the cross-covarience vector and $C_{M_{ij}^2M_{ij}^2}$ the covarience matrix. If the estimator is simplified to be pointwise, vectors and matrics become scalar values. Then the assuming local ergodicity with a square nighbourhood around the pixel $ij$, the finally equation for LMMSE is defined: 
+\begin{equation}
+\begin{aligned}
+\widehat{A_{ij}^2} = \langle M_ij^2 \rangle - 2\sigma_n^2 + K_{ij}  (M_{ij}^2 - \langle M_{ij}^2\rangle )
+\end{aligned}
+\label{m4eq2}
+\end{equation} 
+with $K_{ij}$
+\begin{equation}
+\begin{aligned}
+K_{ij}^2 =1 - \frac{ 4\sigma_n^2( \langle M_ij^2 \rangle - 2\sigma_n^2)}{\langle M_ij^4 \rangle - {\langle M_ij^2 \rangle}^2}
+\end{aligned}
+\label{m4eq3}
+\end{equation}
+
+The LMMSE estimator is related to the quality of the estimate of the noise variance $\sigma_n^2$. For the noise estimation the mode of the sample mean is used:
+
+\begin{equation}
+\begin{aligned}
+\widehat{\sigma_n}=\sqrt{\frac{2}{\pi}}mode(\widehat{\mu_1}_{ij})
+\end{aligned}
+\label{m4eq4}
+\end{equation}
+ where $\widehat{\mu_1}_{ij}$
+\begin{equation}
+\begin{aligned}
+\widehat{\mu_1}_{ij} = \frac{1}{|\eta_{ij}}\sum_{p\colon\eta_{ij}} I_p
+\end{aligned}
+\label{m4eq5}
+\end{equation}
+
+The use of the LMMSE method should makes the filtering process computationally far more efficient and easier to implement. Also the use of local statistics should decrease estimator dependent of parameters such as the size of window.
+
+\emph{\textbf{Module input}}: Reconstructed, normalized and corrected data.
+
+\emph{\textbf{Module output}}: Image without Rician noise.
 
 \section{Module 5}
 Magnetic Resonance images are endangered of being corrupted by noise and artifacts. Since they are used as a basis for medical diagnosis their quality has to be at highest possible level. Noise can be dealt with by changing the parameters of images acquisition, however it increases the scanning time, which is undesirable in medical imaging. To overcome this obstacle, post-processing methods like filtering are employed for denoising. In domain of MRI denoising many filters may be used, though here emphasis is put on Unbiased Non-Local Means (UNLM) filter, which is an extension of NLM filter. In order to understand Unbiased version of this algorithm, the basic one has to be presented.
@@ -481,7 +621,68 @@ In order to improve diffusion tensor estimation it is imperative to remove artif
 
 \section{Module 8}
 
--detailed description of module, algorithm etc, NO CODES, only theoretical! 
+The aim of this module is to remove pieces of skull from MRI Image using at pleasure chosen algorithm from the literature. Skull stripping is performed with use of hybrid approach that combines watershed algorithms and deformable surface models.
+
+Preliminary processing to isolate the brain form extra-cranial or non-brain tissues such as e.g. the eye sockets, skin from MRI head scans is commonly referred as skull stripping. Skull stripping methods which are available in the literature are broadly classified into five categories: mathematical morphology-based metods, intensity-based methods, deformable surface-based methods, atlas-based methods, and hybrid methods. Each skull stripping method has their own merits and limitations. 
+
+In this module is proposed a hybrid approach to robustly and automatically segment brain from non-brain tissues in T1-weighted MR image. The skull stripping consists of series of sequential steps:
+
+\begin{enumerate}
+    \item{Some relevant parameters are estimated from the input image (the coordinates of the brain COG, the average brain radius BR, an upper bound for the intensity of the cerebrospinal fluid CFS – white matter parameters).}
+    \item{Watershed algorithm is performed on the intensity image, with global minimum initialized within the cerebral white matter.}
+    \item{Deformable surface procedure to recover parts of cortex that may have been erroneously removed in watershed algorithm, using smoothness constraints on the shape of the skull and atlas information.}
+\end{enumerate}
+
+Watershed algorithms are based on image intensities. Typically, they attempt to locate the local maxima/minima of the norm of the image intensity gradient to segment the image into different  connected components. The algorithm proceeds in two steps:
+
+\begin{itemize}  
+\item{Watershed transform - the sorting all of voxels (of the gray level inverted image) according to their intensity.}
+\item{Post-watershed correction - assessment the validity of the watershed segmentation and retrospectively correct it, because the result image is often inaccurate and nonsmooth, with extracerebral tissues and CSF frequently remaining.}
+\end{itemize}
+
+Deformable surface algorithm used the watershed segmentation outputs a segmented volume with most of non-brain tissues removed. A deformable balloon-like template employes this brain volume. An initial template deformation is first completed using global parameters regarding the brain/non-brain border to roughly match the boundary of the brain. Next, the correctness of resulting surface is verified by an atlas-based analysis, and if important structures have been removed, it is modified.
+
+\section{Module 9}
+
+Brain MRI segmentation is an essential task in many clinical applications because it influences the entire analysis. This is because different processing steps rely on accurate segmentation of anatomical regions. For example, MRI segmentation is commonly used for measuring and visualizing different brain structures, for delineating lesions, for analysing brain development, and for image-guided interventions and surgical planning. 
+
+\textit{MRI Processing}
+To prepare brain MRI for segmentation, it is necessary to  perform several preprocessing steps. (Fig. \ref{fig:Preprocessing}). 
+
+\begin{figure}[H]
+\centering{}\includegraphics[scale=0.7]{9Preprocessing}\caption{Triangulation for the 15 patterns. \label{fig:Preprocessing}}
+\end{figure}
+
+The most important steps are: MRI bias field correction, image registration and brain extraction. 
+
+\textit{Basic}
+An image for segmentation can be defined in 2D space (pixels) or in 3D space (voxels). Each image element is specified by its intensity value and coordinates for pixels (i,j) and for voxels (i,j,k). Intensity values are typically represented by a gray value {0, …, 255}. 
+
+The goal of image segmentation is to divide an image into a set of semantically meaningful, homogeneous, and nonoverlapping regions of similar attributes such as intensity, depth, color, or texture. Thesegmentation result is either an image of labels identifying each homogeneous region or a set of contours which describe the region boundaries.
+
+Fundamental components of structural brain MRI analysis include the classification of MRI data into specific tissue types and the identification and description of specific anatomical structures. The problems of segmentation and classification are interlinked because segmentation implies a classification, while a classifier implicitly segments an image. In the case of brain MRI, image elements are typically classified into three main tissue types: white matter (WM), gray matter (GM), and cerebrospinal fluid (CSF) (Fig. \ref{fig:Segment}).
+
+\begin{figure}[H]
+\centering{}\includegraphics[scale=0.7]{9Segmentation}\caption{Triangulation for the 15 patterns. \label{fig:Segment}}
+\end{figure}
+
+One of the most important features for brain MRI segmentation is the intensity of brain tissue. However, intensity-based segmentation algorithms will lead to wrong results when intensity value are corrupted by MRI artifacts. 
+
+\textit{MRI Segmentation Methods}
+There is no single method that can be suitable for all images, nor are all methods equally good for a particular type of image. For example, some of the methods use only the gray level histogram, while some integrate spatial image information to be robust for noisy environments. Some methods use probabilistic or fuzzy set theoretic approaches, while some additionally integrate prior knowledge (specific image formation model, e.g., MRI brain atlas) to further improve segmentation performance.
+The segmentation methods, with application to brain MRI, may be grouped as follows:
+\begin{itemize}
+	\item manual segmentation;
+	\item intensity-based methods (including thresholding, region growing, classification, and clustering);
+	\item atlas-based methods;
+	\item surface-based methods (including active contours and surfaces, and multiphase active contours);
+	\item hybrid segmentation methods.
+\end{itemize}
+
+
+\hfill\newline
+\textbf{List of References}\newline
+\cite{09a1} 
 
 \section{Module 9}
 
@@ -532,6 +733,10 @@ the values of new pixels. Every pixel has to be classified into one
 of three groups (grey substance, white substance or cerebral spinal
 fluid).
 
+\hfill\newline
+\textbf{List of References}\newline
+\cite{9art1}
+
 \section{Module 10}
 
 \indent To prepare tree dimension visualization of the cerebral cortex
@@ -557,7 +762,7 @@ vertex is interpolated. The output of the algorithm is the triangle
 vertices and vertex normals.
 
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.7]{figures/MarchingCubes}\caption{Triangulation for the 15 patterns. \label{fig:Marching cubes}}
+\centering{}\includegraphics[scale=0.7]{MarchingCubes}\caption{Triangulation for the 15 patterns. \label{fig:Marching cubes}}
 \end{figure}
 
 \indent To visualization the model, obtained by marching cubes, the
@@ -582,13 +787,36 @@ in the remaining planes, linear interpolation is used
 
 \section{Module 11}
 
--detailed description of module, algorithm etc, NO CODES, only theoretical!
+\indent The literature to this module is as useful as nipples on men. Everything is about inventing how to realize point 1. of the list. \\
+\indent Oblique Imaging is a technique to create non-perspective projections from 3D or multiple 2D images.\\
 
+\indent In order to create oblique image it is essential to:
+\begin{itemize}
+\item choose two angles under which the plane will be inclined,
+\item create a matrix of points that this plane consists of,
+\item from existing points pick those, which will be used in the image,
+\item interpolate points that are not existing.
+\end{itemize}
+\indent Type of interpolation can vary, but in this project interpolation based on mean will be used.
+To interpolate one pixel mean of all pixels around him with given proximity is taken.
+
+\begin{figure}[H]
+\centering{}\includegraphics[scale=0.7]{m11_spherexyz}\caption{Visualization of pixels taken to interpolate} \label{fig:m11_spherexyz }
+\end{figure}
 \chapter{Implementation}
 
 \section{Tools}
 
--python version, libraries
+\textbf{Python} - The main programming language of this project is Python. The utilized language version is \textbf{Python 3.5.4} (last "bugfix" release of Python 3.5).
+
+\textbf{VTK} - The Visualization Toolkit (VTK) is an open-source software system for 3D computer graphics, modeling, image processing, volume rendering, scientific visualization, and information visualization.
+The project uses version \textbf{7.0}, as it is compatible with python 3.5 (compatibility assured by menpo project\footnote{http://www.menpo.org/}).
+
+\textbf{Cython} - Cython is an optimising static compiler for both the Python programming language and the extended Cython programming language. It allows to represent the most computionally complex operations with more efficient code. This project uses version \textbf{0.26.1}.
+
+\textbf{PyQT} - PyQt brings together the Qt C++ cross-platform application framework and the cross-platform interpreted language Python. This project uses its version \textbf{5.6} to create Graphical User Interface (GUI) for the application.
+
+\textbf{Conda} - Conda is an open source package management system and environment management system that runs on Windows, macOS and Linux. Conda quickly installs, runs and updates packages and their dependencies. This project uses \textbf{Anaconda3} distribution to provide standarized enviroment with all of the required packages for our developers.
 
 \section{Module 1}
 
