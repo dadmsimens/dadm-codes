@@ -141,6 +141,7 @@ about the app - the aim, what you can do here etc.
 dependences (tree), modules` descriptions \\
  %
 \begin{tabular}{|c|c|c|c|}
+
 \hline 
 Module  & Input  & Output  & Before that module\tabularnewline
 \hline 
@@ -320,7 +321,10 @@ regularization. \\
 
 \section{Module 2}
 
--detailed description of module, algorithm etc, NO CODES, only theoretical! 
+The Intensity inhomogeneity of the same tissue varies with the location of the tissue within the image. In other words it refers to the slow, nonanatomic intensity variations of the same tissue over the image domain. It can be due to imaging instrumentation (such as radio-frequency nonuniformity, static field inhomogeneity, etc.) or the patient movement. This artifact is particularly severe in MR images captured by surface coils.  Although intensity inhomogeneity is usually hardly noticeable to a human observer, many medical image analysis methods, such as segmentation and registration, are highly sensitive to the spurious variations of image intensities.
+
+The aim of this module is correction of intensity inhomogeneity in MR image using gradient based, surface fitting method. The methods fit a parametric surface to a set of image features that contain information on intensity inhomogeneity. The resulting surface, which is usually polynomial or spline based, represents the multiplicative inhomogeneity field that is used to correct the input image.
+
 
 \section{Module 3}
 
@@ -645,7 +649,7 @@ Brain MRI segmentation is an essential task in many clinical applications becaus
 To prepare brain MRI for segmentation, it is necessary to  perform several preprocessing steps. (Fig. \ref{fig:Preprocessing}). 
 
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.7]{figures/9Preprocessing}\caption{Triangulation for the 15 patterns. \label{fig:Preprocessing}}
+\centering{}\includegraphics[scale=0.7]{9Preprocessing}\caption{Triangulation for the 15 patterns. \label{fig:Preprocessing}}
 \end{figure}
 
 The most important steps are: MRI bias field correction, image registration and brain extraction. 
@@ -658,7 +662,7 @@ The goal of image segmentation is to divide an image into a set of semantically 
 Fundamental components of structural brain MRI analysis include the classification of MRI data into specific tissue types and the identification and description of specific anatomical structures. The problems of segmentation and classification are interlinked because segmentation implies a classification, while a classifier implicitly segments an image. In the case of brain MRI, image elements are typically classified into three main tissue types: white matter (WM), gray matter (GM), and cerebrospinal fluid (CSF) (Fig. \ref{fig:Segment}).
 
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.7]{figures/9Segmentation}\caption{Triangulation for the 15 patterns. \label{fig:Segment}}
+\centering{}\includegraphics[scale=0.7]{9Segmentation}\caption{Triangulation for the 15 patterns. \label{fig:Segment}}
 \end{figure}
 
 One of the most important features for brain MRI segmentation is the intensity of brain tissue. However, intensity-based segmentation algorithms will lead to wrong results when intensity value are corrupted by MRI artifacts. 
@@ -728,6 +732,10 @@ the values of new pixels. Every pixel has to be classified into one
 of three groups (grey substance, white substance or cerebral spinal
 fluid).
 
+\hfill\newline
+\textbf{List of References}\newline
+\cite{9art1}
+
 \section{Module 10}
 
 \indent To prepare tree dimension visualization of the cerebral cortex
@@ -753,7 +761,7 @@ vertex is interpolated. The output of the algorithm is the triangle
 vertices and vertex normals.
 
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.7]{figures/MarchingCubes}\caption{Triangulation for the 15 patterns. \label{fig:Marching cubes}}
+\centering{}\includegraphics[scale=0.7]{MarchingCubes}\caption{Triangulation for the 15 patterns. \label{fig:Marching cubes}}
 \end{figure}
 
 \indent To visualization the model, obtained by marching cubes, the
@@ -792,7 +800,7 @@ in the remaining planes, linear interpolation is used
 To interpolate one pixel mean of all pixels around him with given proximity is taken.
 
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.7]{figures/m11_spherexyz}\caption{Visualization of pixels taken to interpolate} \label{fig:m11_spherexyz }
+\centering{}\includegraphics[scale=0.7]{m11_spherexyz}\caption{Visualization of pixels taken to interpolate} \label{fig:m11_spherexyz }
 \end{figure}
 \chapter{Implementation}
 
