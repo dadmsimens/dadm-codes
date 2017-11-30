@@ -1,0 +1,7 @@
+# Pre-compiled MATLAB files
+*.asv
+
+# Sample data in Module_06 and NIFTI data converter
+
+Module_06/converter
+Module_06/data/raw_00.mat
