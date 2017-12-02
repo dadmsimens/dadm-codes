@@ -15,7 +15,9 @@ for id_x = 1:size(tensor_image,1)
         end
         
         [~, principal_idx] = max(eig_values);
-        color_image(id_x, id_y,:) = eig_values(principal_idx) * eig_vecs(:,principal_idx);
+        % take abs of eigenvectors so that we preserve their main-axis
+        % orientation, regardless of direction
+        color_image(id_x, id_y,:) = eig_values(principal_idx) * abs(eig_vecs(:,principal_idx));
         
     end
 end

@@ -10,7 +10,7 @@ SOLVER = 'MATLAB';
 
 %% Load reconstructed and filtered data
 
-filenameIndex = 48;
+filenameIndex = 40;
 
 load(sprintf('data/rec_%d.mat', filenameIndex));
 

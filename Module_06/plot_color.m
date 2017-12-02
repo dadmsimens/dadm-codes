@@ -2,6 +2,11 @@ function plot_color( color_image, type, figure_handle )
 %PLOT_COLOR Summary of this function goes here
 %   Detailed explanation goes here
 
+% TODO: check if this is correct:
+% red - x-axis
+% green - y-axis
+% blue - z-axis
+
 if nargin < 3
     figure_handle = figure();
 end
