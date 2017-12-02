@@ -59,7 +59,7 @@ plot_biomarker(eig_image,'all');
 
 
 %% Get tensor image in color
-color_image = get_color(tensor_image);
+color_image = get_color(tensor_image, FIX);
 
 
 %% Plot color image
