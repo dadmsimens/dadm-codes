@@ -1,0 +1,23 @@
+\section{Module 2. Intensity inhomogenity correction}
+
+The Intensity inhomogeneity of the same tissue varies with the location
+of the tissue within the image. In other words it refers to the slow,
+nonanatomic intensity variations of the same tissue over the image
+domain. It can be due to imaging instrumentation (such as radio-frequency
+nonuniformity, static field inhomogeneity, etc.) or the patient movement.
+This artifact is particularly severe in MR images captured by surface
+coils. Although intensity inhomogeneity is usually hardly noticeable
+to a human observer, many medical image analysis methods, such as
+segmentation and registration, are highly sensitive to the spurious
+variations of image intensities.
+
+The aim of this module is correction of intensity inhomogeneity in
+MR image using gradient based, surface fitting method. The methods
+fit a parametric surface to a set of image features that contain information
+on intensity inhomogeneity. The resulting surface, which is usually
+polynomial or spline based, represents the multiplicative inhomogeneity
+field that is used to correct the input image.
+
+\hfill{}\\
+\textbf{List of References}\\
+\cite{2a1}, \cite{2a2}

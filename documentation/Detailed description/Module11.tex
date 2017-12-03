@@ -1,0 +1,47 @@
+\section{Module 11. Brain 3D}
+
+\indent To prepare tree dimension visualization of the cerebral cortex
+is used algorithm of marching cubes.\\
+ \indent The input data is multiple 2D slices of MR image. The marching
+cubes algorithm create a polygonal representation of constant density
+surfaces from a 3D array of data. To select the cerebral cortex is
+used output data from segmentation made in module 8. The space of
+the image is divided into a regular grid of cubes. In each iteration
+one cube is considered. At each vertex of cube is determined how the
+surface intersects this cube. The density value and compared with
+the limit value - surface constant. If the data value is bigger than
+suface constant, one is assinged to a cube's vertex. There are 256
+combinations of cube orientation relative to the surface, but we can
+distinguish 15 basic patterns, that repeat as symmetrical reflections,
+produces all possibilities (Fig. \ref{fig:Marching cubes}). If all
+values \LyXZeroWidthSpace \LyXZeroWidthSpace are less than the constant
+value, then the cube does not form any polygon. Otherwise, the edges
+of the polygon are defined (by linear interpolation) at the edges
+that intersect the surface. Using central differences, a unit normal
+at each cube vertex is calculated and then normal to each trangle
+vertex is interpolated. The output of the algorithm is the triangle
+vertices and vertex normals.
+
+\begin{figure}[H]
+\centering{}\includegraphics[scale=0.7,bb = 0 0 200 100, draft, type=eps]{MarchingCubes}\caption{Triangulation for the 15 patterns. \label{fig:Marching cubes}}
+\end{figure}
+
+\indent To visualization the model, obtained by marching cubes, the
+VTK library is used, which enables building the three-dimension model.
+\\
+ \indent The second part of this module includes visualization of
+the brain's cross-section on arbitrarily defined plane. \\
+ \indent
+
+There are three primary imaging planes that are performed in medical
+imaging: 
+\begin{itemize}
+\item axial plane, which is any plane that divides the body into superior
+and inferior parts, roughly perpendicular to spine. 
+\item sagittal plane, which is any imaginary plane parallel to median plane. 
+\item coronal plane, which is any vertical plane that divides the body into
+anterior and posterior sections. 
+\end{itemize}
+The MRI produces two-dimensional images that consist of slices of
+brain's and is usually performed in axial plane. To receive images
+in the remaining planes, linear interpolation is used
