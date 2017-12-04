@@ -1,0 +1,52 @@
+\section{Module 10. Upsampling}
+
+Interpolation is a method of constructing new points based on the
+existing ones. In other words finding a value of a new point in High
+Resolution (HR) image based on points in Low Resolution (LR) pictures.
+
+In classical interpolation techniques pixels in LR data $y$ can be
+related to the corresponding $x$ values of HR data: $y_{p}=\frac{1}{N}\sum_{i=1}^{N}x_{i}+n,$
+where $y_{p}$ is the pixel of LR image at location $p$, $x_{i}$
+is each one of the $N$ High Resolution pixels contained within this
+LR pixel and $n$ is some additive noise.
+
+The biggest problem is that to find High Resolution data from the
+Low Resolution values. Unfortunately, there is an infinite number
+of values that meet that condition. Interpolation methods can be divided
+into three basic techniques.
+
+The first group are the most common ones, like linear or spline-based
+interpolation. These techniques assume that it is possible to count
+the value of a new point by determination some kind of generic function.
+The main disadvantage is that they are correct only for images of
+homogeneous regions. As is well known, brain consists of grey substance,
+white substance and cerebral spinal fluid, so above-mentioned methods
+are not appropriate for MRI images interpolation. The second one is
+Super Resolution technique. It is commonly used to increase image
+resolution on functional MRI (fMRI) and Diffusion Tensor Imaging (DTI).
+The method is based on acquisition of multiple Low Resolution (LR)
+images of the same object. It is time consuming and not adequate for
+clinical applications.
+
+The last but not least method is non-local patch-based technique which
+is based on self-similarity of a single image. It is possible to improve
+resolution by extracting information from a single image instead of
+acquiring several pictures.
+
+The aim of this module is to increase MRI image resolution by upsampling.
+The input data is a single 320x240 image. After the processing it
+is going to be twice as big. To be more specific 640x480 pixels. The
+process can be named as double upsampling.
+
+The first step of the algorithm is to divide every pixel of LR image
+into more pixels. Then the patch is designed. It is a rectangle which
+will be the area of interest. The pixels that are inside the area
+are taken into account during calculation the values of new points.
+After that an appropriate estimator is used to correctly calculate
+the values of new pixels. Every pixel has to be classified into one
+of three groups (grey substance, white substance or cerebral spinal
+fluid).
+
+\hfill{}\\
+\textbf{List of References}\\
+\cite{9art1}

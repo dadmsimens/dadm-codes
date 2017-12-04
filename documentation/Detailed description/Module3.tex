@@ -1,0 +1,91 @@
+\section{Module 3. Non-stationary noise estimation}
+
+Magnetic Resonance Imaging (MRI) is known to be affected by several
+sources of quality deterioration, due to limitations in the hardware,
+scanning times, movement of patients, or even the motion of molecules
+in the scanning subject. Among them, noise is one source of degradation
+that affects acquisitions. The presence of noise over the acquired
+MR signal is a problem that affects not only the visual quality of
+the images, but also may interfere with further processing techniques
+such as registration or tensor estimation in Diffusion Tensor MRI.
+
+The aim of this module is to estimate the spatial dependent pattern
+of the variance of noise in SENSE reconstructed images. For this to
+work some additional information must be known beforehand, such as
+the sensitivity maps of each receiver coil. In the background of a
+SENSE MR image, where the SNR is zero, the Rician PDF (Probability
+density function) simplifies to a (non-stationary) Rayleigh distribution,
+whose second order moment is defined as:
+
+\begin{equation}
+\begin{aligned}E\left\{ M^{2}\left(x\right)\right\} =2\cdot\sigma_{R}^{2}\cdot\left(x\right)\end{aligned}
+\end{equation}
+
+Since $\sigma_{R}^{2}$ is \textit{x}-dependent, $E\left\{ M^{2}\left(x\right)\right\} $
+will also show a different value for each \textit{x} position.
+
+Let us assume that each coil in the \textit{x} -space is initially
+corrupted with uncorrelated Gaussian noise with the same variance
+$\sigma_{n}^{2}$ and there is a correlation between coils $\rho$
+so that matrix $\sigma$ becomes:
+
+\begin{equation}
+\begin{aligned}\Sigma=\sigma_{n}^{2}\begin{pmatrix}1 & \rho & \cdots & \rho\\
+\rho & 1 & \cdots & \rho\\
+\vdots & \vdots & \ddots & \vdots\\
+\rho & \rho & \cdots & 1
+\end{pmatrix}=\sigma_{n}^{2}\left(I+\rho\left[1-I\right]\right)\end{aligned}
+\end{equation}
+with \textit{I} the $L\times L$ identity matrix and \textit{1} a
+$L\times L$ matrix of 1's. For each \textit{x} value, we define the
+global map
+
+\begin{equation}
+\begin{aligned}G_{w_{i}}=W_{i}^{*}\left(I-\rho\left[1-I\right]\right)W_{i},\quad i=1,\cdots,r\end{aligned}
+\end{equation}
+
+Global map $G_{w}(x)$ can be easily inferred from $G_{w_{i}}$ values.
+Note that $G_{w}(x)$ is strongly related fo the g-factor, so the
+first equation becomes
+
+\begin{equation}
+\begin{aligned}E\left\{ M^{2}\left(x\right)\right\} =2\cdot\sigma_{n}^{2}G_{w}\left(x\right)\end{aligned}
+\end{equation}
+
+and
+
+\begin{equation}
+\begin{aligned}\sigma_{n}^{2}=\frac{E\left\{ M^{2}\left(x\right)\right\} }{2G_{w}\left(x\right)}\end{aligned}
+\end{equation}
+
+By using this regularization we can assure a single $\sigma_{n}^{2}$
+value for all the points in the image. We can now define a noise estimator
+based on the local sample estimation of the second order moment:
+
+\begin{equation}
+\begin{aligned}\left\langle M^{2}(x)\right\rangle _{x}=\frac{1}{\left|\eta(x)\right|}\sum_{p\in\eta(x)}M^{2}(p)\end{aligned}
+\end{equation}
+with $\eta(x)$ a neighborhood centered in x. $\left\langle M^{2}(x)\right\rangle _{x}$
+is know to follow a Gamma distribution whose mode is $\sigma_{n}^{2}(\left|\eta(x)\right|-1)/\left|\eta(x)\right|$.
+Then
+
+\begin{equation}
+\begin{aligned}mode\left\{ \frac{\left\langle M_{L}^{2}\right\rangle _{x}}{G_{w}(x)}\right\} =2\sigma_{n}^{2}\frac{\left|\eta(x)\right|-1}{\left|\eta(x)\right|}\approx2\sigma_{n}^{2}\end{aligned}
+\end{equation}
+when $\left|\eta(x)\right|\gg1$. The estimator is the defined as
+
+\begin{equation}
+\begin{aligned}\widehat{\sigma_{n}^{2}}=\frac{1}{2}mode\left\{ \frac{\left\langle M_{L}^{2}(x)\right\rangle _{x}}{G_{w}(x)}\right\} \end{aligned}
+\end{equation}
+and consequently the noise in each pixel is estimated as
+
+\begin{equation}
+\begin{aligned}\widehat{\sigma_{R}^{2}}=\frac{1}{2}mode\left\{ \frac{\left\langle M_{L}^{2}(x)\right\rangle _{x}}{G_{w}(x)}\right\} G_{w}(x)\end{aligned}
+\end{equation}
+
+This estimator is only vaild over the background pixels. However,
+no segmentation of these pixels is needed: the use of the mode allows
+us to work with the whole image. On the other hand, to carry out the
+estimation, the sensitivity map of each coil and the correlation between
+coils must be known beforhand. These parameters are needed for the
+SENSE encoding, and thus, they can be easily obtained.
