@@ -13,13 +13,15 @@ SOLVER = 'MATLAB';
 filenameIndex = 40;
 
 load(sprintf('data/rec_%d.mat', filenameIndex));
+load('data/mask.mat');
+dwi.mask = mask;
 
 % important: equations assume that data is in signal units, not pixels
 % DWI must thus be non-zero
-dwi.data = normalize_data(dwi.data, EPSILON);
+dwi.data = normalize_data(dwi, EPSILON);
 
 % check if bvecs values are of unit length
-dwi.bvecs = eval_bvecs(dwi.bvecs, dwi.bvals);
+eval_bvecs(dwi);
 
 % normalize bvals units from header file
 % TODO: ...
@@ -39,29 +41,29 @@ dwi.bvecs = eval_bvecs(dwi.bvecs, dwi.bvals);
 
 
 %% Tensor estimation
-tensor_image = estimate_tensor(dwi, SOLVER, FIX, EPSILON);
+dwi.tensor_image = estimate_tensor(dwi, SOLVER, FIX, EPSILON);
 
 
 %% Plot results in a 3x3 matrix
-plot_tensor(tensor_image);
+plot_tensor(dwi);
 
 
 %% Obtain tensor eigenvalues
-eig_image = estimate_eig(tensor_image, FIX);
+dwi.eig_image = estimate_eig(dwi, FIX);
 
 
 %% Plot an eigenvalue image
-plot_eig(eig_image);
+plot_eig(dwi);
 
 
 %% Biomarkers
-plot_biomarker(eig_image,'all');
+plot_biomarker(dwi,'all');
 
 
 %% Get tensor image in color
-color_image = get_color(tensor_image, FIX);
+dwi.color_image = get_color(dwi, FIX);
 
 
 %% Plot color image
-plot_color(color_image, 'all');
+plot_color(dwi, 'all');
 

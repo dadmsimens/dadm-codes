@@ -1,12 +1,12 @@
-function eig_variance = get_eig_variance( eig_image )
+function eig_variance = get_eig_variance( dwi )
 %GET_EIG_VARIANCE Summary of this function goes here
 %   Detailed explanation goes here
 
-MD = get_MD(eig_image);
+MD = get_MD(dwi);
 
-eig_variance = diff_squared(eig_image,1,MD) + ...
-    diff_squared(eig_image,2,MD) + ...
-    diff_squared(eig_image,3,MD);
+eig_variance = diff_squared(dwi.eig_image,1,MD) + ...
+    diff_squared(dwi.eig_image,2,MD) + ...
+    diff_squared(dwi.eig_image,3,MD);
 
 end
 

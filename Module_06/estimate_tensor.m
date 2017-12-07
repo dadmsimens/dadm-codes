@@ -36,13 +36,15 @@ end
 for id_x = 1:size(dwi.data,1)
     for id_y = 1:size(dwi.data,2)
         
-        % Get sample pixel attenuation
-        sample_pixel = squeeze(dwi.data(id_x,id_y,~ref_idx));
-        attenuation = log(sample_pixel/ref_image(id_x,id_y));
-        
-        % Solve
-        tensor_image(id_x, id_y, :) = solve(attenuation, W, options,...
-            SOLVER, FIX, EPSILON);    
+        if dwi.mask(id_x,id_y) == 1
+            % Get sample pixel attenuation
+            sample_pixel = squeeze(dwi.data(id_x,id_y,~ref_idx));
+            attenuation = log(sample_pixel/ref_image(id_x,id_y));
+
+            % Solve
+            tensor_image(id_x, id_y, :) = solve(attenuation, W, options,...
+                SOLVER, FIX, EPSILON);    
+        end
 
     end
     fprintf('Progress: %.2f%%\n', 100*id_x/size(dwi.data,1))

@@ -1,11 +1,11 @@
-function [ data_output ] = normalize_data( data_input, EPSILON )
+function [ data_output ] = normalize_data( dwi, EPSILON )
 %NORMALIZE_DATA Summary of this function goes here
 %   Detailed explanation goes here
 
-minimum = min(min(min(data_input)));
-maximum = max(max(max(data_input)));
+minimum = min(min(min(dwi.data)));
+maximum = max(max(max(dwi.data)));
 
-data_output = EPSILON + (1-EPSILON)*(data_input - minimum)...
+data_output = EPSILON + (1-EPSILON)*(dwi.data - minimum)...
     /(maximum - minimum);
 
 
