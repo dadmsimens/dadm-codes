@@ -48,8 +48,8 @@ is going to be twice as big. To be more specific 640x480 pixels. The
 process can be named as double upsampling.
 
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.7]{Module9_1}\caption{Diagram of the patch-based non-local algorithm \cite{9art1}}. 
-\label{fig: Module9_1}
+\centering{}\includegraphics[scale=0.7]{figures/Module9_1}\caption{Diagram of the patch-based non-local algorithm \cite{9art1}}. 
+\label{fig:figures/Module9_1}
 \end{figure}
 
 In a nutshell, the first step of the algorithm is to divide every pixel of LR image into more pixels. Then the patch is designed. It is a rectangle which will be the area of interest. The pixels that are inside the area are taken into account during calculation the values of new points.
@@ -58,15 +58,15 @@ After that an appropriate estimator is used to correctly calculate the values of
 In order to show how the algorithm is designed the following pictured were generated using exemplary data. At the beginning there is an image 256x256 pixels. 
 
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.7]{Module9_2}\caption{DICOM Low Resolution image 256x256}. 
-\label{fig: Module9_2}
+\centering{}\includegraphics[scale=0.7]{figures/Module9_2}\caption{DICOM Low Resolution image 256x256}. 
+\label{fig:figures/Module9_2}
 \end{figure}
 
 The first step is to add new pixels to increase the resolution M times horizontally and N times vertically. The pixels are equal to zero. After this process an appropriate estimator has to be chosen to make a decision about the values of new points.
 
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.7]{Module9_3}\caption{DICOM image with new points with N=2 and M=2}. 
-\label{fig: Module9_3}
+\centering{}\includegraphics[scale=0.7]{figures/Module9_3}\caption{DICOM image with new points with N=2 and M=2}. 
+\label{fig:figures/Module9_3}
 \end{figure}
 
 Patch-based non-local regularization is used to reconstruct new voxels. The voxel under study is reconstruced using all similar voxels which are placed inside the patch. Contrary to classical techniques which use local neighbourhood of the reconstructed voxel, the proposed method uses the only relevant information, the context of the voxel.

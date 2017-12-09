@@ -136,6 +136,8 @@ Jacek Fidos  & 3-Dec-2017  & Files separation\tabularnewline
 \hline 
 Eliza Kowalczyk  & 9-Dec-2017  & Enhancement of description of 10th module\tabularnewline
 \hline 
+Michał Kotarba &9-Dec-2017 & Changed in-out for my module\tabularnewline
+\hline 
 \end{tabular}
 
 \chapter{Assumptions}
@@ -148,7 +150,7 @@ dependences (tree), modules` descriptions \\
  
 
 \begin{tabular}{|c|c|c|c|}
-\hline  Module  & Input  & Output  & Before that module\tabularnewline \hline  \hline  1 & \textbf{k}-space signals  &  \textbf{x}-space fully reconstructed data  & ——–\tabularnewline \hline  2 & reconstruccted image & image with intensity correction & image reconstruction \tabularnewline \hline  3  &  &  & \tabularnewline \hline  4 & reconstructed, normalized image & Rician noise-free image & intensity correction \tabularnewline \hline  5 & reconstructed, normalized image & Rician noise-free image & reconstruction \tabularnewline \hline  6 & \makecell{reconstructed, normalized image;\\ gradient-sequence vectors} & \makecell{estimated diffusion tensor 3D \\ 6-channel image}& modules 1-5, 8* \tabularnewline \hline  8 & image & image without non-brain tissues & \tabularnewline \hline  9 & image without non-brain tissues & segmentated image & \tabularnewline \hline  10 & 320x240 image  & 640x480 image  & denoised data \tabularnewline \hline  11  &\makecell{ 1)segmentated image \\2)defined plane, image } & \makecell{ 1)3D model (e.g. vtkPolyData) \\ 2)cross-section image } & \makecell{1)segmentation \\2) denoised data}\tabularnewline \hline  12&  &  & \tabularnewline \hline  \end{tabular}
+\hline  Module  & Input  & Output  & Before that module\tabularnewline \hline  \hline  1 & \textbf{k}-space signals  &  \textbf{x}-space fully reconstructed data  & ——–\tabularnewline \hline  2 & reconstruccted image & image with intensity correction & image reconstruction \tabularnewline \hline  3  &  &  & \tabularnewline \hline  4 & reconstructed, normalized image & Rician noise-free image & intensity correction \tabularnewline \hline  5 & reconstructed, normalized image & Rician noise-free image & reconstruction \tabularnewline \hline  6 & \makecell{reconstructed, normalized image;\\ gradient-sequence vectors} & \makecell{estimated diffusion tensor 3D \\ 6-channel image}& modules 1-5, 8* \tabularnewline \hline  8 & image & image without non-brain tissues & \tabularnewline \hline  9 & image without non-brain tissues & segmentated image & \tabularnewline \hline  10 & 320x240 image  & 640x480 image  & denoised data \tabularnewline \hline  11  &\makecell{ 1)segmentated image \\2)defined plane, image } & \makecell{ 1)3D model (e.g. vtkPolyData) \\ 2)cross-section image } & \makecell{1)segmentation \\2) denoised data}\tabularnewline \hline  12& many images from one examination & one image from non-standard perspective & denoised data\tabularnewline \hline  \end{tabular}
 
 
 
