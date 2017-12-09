@@ -6,14 +6,10 @@ function tensor_image = estimate_tensor( dwi, SOLVER, FIX, EPSILON )
 % "A unifying theoretical and algorithmic framework for least
 % squares methods of estimation in diffusion tensor imaging"
 
-% Find reference image or their mean, if more than one
-ref_idx = dwi.bvals == 0;
-ref_image = mean(dwi.data(:,:,ref_idx),3);
-
 % Find the design matrix
 % Ref: Eq.8 from "Estimation of the Effective Self-Diffusion Tensor
 % from the NMR Spin-Echo." and Eq.4 from the one mentioned above.
-W = get_design_matrix(dwi.bvals(~ref_idx,:), dwi.bvecs(~ref_idx,:));
+W = get_design_matrix(dwi.bvals, dwi.bvecs);
 
 % Initialize tensor image
 tensor_image = zeros(size(dwi.data,1), size(dwi.data,2), 6);
@@ -37,12 +33,11 @@ for id_x = 1:size(dwi.data,1)
     for id_y = 1:size(dwi.data,2)
         
         if dwi.mask(id_x,id_y) == 1
-            % Get sample pixel attenuation
-            sample_pixel = squeeze(dwi.data(id_x,id_y,~ref_idx));
-            attenuation = log(sample_pixel/ref_image(id_x,id_y));
+            % Get sample pixel measurement
+            measurement = squeeze(dwi.data(id_x,id_y,:));
 
             % Solve
-            tensor_image(id_x, id_y, :) = solve(attenuation, W, options,...
+            tensor_image(id_x, id_y, :) = solve(measurement, W, options,...
                 SOLVER, FIX, EPSILON);    
         end
 
@@ -52,13 +47,13 @@ end
 
 end
 
-function estimate = solve( attenuation, W, options, SOLVER, FIX, EPSILON )
+function estimate = solve( measurement, W, options, SOLVER, FIX, EPSILON )
 
 switch(SOLVER)
     case 'MATLAB'
-        estimate = solve_matlab(attenuation, W, options);
+        estimate = solve_matlab(measurement, W, options);
     case 'WLS'
-        error('WLS is not implemented yet.');
+        estimate = solve_wls(measurement, W);
     case 'NLS'
         error('NLS is not implemented yet.');
     otherwise
@@ -70,16 +65,37 @@ if strcmp(FIX, 'CHOLESKY')
     estimate = get_cholesky(estimate, EPSILON);
 end
 
+% ignore the estimate of ln(S0)
+estimate = estimate(2:end);
+
 end
 
-function estimate = solve_matlab ( attenuation, W, options )
+function estimate = solve_matlab ( measurement, W, options )
 
 % Initial guess for NLS
 % should be WLS solution 
-tensor_0 = ones(6,1);
+tensor_0 = solve_wls ( measurement, W );
 
 % Matlab implementation - NLS        
-error_fun = @(tensor)(attenuation - W*tensor);
+error_fun = @(tensor)(measurement - exp(W*tensor));
 estimate = lsqnonlin(error_fun, tensor_0, [], [], options);
+
+end
+
+function estimate_wls = solve_wls ( measurement, W )
+
+% based on salvador2004
+
+% OLS solution
+estimate_ols = pinv(W'*W)*W'*log(measurement);
+estimate_signal = exp(W*estimate_ols);
+
+% estimated residual covariance matrix assuming E(err) = 0 and 
+% Var(err) = var^2 * Diag(ln(measurement1), ... ln(measurementN))
+%weights = eye(size(estimate_signal,1)) .* estimate_signal;
+weights = eye(size(estimate_signal,1)).*repmat(estimate_signal,[1,size(estimate_signal,1)]);
+
+% WLS solution
+estimate_wls = pinv(W'*weights^2*W) * (W'*weights^2*log(measurement));
 
 end

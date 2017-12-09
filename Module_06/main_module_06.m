@@ -6,7 +6,8 @@ clear all
 
 EPSILON = 1e-8;
 FIX = 'ABS';
-SOLVER = 'MATLAB';
+%SOLVER = 'MATLAB';
+SOLVER = 'WLS';
 
 %% Load reconstructed and filtered data
 
@@ -17,7 +18,7 @@ load('data/mask.mat');
 dwi.mask = mask;
 
 % important: equations assume that data is in signal units, not pixels
-% DWI must thus be non-zero
+% DWI must thus be positive
 dwi.data = normalize_data(dwi, EPSILON);
 
 % check if bvecs values are of unit length
