@@ -4,10 +4,12 @@ rng default
 close all
 clear all
 
+FIX_ENUM = {'', 'ABS', 'CHOLESKY'};
+SOLVER_ENUM = {'MATLAB', 'WLS', 'NLS'};
+
 EPSILON = 1e-8;
-FIX = 'ABS';
-%SOLVER = 'MATLAB';
-SOLVER = 'WLS';
+FIX = FIX_ENUM{3};
+SOLVER = SOLVER_ENUM{2};
 
 %% Load reconstructed and filtered data
 
@@ -24,7 +26,8 @@ dwi.data = normalize_data(dwi, EPSILON);
 % check if bvecs values are of unit length
 eval_bvecs(dwi);
 
-% normalize bvals units from header file
+
+%% Normalize bvals units from header file
 % TODO: ...
 
 
@@ -32,17 +35,8 @@ eval_bvecs(dwi);
 % TODO: ...
 
 
-%% Magnetic Susceptibility correction
-% TODO: ...
-
-
-%% Skull Stripping
-% TODO: from Module 8
-% Tensor image should be estimated only from brain data.
-
-
 %% Tensor estimation
-dwi.tensor_image = estimate_tensor(dwi, SOLVER, FIX, EPSILON);
+dwi.tensor_image = estimate_tensor(dwi, SOLVER, FIX);
 
 
 %% Plot results in a 3x3 matrix
@@ -50,6 +44,8 @@ plot_tensor(dwi);
 
 
 %% Obtain tensor eigenvalues
+% TODO: take square root if FIX=CHOLESKY? 
+% Otherwise the values are really small
 dwi.eig_image = estimate_eig(dwi, FIX);
 
 
@@ -62,9 +58,9 @@ plot_biomarker(dwi,'all');
 
 
 %% Get tensor image in color
-dwi.color_image = get_color(dwi, FIX);
+% dwi.color_image = get_color(dwi, FIX);
 
 
 %% Plot color image
-plot_color(dwi, 'all');
+% plot_color(dwi, 'all');
 

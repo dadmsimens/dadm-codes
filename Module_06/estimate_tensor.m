@@ -1,4 +1,4 @@
-function tensor_image = estimate_tensor( dwi, SOLVER, FIX, EPSILON )
+function tensor_image = estimate_tensor( dwi, SOLVER, FIX )
 %ESTIMATE_TENSOR Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -38,7 +38,7 @@ for id_x = 1:size(dwi.data,1)
 
             % Solve
             tensor_image(id_x, id_y, :) = solve(measurement, W, options,...
-                SOLVER, FIX, EPSILON);    
+                SOLVER, FIX);    
         end
 
     end
@@ -47,11 +47,11 @@ end
 
 end
 
-function estimate = solve( measurement, W, options, SOLVER, FIX, EPSILON )
+function estimate = solve( measurement, W, options, SOLVER, FIX )
 
 switch(SOLVER)
     case 'MATLAB'
-        estimate = solve_matlab(measurement, W, options);
+        estimate = solve_matlab(measurement, W, options, FIX);
     case 'WLS'
         estimate = solve_wls(measurement, W);
     case 'NLS'
@@ -62,7 +62,7 @@ end
 
 % Solve for Cholesky parametrization so that D is positive definite
 if strcmp(FIX, 'CHOLESKY')
-    estimate = get_cholesky(estimate, EPSILON);
+    estimate = get_cholesky(estimate);
 end
 
 % ignore the estimate of ln(S0)
@@ -70,11 +70,14 @@ estimate = estimate(2:end);
 
 end
 
-function estimate = solve_matlab ( measurement, W, options )
+function estimate = solve_matlab ( measurement, W, options, FIX )
 
 % Initial guess for NLS
 % should be WLS solution 
 tensor_0 = solve_wls ( measurement, W );
+if strcmp(FIX, 'CHOLESKY')
+    tensor_0 = get_cholesky(tensor_0);
+end
 
 % Matlab implementation - NLS        
 error_fun = @(tensor)(measurement - exp(W*tensor));
@@ -84,18 +87,7 @@ end
 
 function estimate_wls = solve_wls ( measurement, W )
 
-% based on salvador2004
-
-% OLS solution
-estimate_ols = pinv(W'*W)*W'*log(measurement);
-estimate_signal = exp(W*estimate_ols);
-
-% estimated residual covariance matrix assuming E(err) = 0 and 
-% Var(err) = var^2 * Diag(ln(measurement1), ... ln(measurementN))
-%weights = eye(size(estimate_signal,1)) .* estimate_signal;
-weights = eye(size(estimate_signal,1)).*repmat(estimate_signal,[1,size(estimate_signal,1)]);
-
-% WLS solution
-estimate_wls = pinv(W'*weights^2*W) * (W'*weights^2*log(measurement));
+weights = eye(size(measurement,1)).*repmat(measurement,[1,size(measurement,1)]);
+estimate_wls = pinv(W'*weights^2*W) * (weights*W)'*weights*log(measurement);
 
 end
