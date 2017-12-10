@@ -4,12 +4,12 @@ rng default
 close all
 clear all
 
-FIX_ENUM = {'', 'ABS', 'CHOLESKY'};
+FIX_ENUM = {'ZERO', 'ABS', 'CHOLESKY'};
 SOLVER_ENUM = {'MATLAB', 'WLS', 'NLS'};
 
 EPSILON = 1e-8;
-FIX = FIX_ENUM{3};
-SOLVER = SOLVER_ENUM{2};
+FIX = FIX_ENUM{1};  % method error: ZERO > ABS >> CHOLESKY
+SOLVER = SOLVER_ENUM{2};  % use 2 or 3
 
 %% Load reconstructed and filtered data
 
