@@ -1,4 +1,4 @@
-\section{Module 2. Intensity inhomogenity correction}
+\section{Module 2. Intensity inhomogeneity correction}
 
 The Intensity inhomogeneity of the same tissue varies with the location
 of the tissue within the image. In other words it refers to the slow,
@@ -11,12 +11,47 @@ to a human observer, many medical image analysis methods, such as
 segmentation and registration, are highly sensitive to the spurious
 variations of image intensities.
 
-The aim of this module is correction of intensity inhomogeneity in
-MR image using gradient based, surface fitting method. The methods
-fit a parametric surface to a set of image features that contain information
-on intensity inhomogeneity. The resulting surface, which is usually
-polynomial or spline based, represents the multiplicative inhomogeneity
-field that is used to correct the input image.
+The aim of this module is estimation of intensity inhomogeneity field in MR image using surface fitting method. The method fits a parametric surface to a set of image features that contain information on intensity inhomogeneity. The resulting surface, which is usually polynomial or spline based, represents the multiplicative inhomogeneity field that is used to correct the input image.
+
+The steps of this approach are: 
+\begin{enumerate}
+\item {Extract a background image from the corrupted MRI image, for example, by smoothing the image with a Gaussian filter of a large bandwidth (about 2/3 the size of the MRI image) to filter out all the image details that correspond to highfrequency components.}
+\item {Select few data points from the background image and save their coordinates and graylevel values into a matrix $D = (xi , yi , gi), i = 1, 2, ...n$. It is recommended not to select points from the regions where there is no MRI signal since this regions has no bias field signal.}
+\item {Select a parametric equation for the fitted surface . It is better to fit simple surfaces such as low order polynomial surfaces since they are very smooth and their parameters are very easy to estimate.}
+\item {Estimate the parameters of the surface that best fits the data in matrix D by the method of nonlinear least-squares.}
+\item {Use the fitted equation to generate an image of the bias field signal.}
+\item {Divide the corrupted MRI image by the estimated bias field image in step 5.} 
+\end{enumerate}
+Even though different surfaces can reasonably fit the data very well and it is not possible to tell which surface is most likely represents the actual bias field signal, however, in practice the bias signal estimated by fitting a smooth 2-dimensional polynomial surface to a background image can be used effectively to restore the corrupted MRI image.
+
+Fitting of the surface can be done by means of the Levenberg-Marquardt algorithm for nonlinear least squares fitting of a function $f(x, y; a_{1}, ..., a_{m})$ of known form to $n$ data points ${(x_{1}, y_{1}, g_{1}), ...,(xn, yn, gn)}$. For example, a polynomial surface of degree three can be fitted which has the following equation: $f(x, y; a) = a_{1}x^{3} + a_{2}y^{3} + a_{3}$, where $a = {a_{1}, a_{2}, a_{3}}$ is the parameter vector that define the surface. If we substitute the data points in the nonlinear function we get an overdetermined set of equations, i.e.,
+\begin{equation}
+\begin{Bmatrix}
+g_{1} = f(x_{1}, y_{1}; a_{1}, a_{2}, ..., a_{m})\\ 
+\cdot                                            \\
+\cdot                                            \\ 
+g_{n} = f(x_{n}, y_{n}; a_{1}, a_{2}, ..., a_{m})\\ 
+\end{Bmatrix}
+\end{equation}
+These equations can be solved to obtain the unknown parameter vector $(a_{1}, a_{2}, ..., a_{m})$ by minimizing the sum of the squares of the differences between the data and the fitted function
+\begin{equation}
+\begin{aligned}
+Q(\textbf{a})=\dfrac{1}{2} \sum_{i=1}^{n}(g_{i} - f(x_{i},y_{i}; a_{1},a_{2}, ...,a_{m}))^{2}
+\end{aligned}
+\end{equation}
+Let $r_{i}(\textbf{a}) = (g_{i} - f( x_{i}, y_{i}; a_{1}, a_{2}, ..., a_{m})$, which is the residual vector of point $i$, then equation(??) can be written as:
+\begin{equation}
+\begin{aligned}
+Q(\textbf{a})=\dfrac{1}{2} \sum_{i=1}^{n}(r_{1}(\textbf{a}))^{2}
+\end{aligned}
+\end{equation}
+According to the Levenberg-Marquardt algorithm, Eq(??) can be solved iteratively to find the values of the parameters vector ($\textbf{a}$) starting from an initial estimate of the parameter vector $(\textbf{a}_{0})$ using:
+\begin{equation}
+\begin{aligned}
+\textbf{a}_{i+1} = \textbf{a}_{i} - (H + \lambda diag[H])^{-1} \bigtriangledown Q(\textbf{a}_{i})
+\end{aligned}
+\end{equation}
+where $H$ and $\bigtriangledown$Q($\textbf{a}_{1}$) are Hessian matrix and the gradient of Eq. ?? both evaluated at ai, diag is the diagonal elements of the Hessian matrix. At each iteration, the algorithm tests the value of the residual error  and adjusts $\lambda$ accordingly.
 
 \hfill{}\\
 \textbf{List of References}\\
