@@ -142,20 +142,40 @@ Kacper Turek &9-Dec-2017 & Description of 3rd module changed and in-out for my m
 \hline 
 Anna Grzywa &9-Dec-2017 & In-out for 8th module added\tabularnewline
 \hline 
+Sylwia Mól &10-Dec-2017 & "Structure" \& "Assumptions" chapters changed\tabularnewline
+\hline 
 \end{tabular}
 
 \chapter{Assumptions}
 
-about the app - the aim, what you can do here etc.
+The aim of this project is to create the system for MRI data pre-processing and post-processing using Python, SciPy, Cython and Qt5 (detailed description of tools available in chapter {\it Implementation}, section {\it Tools}). The project is divided into 11 modules. The application allows to <... to be continued - detailed description what you can do in this app, possiblities, choose etc.>
 
 \chapter{Structure}
 
-dependences (tree), modules` descriptions \\
+As mentioned in chapter {\it Assumptions} the project is divided into 11 modules. Each module includes one system`s functionality, as follows:
+\begin{itemize}
+\item Module 1.: MRI images reconstruction using Cartesian SENSE algorithm.
+\item Module 2.: Intensity inhomogenity correction on MRI reconstructed images.
+\item Module 3.: Non-stationary noise estimation (a homomorphic approach)
+\item Module 4.:Non-stationary noise filtering \#1 with LMMSE filter.
+\item Module 5.: Non-stationary noise filtering \#2 using unbiased non-local means filter.
+\item Module 6.:Diffusion tensor imaging (WLS, NLS algorithms)
+\item Module 8.: Skull stripping
+\item Module 9.: MRI segmentation of the human brain
+\item Module 10.: Upsampling based on non-local means approach
+\item Module 11.: Brain 3D visualization using marching cubes method
+\item Module 12.: Oblique imaging
+\end{itemize}
  
-
+The input and output signals for each module are listed in the table. \\
 \begin{tabular}{|c|c|c|c|}
-\hline  Module  & Input  & Output  & Before that module\tabularnewline \hline  \hline  1 & \textbf{k}-space signals  &  \textbf{x}-space fully reconstructed data  & ——–\tabularnewline \hline  2 & reconstruccted image & image with intensity correction & image reconstruction \tabularnewline \hline  3  & reconstructed image  & estimated noise map  & reconstruction \tabularnewline \hline  4 & reconstructed, normalized image & Rician noise-free image & intensity correction \tabularnewline \hline  5 & reconstructed, normalized image & Rician noise-free image & reconstruction \tabularnewline \hline  6 & \makecell{reconstructed, normalized image;\\ gradient-sequence vectors} & \makecell{estimated diffusion tensor 3D \\ 6-channel image}& modules 1-5, 8* \tabularnewline \hline  8 & reconstructed, normalized, filtered image & image without non-brain tissues & modules 1- 4 or 5 \tabularnewline \hline  9 & image without non-brain tissues & segmentated image & \tabularnewline \hline  10 & 320x240 image  & 640x480 image  & denoised data \tabularnewline \hline  11  &\makecell{ 1)segmentated image \\2)defined plane, image } & \makecell{ 1)3D model (e.g. vtkPolyData) \\ 2)cross-section image } & \makecell{1)segmentation \\2) denoised data}\tabularnewline \hline  12& many images from one examination & one image from non-standard perspective & denoised data\tabularnewline \hline  \end{tabular}
+\hline  Module  & Input  & Output  & Before that module\tabularnewline \hline  \hline  1 & \textbf{k}-space signals  &  \textbf{x}-space fully reconstructed data  & ——–\tabularnewline \hline  2 & reconstruccted image & image with intensity correction & image reconstruction \tabularnewline \hline  3  & reconstructed image  & estimated noise map  & reconstruction \tabularnewline \hline  4 & reconstructed, normalized image & Rician noise-free image & intensity correction \tabularnewline \hline  5 & reconstructed, normalized image & Rician noise-free image & reconstruction \tabularnewline \hline  6 & \makecell{reconstructed, normalized image;\\ gradient-sequence vectors} & \makecell{estimated diffusion tensor 3D \\ 6-channel image}& modules 1-5, 8* \tabularnewline \hline  8 & reconstructed, normalized, filtered image & image without non-brain tissues & modules 1- 4 or 5 \tabularnewline \hline  9 & image without non-brain tissues & segmentated image & \tabularnewline \hline  10 & 320x240 image  & 640x480 image  & denoised data \tabularnewline \hline  11  &\makecell{ 1)segmentated image \\2)defined plane, image } & \makecell{ 1)3D model (e.g. vtkPolyData) \\ 2)cross-section image } & \makecell{1)segmentation \\2) denoised data}\tabularnewline \hline  12& many images from one examination & one image from non-standard perspective & denoised data\tabularnewline \hline  \end{tabular}\\
 
+Dependencies between modules are shown on the picture. 11th module is divided into two parts, because every part of module requires other pre-procesing activities. 
+\begin{figure}[H]
+\centering{}\includegraphics[scale=0.7]{figures/drzewo}\caption{Dependencies between modules}
+\label{fig:figures/drzewo } 
+\end{figure}
 
 
 \chapter{User guide}
