@@ -24,7 +24,7 @@ Please follow the instructions from [official conda documentation](https://conda
 ## Create Anaconda env
 Once you have installed Anaconda, run in terminal:
 ```sh
-conda create -n DADM python=3.5 pyqt=5 vtk cython -c menpo
+conda create -n DADM python=3.5 pyqt=5 vtk cython scipy -c menpo
 ```
 Alternatively, you can navigate to this repo folder in terminal and run:
 ```sh
@@ -35,6 +35,21 @@ The enviroment can be used in terminal by typing
 source activate DADM
 ```
 Run the python scripts from terminal window with activated source.
+
+
+If you encounter an UnsatisfiableError, try:
+- updating your anaconda with:
+```sh
+conda update anaconda
+```
+and retrying.
+- changing channel from menpo to clinicalgraphics.
+- desperate move:
+```sh
+conda update --all
+```
+and retrying.
+
 
 # Contributing
 Every member of Developers and Organizational teams has the rights to push and pull - please be careful! <br />
