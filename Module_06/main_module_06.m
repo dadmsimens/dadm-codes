@@ -8,8 +8,8 @@ FIX_ENUM = {'ZERO', 'ABS', 'CHOLESKY'};
 SOLVER_ENUM = {'MATLAB', 'WLS', 'NLS'};
 
 EPSILON = 1e-8;
-FIX = FIX_ENUM{1};  % method error: ZERO > ABS >> CHOLESKY
-SOLVER = SOLVER_ENUM{2};  % use 2 or 3
+FIX = FIX_ENUM{3};  % method error: ZERO > ABS >> CHOLESKY
+SOLVER = SOLVER_ENUM{3};  % use 2 or 3
 
 % TODO: take sqrt of tensor image after CHOLESKY?
 % ^ right now the values are smaller than they should be

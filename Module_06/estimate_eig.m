@@ -2,8 +2,6 @@ function eig_image = estimate_eig( dwi, FIX )
 %ESTIMATE_EIG Summary of this function goes here
 %   Detailed explanation goes here
 
-% reconstruct the entire tensor from vector - temp function
-% should be direct calculation, without reconstructing the tensor first
 eig_image = zeros(size(dwi.tensor_image,1), size(dwi.tensor_image,2), 3);
 
 for id_x = 1:size(dwi.tensor_image,1)

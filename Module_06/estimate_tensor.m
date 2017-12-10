@@ -184,7 +184,7 @@ for k = 1:MAX_ITER + 1
 end
 
 % check if iteration limit exceeded without convergence
-if ~exist('estimate_nls', 'var')
+if ~exist('estimate_mfn', 'var')
     estimate_mfn = estimate;
 end
 
@@ -198,7 +198,6 @@ end
 function nls_error = get_nls_error_value ( measurement, W, estimate )
 
 measurement_estimated = measurement - exp(W*estimate);
-
 nls_error = 1/2 * (measurement_estimated)' * (measurement_estimated);
 
 end
@@ -206,9 +205,7 @@ end
 function wls_error = get_wls_error_value (measurement, W, estimate )
 
 weights = get_wls_weights(measurement, W);
-
 measurement_estimated  = weights .* (log(measurement) - W * estimate);
-
 wls_error = 1/2 * (measurement_estimated)' * (measurement_estimated);
 
 end
