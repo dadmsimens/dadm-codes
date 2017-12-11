@@ -141,7 +141,7 @@ error_old = get_error_value(measurement, W, estimate);
 
 
 %% Iterate
-for k = 1:MAX_ITER + 1
+for k = 1:MAX_ITER
     
     if hessian_flag == 1
        hessian = get_hessian(measurement, W, estimate, FIX);
@@ -153,7 +153,7 @@ for k = 1:MAX_ITER + 1
     error_new = get_error_value(measurement, W, estimate+delta);
     
     % check for convergence
-    if (abs(error_new-error_old) < NLS_EPSILON) || ...
+    if (abs(error_new-error_old) < NLS_EPSILON) && ...
             (-delta'*gradient >= 0 && -delta'*gradient < GRADIENT_EPSILON)
         
         if error_new < error_old
