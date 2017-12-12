@@ -5,7 +5,7 @@ channels:
 dependencies:
 - ca-certificates=2017.08.26=h1d4fec5_0
 - certifi=2017.11.5=py35h9749603_0
-- cython=0.26.1=py35h636ebcb_0
+- cython=0.27.3=py35h6cdc64b_0
 - dbus=1.10.22=h3b5a359_0
 - expat=2.2.5=he0dffb1_0
 - fontconfig=2.12.4=h88586e7_1
@@ -15,6 +15,7 @@ dependencies:
 - gstreamer=1.12.2=h4f93127_0
 - hdf5=1.10.1=h9caa474_1
 - icu=58.2=h9c2bf20_1
+- intel-openmp=2018.0.0=hc7b2577_8
 - jpeg=9b=h024ee3a_2
 - libedit=3.1=heed3624_0
 - libffi=3.2.1=hd88cf55_4
@@ -24,14 +25,17 @@ dependencies:
 - libstdcxx-ng=7.2.0=h7a57d05_2
 - libxcb=1.12=hcd93eb1_4
 - libxml2=2.9.4=h2e8b1d7_6
+- mkl=2018.0.1=h19d6760_4
 - ncurses=6.0=h9df7e31_2
-- openssl=1.0.2m=h26d622b_1
+- numpy=1.13.3=py35hd829ed6_0
+- openssl=1.0.2n=hb7f436b_0
 - pcre=8.41=hc27e229_1
 - pip=9.0.1=py35h7e7da9d_4
 - pyqt=5.6.0=py35h0e41ada_5
 - python=3.5.4=h417fded_24
 - qt=5.6.2=h974d657_12
 - readline=7.0=ha6073c6_4
+- scipy=1.0.0=py35hcbbe4a2_0
 - setuptools=36.5.0=py35ha8c1747_0
 - sip=4.18.1=py35h9eaea60_2
 - sqlite=3.20.1=hb898158_2

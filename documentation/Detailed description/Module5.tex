@@ -1,0 +1,115 @@
+\section{Module 5. . Non-stationary noise filtering 2}
+
+Magnetic Resonance images are endangered of being corrupted by noise
+and artifacts. Since they are used as a basis for medical diagnosis
+their quality has to be at highest possible level. Noise can be dealt
+with by changing the parameters of images acquisition, however it
+increases the scanning time, which is undesirable in medical imaging.
+To overcome this obstacle, post-processing methods like filtering
+are employed for denoising. In domain of MRI denoising many filters
+may be used, though here emphasis is put on Unbiased Non-Local Means
+(UNLM) filter, which is an extension of NLM filter. In order to understand
+Unbiased version of this algorithm, the basic one has to be presented.
+
+Having image \textit{Y}, the NLM algorithm calculates the new value
+of point \textit{p} accordingly to the equation:
+
+\begin{equation}
+\begin{aligned}NLM(Y(p))=\sum_{\forall q\in Y}^ {}w(p,q)Y(q)\\
+0\le w(p,q)\le1,\sum_{\forall q\in Y}^ {}w(p,q)=1
+\end{aligned}
+\label{m5e1}
+\end{equation}
+
+It can be seen that value of \textit{p} is calculated as weighted
+average of pixels in the image (\textit{q}), having fulfilled restrictions
+from \ref{m5e1}. To determine before mentioned average the similarity
+between squared neighbourhoods widows centered around pixels \textit{p}
+and \textit{q} are calculated. The size of the window can determined
+by the user, defined by parameter $R_{sim}$. Equation \ref{m5e2}
+shows how to determine this similarity.
+
+\begin{equation}
+w(p,q)=\frac{1}{Z(p)}e^{\dfrac{d(p,q)}{h^{2}}}\label{m5e2}
+\end{equation}
+
+\textit{Z(p)} is the normalizing constant which also uses exponential
+decay parameter \textit{h} and the weighted Euclidean distance measure
+for pixels in each neighbourhood, called \textit{d}.
+
+\begin{equation}
+Z(p)=\sum_{\forall q}^ {}e^{\dfrac{d(p,q)}{h^{2}}}\label{m5e5}
+\end{equation}
+
+\begin{equation}
+d(p,q)=G_{p}||Y(N_{p})-Y(N_{q})||_{R_{sim}}^{2}\label{m5e6}
+\end{equation}
+
+In above equation $G_{p}$ stands for a Gaussian weighting function
+that has a 0 mean and standard deviation usually equal to 1.
+
+Once NLM filter is fully explained, unbiased extension of it can be
+examined. It builds on the properties of MRI signal. According to
+\cite{5a1} the magnitude signal of MRI follows a Rician distribution.
+Furthermore, for low intensity regions the Rician distribution approaches
+to a Rayleigh one, whilst for high intensity it shifts towards Gaussian.
+It was investigated that this bias can be handled by filtering the
+squared MRI image, since it is not longer signal-dependent \cite{5a1}.
+As a consequence the bias, which equals 2$\sigma^{2}$ \cite{5a3}
+can be deleted with ease. The blueprint for UNLM can be summarized
+in:
+\begin{itemize}
+\item noise estimation - which can be done by calculating standard deviation
+of background in the image, following formula \ref{m5e4}, where $\mu$
+is the mean value of background of squared magnitude image. To distinguish
+background and the body on the MRI scan the Otsu thresholding method
+\cite{5a4} can be successfully used, 
+\item calculating NLM values for each point of image as in \ref{m5e1}, 
+\item assessing the unbiased value of each point accordingly to the equation
+\ref{m5e3}.
+\end{itemize}
+\begin{equation}
+UNLM(Y)=\sqrt{NLM(Y)^{2}-2\sigma^{2}}\label{m5e3}
+\end{equation}
+
+\begin{equation}
+\sigma=\sqrt{\frac{\mu}{2}}\label{m5e4}
+\end{equation}
+
+% dwi, if it has to be joint implementation 
+UNML implementation for diffusion weighted data becomes a bit less
+trivial task. Noise estimation is done in different fashion. From
+distribution of local averages of voxels in the background, the mode
+has to be calculated and then corrected with a factor of $\sqrt{\frac{2}{\pi}}$
+\cite{5a2}. Based on assumption that gradients in similar directions
+present related behaviours, UNLM for DWI can be formulated as:
+
+\begin{equation}
+Y_{i}(p)=\sqrt{\sum_{j\in\Theta_{i}^{N}}^ {}\sum_{q\in N_{p}}^ {}w_{i}^{j}(p,q)M_{j}^{2}(q)-2\sigma^{2}}
+\end{equation}
+
+Where weights are calculated as for structural data and \textit{M}
+is a vector containing gray values. Another difference can be found
+in way the distance between voxels is calculated. It is, the distance
+in domain of gray levels in the image.
+
+\begin{equation}
+d_{i}^{j}(p,q)=(M_{i}(N_{p})-M_{j}(N_{q}))^{T}G_{p}(M_{i}(N_{p})-M_{j}(N_{q}))\label{m5e7}
+\end{equation}
+
+UNLM in this case not only looks for in the same gradient image \textit{i},
+but also searches images \textit{j} near the mainly investigated direction
+\textit{i}. Working in that manner allows the objective of using joint
+information (including correlation between channels) to be met \cite{5a2}.
+
+It is worth mentioning that UNLM filter's performance is highly dependent
+on parameter values. The optimal values of them were examined in \cite{5a1}
+and same values are adapted in presented implementation. Properly-tuned
+filter can significantly increase SNR of the scans while preserving
+body structures.
+
+\textbf{\emph{Module input}}: Previously reconstructed, normalized
+and corrected data.
+
+\textbf{\emph{Module output}}: Image with deleted Rician noise by
+unbiased non-local means filter. \\

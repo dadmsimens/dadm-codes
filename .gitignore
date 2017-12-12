@@ -29,3 +29,12 @@
 
 ## Pre-compiled MATLAB files
 *.asv
+
+## Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+## Please don't upload our data...
+dane/
+dane_recon/

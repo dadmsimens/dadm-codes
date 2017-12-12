@@ -1,0 +1,79 @@
+\section{Module 3. Non-stationary noise estimation}
+
+Magnetic Resonance Imaging (MRI) is known to be affected by several
+sources of quality deterioration, due to limitations in the hardware,
+scanning times, movement of patients, or even the motion of molecules
+in the scanning subject. Among them, noise is one source of degradation
+that affects acquisitions. The presence of noise over the acquired
+MR signal is a problem that affects not only the visual quality of
+the images, but also may interfere with further processing techniques
+such as registration or tensor estimation in Diffusion Tensor MRI.
+
+The aim of this module is estimation of non-stationary noise maps based on MRI image. The module
+contains a homomorphic method for the non-stationary noise of Gauss and Rice aswell. For the high SNR (signal to noise ratio) algoritm for Gaussian case should be used and for the lower value algorithm for Rician case. In the first case image is corrupted
+with Gaussian noise which has mean equal to zero spatially-dependent variance $\sigma^{2}(x)$:
+
+\begin{equation}
+\begin{aligned}I(x)=A(x)+N(x;0,\sigma^{2}(x))=A(x)+\sigma(x)\cdot N(x;0,1)\end{aligned}
+\end{equation}
+The goal is to estimate $\sigma(x)$ from the final image $I(x)$.
+
+The variance of the noise $\sigma^{2}(x)$ slowly differs across the image. Therefore the first step is to remove
+mean of the image in order to avoid contribution of $A(x)$:
+
+\begin{equation}
+\begin{aligned}I_{n}(x)=I(x)-E\left \{ I(x) \right \}=\sigma(x)\cdot N(x;0,1)\end{aligned}
+\end{equation}
+where $E\left \{ I(x) \right \}$ is expected value in each point in the image. It is estimated as local mean using $3\times3$
+window.
+
+The next step is to separate signals $\sigma(x)$ and $N(x)$ by applying the logarithm, but to do so the absolute value of $I_{n}(x)$ is needed:
+
+\begin{equation}
+\begin{aligned}log\left |  I_{n}(x)\right |=log\sigma(x)+log\left | N(x) \right |\end{aligned}
+\end{equation}
+where $log\left | N(x) \right |$ has its energy distributed in all frequencies and $log\sigma(x)$ is a low frequeny signal.
+
+$log\sigma(x)$ is the interesting part, so to get rid of $log\left | N(x) \right |$ low pas filter has to be used:
+
+\begin{equation}
+\begin{aligned}LPF\left \{ log\left |  I_{n}(x)\right | \right \}\approx log\sigma(x)+\delta _{N}\end{aligned}
+\end{equation}
+where $\delta_{N}$ is a lowa pass resideu of $log\left | N(x) \right |$ that must be removed from the estimation.
+Throughout various calculations the final outcome of the $LPF$ was delineated as:
+
+\begin{equation}
+\begin{aligned}LPF\left \{ log\left |  I_{n}(x)\right | \right \}\approx log\sigma(x)-log\sqrt{2}-\frac{\gamma }{2}\end{aligned}
+\end{equation}
+with $\gamma$ being Euler-Mascheroni constant.
+
+Taking the exponential of every part of foregoing formula estimator of $\sigma(x)$ can be defined as:
+
+\begin{equation}
+\begin{aligned}\widehat{\sigma(x)}=\sqrt{2}e^{LPF\left \{ log\left | I(x)-E\left \{ I(x) \right \} \right | \right \}+\gamma/2}\end{aligned}
+\end{equation}
+
+
+The Rician case is similar to the described abocv Gaussian case, but a bit more complicated. The signal $A(x)$ is corrupted with complex Gaussian noise with zero mean and spatially-dependent variance $\sigma^{2}(x)$, which has module following a nonstationary Rician distribution:
+
+
+\begin{equation}
+\begin{aligned}I(x;A(x),\sigma(x))=\left | A(x)+N_{r}(x;0,\sigma^{2}(x))+j\cdot N_{i}(x;0,\sigma^{2}(x)) \right |\end{aligned}
+\end{equation}
+To simplify, the dependence of $I(x)$ with $A(x)$ and $\sigma(x)$ are removed.
+
+First couple of steps in Rician case are congenial to the steps taken in Gaussian case. The local mean calulated using $3\times 3$ window is substracted from the image so it can be centered. After that logarithm of the absolute value of centered image is filtered by low passing filter, giving as a result:
+
+\begin{equation}
+\begin{aligned}log\left |  I_{n}(x)\right |=log\sigma(x)+log\left | G(s_{0}(x)) \right |\end{aligned}
+\begin{aligned}LPF\left \{ log\left |  I_{n}(x)\right | \right \}\approx log\sigma(x)+\delta _{R}\end{aligned}
+\end{equation}
+where $\sigma_{R}$ is a low pass residue of $log\left | G(s_{0}(x)) \right |$. Again after various operation previouse formula presents as:
+
+\begin{equation}
+\begin{aligned}LPF\left \{ log\left |  I_{n}(x)\right | \right \}\approx log\sigma(x)-log\sqrt{2}-\frac{\gamma }{2}+\varphi (s_{0}(x))\end{aligned}
+\end{equation}
+with $\varphi (s_{0}(x))$ being a Rician/Gaussian correction function. Finally the estimator for $\sigma(x)$ is defined as:
+\begin{equation}
+\begin{aligned}\widehat{\sigma(x)}=\sqrt{2}e^{LPF\left \{ log\left | I(x)-E\left \{ I(x) \right \} \right | \right \}}e^{{\gamma/2}-\varphi (s_{0}(x))}\end{aligned}
+\end{equation}
