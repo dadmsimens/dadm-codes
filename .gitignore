@@ -34,7 +34,11 @@
 Module_06/converter
 Module_06/data/raw_00.mat
 
-# Byte-compiled / optimized / DLL files
+## Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+## Please don't upload our data...
+dane/
+dane_recon/

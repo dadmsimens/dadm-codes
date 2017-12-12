@@ -4,11 +4,11 @@ def mymodulefunction(mri_class, other_arguments = None):
 
 	if (isinstance(mri_class, smns.mri_struct)):
 		mri_class_modified = mri_class
-		print("This file contains structural MRI")
+		print("This file contains structural MRI") #inheritance...
 		#some_code
 		my_returns = 0
-	else:
-		print("This file contains diffusion MRI")
+	if (isinstance(mri_class, smns.mri_diff)):
+		print("This file contains diffusion MRI") #inheritance...
 		mri_class_modified = mri_class
 		#some_code
 		my_returns = 0
