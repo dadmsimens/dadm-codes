@@ -7,7 +7,7 @@ function tensor_image = estimate_tensor( dwi, SOLVER, FIX )
 % squares methods of estimation in diffusion tensor imaging"
 
 %% Set MFN parameters
-MAX_ITER = 10;
+MAX_ITER = 20;
 NLS_EPSILON = 1e-5;
 GRADIENT_EPSILON = 1e-5;
 
@@ -17,7 +17,7 @@ GRADIENT_EPSILON = 1e-5;
 % Ref: Eq.8 from "Estimation of the Effective Self-Diffusion Tensor
 % from the NMR Spin-Echo." and Eq.4 from the one mentioned above.
 W = get_design_matrix(dwi.bvals, dwi.bvecs);
-LAMBDA_MATRIX = zeros(size(W,2));
+LAMBDA_MATRIX = eye(size(W,2));
 
 % Initialize tensor image
 tensor_image = zeros(size(dwi.data,1), size(dwi.data,2), 6);
@@ -145,11 +145,10 @@ for k = 1:MAX_ITER
     
     if hessian_flag == 1
        hessian = get_hessian(measurement, W, estimate, FIX);
-       hessian = hessian + lambda*LAMBDA_MATRIX;  % from MFN algorithm
        gradient = get_gradient(measurement, W, estimate, FIX);
        hessian_flag = 0;
     end
-    delta = -pinv(hessian)*gradient;
+    delta = -pinv(hessian + lambda*LAMBDA_MATRIX)*gradient;
     error_new = get_error_value(measurement, W, estimate+delta);
     
     % check for convergence
