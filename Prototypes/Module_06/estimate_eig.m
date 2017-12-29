@@ -9,7 +9,9 @@ for id_x = 1:size(dwi.tensor_image,1)
         
         if dwi.mask(id_x, id_y) == 1
             tensor = get_tensor_from_vector(dwi.tensor_image(id_x, id_y, :));
-            eig_image(id_x,id_y,:) = eig(tensor);
+            eigenvalues = eig(tensor);
+            % ensure eigenvalues are in descending order
+            eig_image(id_x,id_y,:) = flip(sort(eigenvalues)); 
 
             switch(FIX)
                 case 'ABS'

@@ -5,7 +5,7 @@ function FA_image = get_FA( dwi )
 eig_variance = get_eig_variance(dwi);
 sum_squared = sum_squares(dwi.eig_image);
 
-FA_image = zeros(size(dwi.eig_image,1), size(dwi.eig_image,2));
+FA_image = zeros(size(eig_variance));
 FA_image(dwi.mask) = sqrt(3/2) * sqrt(...
     eig_variance(dwi.mask) ./ sum_squared(dwi.mask) );
 

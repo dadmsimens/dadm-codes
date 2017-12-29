@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 import os
 import scipy.io
 import numpy as np
+import matplotlib.pyplot as plt
 
 from .dti_solver import DTISolver
 
@@ -63,17 +64,25 @@ class DiffusionData(Data):
             print('SKULL STRIPPING workaround: loading from .mat file...\n')
             mask_path = os.path.dirname(self.__dataset__) + '\\mask.mat'
             matfile = scipy.io.loadmat(mask_path, struct_as_record=False, squeeze_me=True)
-            self.mask = matfile['mask']
+            self.mask = matfile['mask'] == 1
 
-    def estimate_tensor(self, solver, fix_method):
+    def get_dti_biomarkers(self, solver, fix_method, plotting=True):
         dti_solver = DTISolver(self, solver, fix_method)
-        self.tensor = dti_solver.solve()
+        dti_solver.estimate_tensor()
+        dti_solver.estimate_eig()
+        biomarkers = dti_solver.get_biomarkers()
+
+        if plotting is True:
+            dti_solver.plot_tensor()
+            dti_solver.plot_eig()
+            dti_solver.plot_biomarkers()
+            plt.show()
+
+        return biomarkers
 
     def _load_matfile(self, dataset_path):
         """
         Helper function used to load and process data before Module 1 is implemented
-        :param dataset_path:
-        :return:
         """
         matfile = scipy.io.loadmat(dataset_path, struct_as_record=False, squeeze_me=True)
 
@@ -82,7 +91,10 @@ class DiffusionData(Data):
         data = matfile['dwi'].data
         data_minimum = np.amin(data)
         data_maximum = np.amax(data)
-        data = EPSILON + (1-EPSILON) * (np.divide(data-data_minimum, data_maximum-data_minimum))
+        if not data_maximum-data_minimum == 0:
+            data = EPSILON + (1-EPSILON) * (np.divide(data-data_minimum, data_maximum-data_minimum))
+        else:
+            raise ValueError('Data normalization results in division by zero.')
 
         return data, matfile['dwi'].bvecs, matfile['dwi'].bvals
 

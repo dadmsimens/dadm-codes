@@ -2,7 +2,7 @@ import os
 
 from classes.mri_data import DiffusionData
 
-# Module parameters
+# Module parameters definition, chosen later using GUI
 SOLVERS = {
     0: 'wls',
     1: 'nls'
@@ -23,10 +23,14 @@ DATASETS = {
 
 
 if __name__ == '__main__':
-    dataset_path = DATASET_ROOT + DATASETS[1]
+    # API parameters (passed from GUI)
+    dataset_name = DATASETS[1]
+    solver = SOLVERS[0]
+    fix_method = FIX_METHODS[1]
+    plotting = True  # True for verifying functionality
 
     # Module 01 - Reconstruction
-    dwi = DiffusionData(dataset_path)
+    dwi = DiffusionData(dataset_path=DATASET_ROOT + dataset_name)
 
     # Required preprocessing steps, currently a dummy method
     dwi.preprocess()
@@ -35,8 +39,5 @@ if __name__ == '__main__':
     dwi.strip_skull()
 
     # Module 06 - Diffusion tensor estimation
-    solver = SOLVERS[0]
-    fix_method = FIX_METHODS[1]
-    dwi.estimate_tensor(solver, fix_method)
-
-    print('fin')
+    # biomarkers is a dictionary of biomarkers: MD, RA, FA, VR
+    biomarkers = dwi.get_dti_biomarkers(solver, fix_method, plotting)
