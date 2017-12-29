@@ -5,9 +5,12 @@ function [ data_output ] = normalize_data( dwi, EPSILON )
 minimum = min(min(min(dwi.data)));
 maximum = max(max(max(dwi.data)));
 
-data_output = EPSILON + (1-EPSILON)*(dwi.data - minimum)...
-    /(maximum - minimum);
-
+if maximum - minimum ~= 0
+    data_output = EPSILON + (1-EPSILON)*(dwi.data - minimum)...
+        /(maximum - minimum);
+else
+    data_output = dwi.data;
+end
 
 end
 

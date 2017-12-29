@@ -24,7 +24,7 @@ Please follow the instructions from [official conda documentation](https://conda
 ## Create Anaconda env
 Once you have installed Anaconda, run in terminal:
 ```sh
-conda create -n DADM python=3.5 pyqt=5 vtk cython scipy -c menpo
+conda create -n DADM python=3.5 pyqt=5 vtk cython scipy matplotlib -c menpo
 ```
 Alternatively, you can navigate to this repo folder in terminal and run:
 ```sh
