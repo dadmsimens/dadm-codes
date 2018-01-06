@@ -1,18 +1,21 @@
 from .. import simens_dadm as smns
 
-def mymodulefunction(mri_class, other_arguments = None):
+def mymodulefunction(mri_input, other_arguments = None):
 
-	if (isinstance(mri_class, smns.mri_struct)):
-		mri_class_modified = mri_class
-		print("This file contains structural MRI") #inheritance...
-		#some_code
-		my_returns = 0
-	if (isinstance(mri_class, smns.mri_diff)):
-		print("This file contains diffusion MRI") #inheritance...
-		mri_class_modified = mri_class
-		#some_code
-		my_returns = 0
-		#some code
+	if (isinstance(mri_input, smns.mri_diff)): # instructions for diffusion mri
 
-	# https://www.safaribooksonline.com/library/view/python-cookbook-3rd/9781449357337/ch07s04.html
-	return mri_class_modified, my_returns
+	# isinstance(mri_input, smns.mri_struct) returns TRUE for diffusion AND structural MRI because of inheritance.
+	# It should be used if you have some code to work with BOTH structural and diffusion data (which may be frequent).
+
+		mri_output = mri_input
+		print("This file contains diffusion MRI")
+		#some_code
+
+	elif (isinstance(mri_input, smns.mri_struct)): # instructions specific for structural mri. The case of diffusion MRI is excluded here by elif.
+		mri_output = mri_input
+		print("This file contains structural MRI")
+		#some_code
+	else:
+		return "Unexpected data format in module number X!"
+
+	return mri_output
