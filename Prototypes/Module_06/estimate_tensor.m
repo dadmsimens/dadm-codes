@@ -7,7 +7,7 @@ function tensor_image = estimate_tensor( dwi, SOLVER, FIX )
 % squares methods of estimation in diffusion tensor imaging"
 
 %% Set MFN parameters
-MAX_ITER = 10;
+MAX_ITER = 20;
 NLS_EPSILON = 1e-5;
 GRADIENT_EPSILON = 1e-5;
 
@@ -17,7 +17,7 @@ GRADIENT_EPSILON = 1e-5;
 % Ref: Eq.8 from "Estimation of the Effective Self-Diffusion Tensor
 % from the NMR Spin-Echo." and Eq.4 from the one mentioned above.
 W = get_design_matrix(dwi.bvals, dwi.bvecs);
-LAMBDA_MATRIX = zeros(size(W,2));
+LAMBDA_MATRIX = eye(size(W,2));
 
 % Initialize tensor image
 tensor_image = zeros(size(dwi.data,1), size(dwi.data,2), 6);
@@ -105,8 +105,11 @@ if strcmp(FIX, 'CHOLESKY')
 else
     weights = get_wls_weights(measurement, W);
 
-    weights = eye(size(weights,1)).*repmat(weights,[1,size(weights,1)]);
     estimate_wls = pinv(W'*weights^2*W) * (weights*W)'*weights*log(measurement);
+end
+
+if sum(isnan(estimate_wls))
+    estimate_wls = zeros(size(estimate_wls));
 end
 
 end
@@ -137,7 +140,7 @@ end
 %% Initialization
 % Initial guess for MFN should be the unconstrained WLS solution 
 estimate = solve_wls ( measurement, W );
-error_old = get_error_value(measurement, W, estimate);
+error_best = get_error_value(measurement, W, estimate);
 
 
 %% Iterate
@@ -145,18 +148,17 @@ for k = 1:MAX_ITER
     
     if hessian_flag == 1
        hessian = get_hessian(measurement, W, estimate, FIX);
-       hessian = hessian + lambda*LAMBDA_MATRIX;  % from MFN algorithm
        gradient = get_gradient(measurement, W, estimate, FIX);
        hessian_flag = 0;
     end
-    delta = -pinv(hessian)*gradient;
+    delta = -pinv(hessian + lambda*LAMBDA_MATRIX)*gradient;
     error_new = get_error_value(measurement, W, estimate+delta);
     
     % check for convergence
-    if (abs(error_new-error_old) < NLS_EPSILON) && ...
+    if (abs(error_new-error_best) < NLS_EPSILON) && ...
             (-delta'*gradient >= 0 && -delta'*gradient < GRADIENT_EPSILON)
         
-        if error_new < error_old
+        if error_new < error_best
             estimate_mfn = estimate + delta;
         else
             estimate_mfn = estimate;
@@ -165,11 +167,11 @@ for k = 1:MAX_ITER
     end
     
     % check if current estimate achieves lower nls_error
-    if error_new < error_old
+    if error_new < error_best
         lambda = 0.1 * lambda;
         estimate = estimate + delta;
         hessian_flag = true;
-        error_old = error_new;
+        error_best = error_new;
         
     else
         % check if first iteration
@@ -197,16 +199,16 @@ end
 
 function nls_error = get_nls_error_value ( measurement, W, estimate )
 
-measurement_estimated = measurement - exp(W*estimate);
-nls_error = 1/2 * (measurement_estimated)' * (measurement_estimated);
+nls_residual = measurement - exp(W*estimate);
+nls_error = 1/2 * (nls_residual)' * (nls_residual);
 
 end
 
 function wls_error = get_wls_error_value (measurement, W, estimate )
 
 weights = get_wls_weights(measurement, W);
-measurement_estimated  = weights .* (log(measurement) - W * estimate);
-wls_error = 1/2 * (measurement_estimated)' * (measurement_estimated);
+wls_residual  = weights * (log(measurement) - W * estimate);
+wls_error = 1/2 * (wls_residual)' * (wls_residual);
 
 end
 
@@ -225,16 +227,18 @@ nls_residual = measurement - measurement_estimated;
 
 if strcmp(FIX, 'CHOLESKY')
     reduced_sum = zeros(7);
+    coeff_diagonal = nls_residual * measurement_estimated;
     for idx = 1:no_samples
-        temp = nls_residual * measurement_estimated;
-        reduced_sum = reduced_sum + temp(temp(:,idx)~=0, idx) * P_matrix(:,:,idx);
+        reduced_sum = reduced_sum + coeff_diagonal(idx, idx) * P_matrix(:,:,idx);
     end
     
     nls_hessian = J_matrix' * W' * ...
-        (measurement_estimated - nls_residual*measurement_estimated) ...
+        (measurement_estimated' * measurement_estimated ...
+        - nls_residual*measurement_estimated) ...
         * W * J_matrix + reduced_sum;
 else
-    nls_hessian = W' * (measurement_estimated - nls_residual*measurement_estimated) * W;
+    nls_hessian = W' * (measurement_estimated' * measurement_estimated ...
+        - nls_residual*measurement_estimated) * W;
 end
 
 end
@@ -252,9 +256,9 @@ no_samples = size(measurement,1);
 
 if strcmp(FIX, 'CHOLESKY')
     reduced_sum = zeros(7);
-    measurement_estimated  = weights.^2 .* (log(measurement) - W * estimate);
+    wls_residual  = weights^2 * (log(measurement) - W * estimate);
     for idx = 1:no_samples
-        reduced_sum = reduced_sum + measurement_estimated(idx,1) * P_matrix(:,:,idx);
+        reduced_sum = reduced_sum + wls_residual(idx,1) * P_matrix(:,:,idx);
     end
     
     wls_hessian = J_matrix' * W' * (weights' * weights) ...
@@ -294,10 +298,10 @@ if strcmp(FIX, 'CHOLESKY')
 end
 
 if strcmp(FIX, 'CHOLESKY')
-    wls_gradient = -J_matrix' * W' * (weights * weights') * ...
+    wls_gradient = -J_matrix' * W' * (weights' * weights) * ...
         (log(measurement) - W * estimate);
 else
-    wls_gradient = -W' * (weights * weights') * ...
+    wls_gradient = -W' * (weights' * weights) * ...
         (log(measurement) - W * estimate);
 end
 
@@ -338,6 +342,7 @@ end
 
 function weights = get_wls_weights ( measurement, W )
 
-weights = measurement;
+no_samples = size(measurement,1);
+weights = eye(no_samples) .* repmat(measurement, 1, no_samples);
 
 end
