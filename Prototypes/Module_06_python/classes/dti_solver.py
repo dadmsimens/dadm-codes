@@ -2,7 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-class DTISolver:
+
+class DTISolver(object):
 
     MFN_MAX_ITER = 20
     MFN_ERROR_EPSILON = 1e-5
@@ -17,12 +18,17 @@ class DTISolver:
 
         self._design_matrix = self._get_design_matrix()
 
+        self._check_mask()
         self._setup_MFN()
         self._setup_solver()
 
     """
     Initialization
     """
+
+    def _check_mask(self):
+        if not hasattr(self._dwi, 'mask'):
+            self._dwi.mask = np.ones((self._dwi.data.shape[0], self._dwi.data.shape[1]))
 
     def _get_design_matrix(self):
         design_matrix = np.column_stack((
@@ -119,21 +125,33 @@ class DTISolver:
         self._tensor_image = self._pixel_loop(image_depth=6, function_handle=estimate_tensor_pixel_func)
 
     def estimate_eig(self):
-        # TODO: do sth with eigenvectors
 
         def estimate_eig_pixel_func(DTISolver, id_x, id_y):
             tensor = self._build_tensor(np.squeeze(DTISolver._tensor_image[id_x, id_y, :]))
-            eig_vals, eig_vectors = np.linalg.eigh(tensor)  # eigenvalues in ascending order
+            eig_vals, eig_vectors = np.linalg.eigh(tensor)
+
+            # eigenvalues in ascending order, flip array
             eig_vals = eig_vals[::-1]
+
+            # get RGB values (from eigenvectr corresponding to largest eigenvalue)
+            # red: transversal (left-right)
+            # green: anterior-posterior (front-back)
+            # blue: cranio-caudal (head-feet)
+            # we take absolute value because we care about the axis in general, not direction specifically
+            rgb = np.abs(eig_vectors[:, -1])
 
             if self._fix_method == 'zero':
                 eig_vals[eig_vals < 0] = 0
             elif self._fix_method == 'abs':
                 eig_vals = np.abs(eig_vals)
 
-            return eig_vals
+            return np.hstack((eig_vals, rgb))
 
-        self._eig_image = self._pixel_loop(image_depth=3, function_handle=estimate_eig_pixel_func)
+        results = self._pixel_loop(image_depth=6, function_handle=estimate_eig_pixel_func)
+
+        # split results into eigenvalues and rgb map
+        self._eig_image = results[:, :, 0:3]
+        self._rgb_image = results[:, :, 3:]
 
     """
     Biomarkers
@@ -144,12 +162,14 @@ class DTISolver:
         RA = self._get_marker_RA()
         FA = self._get_marker_FA()
         VR = self._get_marker_VR()
+        FA_rgb = FA[:, :, np.newaxis] * self._rgb_image
 
         biomarkers = {
             'MD': MD,
             'RA': RA,
             'FA': FA,
-            'VR': VR
+            'VR': VR,
+            'FA_rgb': FA_rgb
         }
 
         self._biomarkers = biomarkers
@@ -241,6 +261,19 @@ class DTISolver:
         for key, value in plot_dict.items():
             plt.subplot(key)
             plt.imshow(np.squeeze(self._biomarkers[value[0]]), cmap='gray')
+            plt.axis('off')
+            plt.title(value[1])
+
+    def plot_FA_rgb(self):
+        plot_dict = {
+            111: ['FA_rgb', 'FA (Fractional Anisotropy)']
+        }
+        fig = plt.figure()
+        plt.suptitle('Fractional Anisotropy Colormap')
+
+        for key, value in plot_dict.items():
+            plt.subplot(key)
+            plt.imshow(np.squeeze(self._biomarkers[value[0]]))
             plt.axis('off')
             plt.title(value[1])
 

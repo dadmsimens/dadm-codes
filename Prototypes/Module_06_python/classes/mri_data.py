@@ -76,6 +76,7 @@ class DiffusionData(Data):
             dti_solver.plot_tensor()
             dti_solver.plot_eig()
             dti_solver.plot_biomarkers()
+            dti_solver.plot_FA_rgb()
             plt.show()
 
         return biomarkers
