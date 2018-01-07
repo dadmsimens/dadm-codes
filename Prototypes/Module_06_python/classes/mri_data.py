@@ -70,7 +70,7 @@ class DiffusionData(Data):
         dti_solver = DTISolver(self, solver, fix_method)
         dti_solver.estimate_tensor()
         dti_solver.estimate_eig()
-        biomarkers = dti_solver.get_biomarkers()
+        self.biomarkers = dti_solver.get_biomarkers()
 
         if plotting is True:
             dti_solver.plot_tensor()
@@ -78,8 +78,6 @@ class DiffusionData(Data):
             dti_solver.plot_biomarkers()
             dti_solver.plot_FA_rgb()
             plt.show()
-
-        return biomarkers
 
     def _load_matfile(self, dataset_path):
         """
