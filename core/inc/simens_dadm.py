@@ -12,6 +12,7 @@ class mri_struct:
 	noise_map is the estimated noise map
 	skull_stripping_mask is a binary mask - the result of skull stripping module
 	segmentation is a matrix with segmentation module result
+	biomarkers is the result of diffusion tensor imaging module
 	"""
 	def __init__(self, structural_data = (), compression_rate = 1, coils_n = 0, sensitivity_maps = []):
 		self.structural_data = structural_data
@@ -22,6 +23,7 @@ class mri_struct:
 		self.noise_map = []
 		self.skull_stripping_mask = []
 		self.segmentation = []
+		self.biomarkers = []
 
 class mri_diff(mri_struct):
 	"""A class for storing diffusion MRI data.
@@ -37,6 +39,7 @@ class mri_diff(mri_struct):
 	noise_map is the estimated noise map
 	skull_stripping_mask is a binary mask - the result of skull stripping module
 	segmentation is a matrix with segmentation module result
+	biomarkers is the result of diffusion tensor imaging module
 	"""
 	def __init__(self, raw_data = (), compression_rate = 1, coils_n = 0, sensitivity_maps = [], gradients = [], b_value = 0):
 		self.structural_data = raw_data[:,:,0,:]
@@ -51,6 +54,7 @@ class mri_diff(mri_struct):
 		self.noise_map = []
 		self.skull_stripping_mask = []
 		self.segmentation = []
+		self.biomarkers = []
 
 def mri_read (filename):
 	mfile = sio.loadmat(filename)
