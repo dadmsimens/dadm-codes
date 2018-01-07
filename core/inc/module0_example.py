@@ -1,6 +1,6 @@
-from .. import simens_dadm as smns
+from . import simens_dadm as smns
 
-def mymodulefunction(mri_input, other_arguments = None):
+def main0(mri_input, other_arguments = None):
 
 	if (isinstance(mri_input, smns.mri_diff)): # instructions for diffusion mri
 
@@ -16,6 +16,6 @@ def mymodulefunction(mri_input, other_arguments = None):
 		print("This file contains structural MRI")
 		#some_code
 	else:
-		return "Unexpected data format in module number X!"
+		return "Unexpected data format in module number 0!"
 
 	return mri_output

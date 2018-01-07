@@ -52,7 +52,6 @@ class mri_diff(mri_struct):
 		self.skull_stripping_mask = []
 		self.segmentation = []
 
-
 def mri_read (filename):
 	mfile = sio.loadmat(filename)
 	if('raw_data' in mfile and 'r' in mfile and 'L' in mfile and 'sensitivity_maps' in mfile):
