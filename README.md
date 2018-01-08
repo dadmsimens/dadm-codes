@@ -9,7 +9,7 @@ The aim of this project is to create the system for MRI data pre-processing and 
 4. Non-stationary noise filtering #1<br />
 5. Non-stationary noise filtering #2<br />
 6. Diffusion tensor imaging<br />
-<7th module excluded> <br />
+7. MODULE EXCLUDED <br />
 8. Skull stripping<br />
 9. Segmentation<br />
 10. Upsampling<br />
