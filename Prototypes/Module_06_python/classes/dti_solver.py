@@ -111,7 +111,8 @@ class DTISolver(object):
                 if self._dwi.mask[id_x, id_y]:
                     output_image[id_x, id_y, :] = function_handle(self, id_x, id_y)
 
-            print('Progress: {0:0.2f}%'.format(100*id_x/np.shape(self._dwi.data)[0]))
+            if not np.floor(100*id_x/np.shape(self._dwi.data)[0]) % 10:
+                print('Progress: {0:0.2f}%'.format(100*id_x/np.shape(self._dwi.data)[0]))
 
         return output_image
 
@@ -482,3 +483,31 @@ class DTISolver(object):
 
         cholesky_estimate = [pixel_log, Dxx, Dyy, Dzz, Dxy, Dyz, Dxz]
         return cholesky_estimate
+
+
+def run_pipeline(diffusion_data, solver, fix_method, plotting=False):
+    dti_solver = DTISolver(diffusion_data, solver, fix_method)
+    dti_solver.estimate_tensor()
+    dti_solver.estimate_eig()
+    biomarkers = dti_solver.get_biomarkers()
+
+    if plotting is True:
+        dti_solver.plot_tensor()
+        dti_solver.plot_eig()
+        dti_solver.plot_biomarkers()
+        dti_solver.plot_FA_rgb()
+        plt.show()
+
+    return biomarkers
+
+
+def run_module(diffusion_data, solver, fix_method, plotting=False):
+    # importing here avoids cyclic import problems
+    from .mri_data import DiffusionData
+
+    if isinstance(diffusion_data, DiffusionData):
+        diffusion_data.biomarkers = run_pipeline(diffusion_data, solver, fix_method, plotting)
+        return diffusion_data
+
+    else:
+        raise ValueError("Unexpected data format in module number 6!")

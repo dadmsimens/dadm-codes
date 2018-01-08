@@ -4,9 +4,9 @@ from abc import ABCMeta, abstractmethod
 import os
 import scipy.io
 import numpy as np
-import matplotlib.pyplot as plt
 
-from .dti_solver import DTISolver
+from .dti_solver import run_module
+import time
 
 
 class Data:
@@ -66,18 +66,10 @@ class DiffusionData(Data):
             matfile = scipy.io.loadmat(mask_path, struct_as_record=False, squeeze_me=True)
             self.mask = matfile['mask'] == 1
 
-    def get_dti_biomarkers(self, solver, fix_method, plotting=True):
-        dti_solver = DTISolver(self, solver, fix_method)
-        dti_solver.estimate_tensor()
-        dti_solver.estimate_eig()
-        self.biomarkers = dti_solver.get_biomarkers()
-
-        if plotting is True:
-            dti_solver.plot_tensor()
-            dti_solver.plot_eig()
-            dti_solver.plot_biomarkers()
-            dti_solver.plot_FA_rgb()
-            plt.show()
+    def get_dti_biomarkers(self, solver, fix_method, plotting=False):
+        time.perf_counter()
+        self = run_module(self, solver, fix_method, plotting)
+        print("Module 6 (DTI) time: {} seconds.\n".format(time.perf_counter()))
 
     def _load_matfile(self, dataset_path):
         """
