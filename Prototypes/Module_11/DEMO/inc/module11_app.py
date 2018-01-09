@@ -17,7 +17,6 @@ class Brain3D_App(QtWidgets.QMainWindow):
         self.layout = QtWidgets.QHBoxLayout()
         self.model3D = model3D.model3D(self.mri_data, self.ui.frame, self.layout)
         self.ui.actionReturn.setEnabled(False)
-        #self.preview_model()
 
     def exit(self):
         reply = QMessageBox.question(self, 'Message',
@@ -31,11 +30,10 @@ class Brain3D_App(QtWidgets.QMainWindow):
         self.ui.actionExit.triggered.connect(self.exit)
         self.ui.actionClip.triggered.connect(self.cut_mode_enable)
         self.ui.actionReturn.triggered.connect(self.undo)
-        #self.ui.slider.valueChanged.connect(self.slide_val)
-        #self.ui.chosePlane.currentIndexChanged.connect(self.plane_change)
+
 
     def undo(self):
-        self.model3D.change_mode()
+        self.model3D.change_mode(0)
         self.ui.actionReturn.setEnabled(False)
         self.ui.actionClip.setEnabled(True)
 
@@ -49,8 +47,7 @@ class Brain3D_App(QtWidgets.QMainWindow):
         msg.exec()
 
 
-         
     def cut_mode_enable(self):
         self.ui.actionReturn.setEnabled(True)
-        self.model3D.change_mode()
+        self.model3D.change_mode(1)
         self.model3D.cut_model()
