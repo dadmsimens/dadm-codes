@@ -4,9 +4,14 @@ from abc import ABCMeta, abstractmethod
 import os
 import scipy.io
 import numpy as np
-
-from .dti_solver import run_module
 import time
+
+try:
+    from .dti_solver_cy import run_module
+    print('Using Cython implementation of module 6.')
+except ImportError:
+    from .dti_solver import run_module
+    print('Using Python implementation of module 6.')
 
 
 class Data:
