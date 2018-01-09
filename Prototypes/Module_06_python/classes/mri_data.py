@@ -4,9 +4,14 @@ from abc import ABCMeta, abstractmethod
 import os
 import scipy.io
 import numpy as np
-import matplotlib.pyplot as plt
+import time
 
-from .dti_solver import DTISolver
+try:
+    from .dti_solver_cy import run_module
+    print('Using Cython implementation of module 6.')
+except ImportError:
+    from .dti_solver import run_module
+    print('Using Python implementation of module 6.')
 
 
 class Data:
@@ -66,19 +71,10 @@ class DiffusionData(Data):
             matfile = scipy.io.loadmat(mask_path, struct_as_record=False, squeeze_me=True)
             self.mask = matfile['mask'] == 1
 
-    def get_dti_biomarkers(self, solver, fix_method, plotting=True):
-        dti_solver = DTISolver(self, solver, fix_method)
-        dti_solver.estimate_tensor()
-        dti_solver.estimate_eig()
-        biomarkers = dti_solver.get_biomarkers()
-
-        if plotting is True:
-            dti_solver.plot_tensor()
-            dti_solver.plot_eig()
-            dti_solver.plot_biomarkers()
-            plt.show()
-
-        return biomarkers
+    def get_dti_biomarkers(self, solver, fix_method, plotting=False):
+        time.perf_counter()
+        self = run_module(self, solver, fix_method, plotting)
+        print("Module 6 (DTI) time: {} seconds.\n".format(time.perf_counter()))
 
     def _load_matfile(self, dataset_path):
         """

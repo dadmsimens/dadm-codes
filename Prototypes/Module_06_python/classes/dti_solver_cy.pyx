@@ -1,24 +1,95 @@
-
+cimport cython
 import numpy as np
+cimport numpy as np
 import matplotlib.pyplot as plt
+from cpython cimport array
+
+#TODO: convert np.shape(X)[...] to X.shape?
+#TODO: numpy matmul calls BLAS, which is coded in Fortran order
+#TODO: cast for range indexes as Py_ssize_t
+
+cdef class DWI:
+
+    cdef double[:,:, ::1] data
+    cdef double[:, ::1] bvecs
+    cdef unsigned short[::1] bvals
+    cdef unsigned short[:, ::1] mask
+
+    def __cinit__(
+            self,
+            double[:,:, ::1] data,
+            double[:, ::1] bvecs,
+            unsigned short[::1] bvals,
+            unsigned short[:, ::1] mask
+        ):
+        self.data = data
+        self.bvecs = bvecs
+        self.bvals = bvals
+        self.mask = mask
 
 
-class DTISolver(object):
+cdef class DTISolver:
 
-    MFN_MAX_ITER = 20
-    MFN_ERROR_EPSILON = 1e-5
-    MFN_GRADIENT_EPSILON = 1e-5
-    MFN_LAMBDA_MATRIX_FUN = 'identity'
+    # class variables
+    cdef int MFN_MAX_ITER
+    cdef double MFN_ERROR_EPSILON
+    cdef double MFN_GRADIENT_EPSILON
+    cdef str MFN_LAMBDA_MATRIX_FUN
 
-    def __init__(self, dwi, solver, fix_method):
+    # __init__ parameters
+    cdef DWI _dwi
+    cdef str _solver
+    cdef str _fix_method
+    cdef double[:, ::1] _design_matrix
 
+    # Setup MFN
+    cdef int _max_iter
+    cdef double _error_epsilon
+    cdef double _gradient_epsilon
+    cdef double[:, ::1] _lambda_matrix
+
+    # TODO type definition
+    # setup function handlers
+    cdef object _solver_func
+    cdef object _get_error_value
+    cdef object _get_gradient
+    cdef object _get_hessian
+
+    # images
+    cdef double[:,:, ::1] _tensor_image
+    cdef double[:,:, ::1] _eig_image
+    cdef double[:,:, ::1] _rgb_image
+    cdef dict _biomarkers
+
+    def __cinit__(
+            self,
+            DWI dwi,
+            str solver,
+            str fix_method
+        ):
+
+        # class variables
+        self.MFN_MAX_ITER = 20
+        self.MFN_ERROR_EPSILON = 1e-5
+        self.MFN_GRADIENT_EPSILON = 1e-5
+        self.MFN_LAMBDA_MATRIX_FUN = 'identity'
+
+        # instance variables
         self._dwi = dwi
         self._solver = solver
         self._fix_method = fix_method
 
+    def __init__(
+            self,
+            DWI dwi,
+            str solver,
+            str fix_method
+        ):
+
+        # get design matrix
         self._design_matrix = self._get_design_matrix()
 
-        self._check_mask()
+        # initialize solvers
         self._setup_MFN()
         self._setup_solver()
 
@@ -26,12 +97,14 @@ class DTISolver(object):
     Initialization
     """
 
-    def _check_mask(self):
-        if not hasattr(self._dwi, 'mask'):
-            self._dwi.mask = np.ones((self._dwi.data.shape[0], self._dwi.data.shape[1]))
+    cdef double[:, ::1] _get_design_matrix(self):
+        cdef double[:, ::1] design_matrix_temp
+        cdef double[:, ::1] design_matrix
 
-    def _get_design_matrix(self):
-        design_matrix = np.column_stack((
+        design_matrix_temp = np.zeros((np.shape(self._dwi.bvals)[0], 6))
+        design_matrix = np.ones((np.shape(self._dwi.bvals)[0], 7))
+
+        design_matrix_temp = np.column_stack((
             np.square(self._dwi.bvecs[:, 0]),
             np.square(self._dwi.bvecs[:, 1]),
             np.square(self._dwi.bvecs[:, 2]),
@@ -39,25 +112,29 @@ class DTISolver(object):
             2 * np.multiply(self._dwi.bvecs[:, 1], self._dwi.bvecs[:, 2]),
             2 * np.multiply(self._dwi.bvecs[:, 0], self._dwi.bvecs[:, 2])
         ))
-        design_matrix *= (-1)*self._dwi.bvals[:, np.newaxis]
-        design_matrix = np.insert(design_matrix, 0, np.ones(self._dwi.bvals.shape), axis=1)
+
+        design_matrix_temp *= np.multiply((-1), self._dwi.bvals[:, None])
+        design_matrix[:,1:] = design_matrix_temp
 
         return design_matrix
 
-    def _setup_MFN(self):
+    cdef void _setup_MFN(self):
+
         # MFN method convergence breakpoints
-        self._max_iter = DTISolver.MFN_MAX_ITER
-        self._error_epsilon = DTISolver.MFN_ERROR_EPSILON
-        self._gradient_epsilon = DTISolver.MFN_GRADIENT_EPSILON
+        self._max_iter = self.MFN_MAX_ITER
+        self._error_epsilon = self.MFN_ERROR_EPSILON
+        self._gradient_epsilon = self.MFN_GRADIENT_EPSILON
 
         # Lambda parameter to multiply the hessian
-        if DTISolver.MFN_LAMBDA_MATRIX_FUN == 'identity':
+        if self.MFN_LAMBDA_MATRIX_FUN == 'identity':
             self._lambda_matrix = np.eye(7)
 
         if self._fix_method == 'cholesky':
             self._get_cholesky_P_matrix()
 
-    def _setup_solver(self):
+    cdef void _setup_solver(self):
+
+        # TODO: convert function pointers
         if self._solver == 'wls':
             self._solver_func = self._solve_wls
             self._get_error_value = self._get_wls_error_value
@@ -67,6 +144,7 @@ class DTISolver(object):
             if self._fix_method == 'cholesky':
                 self._solver_func = self._solve_nls
 
+        # TODO: convert function pointers
         elif self._solver == 'nls':
             self._solver_func = self._solve_nls
             self._get_error_value = self._get_nls_error_value
@@ -80,8 +158,8 @@ class DTISolver(object):
     Solvers
     """
 
-    def _build_tensor(self, tensor_vector):
-        tensor = np.zeros((3, 3))
+    cdef double[:, ::1] _build_tensor(self, double[::1] tensor_vector):
+        cdef double[:, ::1] tensor = np.zeros((3, 3))
 
         # x-row
         tensor[0, 0] = tensor_vector[0]
@@ -100,7 +178,13 @@ class DTISolver(object):
 
         return tensor
 
-    def _pixel_loop(self, image_depth, function_handle):
+    cdef double[:,:, ::1] _pixel_loop(self,
+            unsigned int image_depth,
+            function_handle
+            ):
+        cdef double [:,:, ::1] output_image
+        cdef unsigned int id_x, id_y
+        cdef double[::1] temp
 
         output_image = np.zeros((np.shape(self._dwi.data)[0], np.shape(self._dwi.data)[1], image_depth))
 
@@ -109,26 +193,38 @@ class DTISolver(object):
             for id_y in range(np.shape(self._dwi.data)[1]):
 
                 if self._dwi.mask[id_x, id_y]:
-                    output_image[id_x, id_y, :] = function_handle(self, id_x, id_y)
+                    #TODO: temp?
+                    temp = function_handle(self, id_x, id_y)
+                    output_image[id_x, id_y, :] = temp
 
             if not np.floor(100*id_x/np.shape(self._dwi.data)[0]) % 10:
                 print('Progress: {0:0.2f}%'.format(100*id_x/np.shape(self._dwi.data)[0]))
 
         return output_image
 
-    def estimate_tensor(self):
+    cdef void estimate_tensor(self):
+        # TODO:
+        cdef unsigned int image_depth = 6
 
-        def estimate_tensor_pixel_func(DTISolver, id_x, id_y):
-            pixel = np.squeeze(DTISolver._dwi.data[id_x, id_y, :])
+        # TODO: this declaration should be somewhere else, convert function pointers
+        def estimate_tensor_pixel_func(DTISolver self, unsigned int id_x, unsigned int id_y):
+
+            cdef double[::1] pixel
+            cdef double[::1] estimate
+
+            pixel = np.squeeze(self._dwi.data[id_x, id_y, :])
             estimate = self._solver_func(pixel)
             return estimate[1:]
 
-        self._tensor_image = self._pixel_loop(image_depth=6, function_handle=estimate_tensor_pixel_func)
+        self._tensor_image = self._pixel_loop(image_depth, estimate_tensor_pixel_func)
 
-    def estimate_eig(self):
+    cdef void estimate_eig(self):
+        cdef double[:,:, ::1] results
+        cdef unsigned int image_depth = 6
 
-        def estimate_eig_pixel_func(DTISolver, id_x, id_y):
-            tensor = self._build_tensor(np.squeeze(DTISolver._tensor_image[id_x, id_y, :]))
+        #TODO
+        def estimate_eig_pixel_func(DTISolver self, unsigned int id_x, unsigned int id_y):
+            tensor = self._build_tensor(np.squeeze(self._tensor_image[id_x, id_y, :]))
             eig_vals, eig_vectors = np.linalg.eigh(tensor)
 
             # eigenvalues in ascending order, flip array
@@ -148,7 +244,7 @@ class DTISolver(object):
 
             return np.hstack((eig_vals, rgb))
 
-        results = self._pixel_loop(image_depth=6, function_handle=estimate_eig_pixel_func)
+        results = self._pixel_loop(image_depth, estimate_eig_pixel_func)
 
         # split results into eigenvalues and rgb map
         self._eig_image = results[:, :, 0:3]
@@ -158,12 +254,13 @@ class DTISolver(object):
     Biomarkers
     """
 
-    def get_biomarkers(self):
+    #TODO
+    cpdef dict get_biomarkers(self):
         MD = self._get_marker_MD()
         RA = self._get_marker_RA()
         FA = self._get_marker_FA()
         VR = self._get_marker_VR()
-        FA_rgb = FA[:, :, np.newaxis] * self._rgb_image
+        FA_rgb = np.multiply(FA[:, :, None], self._rgb_image)
 
         biomarkers = {
             'MD': MD,
@@ -176,43 +273,53 @@ class DTISolver(object):
         self._biomarkers = biomarkers
         return biomarkers
 
-    def _get_marker_MD(self):
+    #TODO
+    cpdef _get_marker_MD(self):
         return np.mean(self._eig_image, axis=2)
 
-    def _get_marker_RA(self):
+    #TODO
+    cpdef _get_marker_RA(self):
+        mask = np.array(self._dwi.mask) > 0.01
         MD = self._get_marker_MD()
         eig_variance = self._get_eig_variance()
 
         RA = np.zeros(np.shape(MD))
-        RA[self._dwi.mask] = np.sqrt(np.divide(eig_variance[self._dwi.mask], 3*MD[self._dwi.mask]))
+        RA[mask] = np.sqrt(np.divide(eig_variance[mask], np.multiply(3, MD[mask])))
         return RA
 
-    def _get_marker_FA(self):
+    #TODO
+    cpdef _get_marker_FA(self):
+        mask = np.array(self._dwi.mask) > 0.01
+
         eig_variance = self._get_eig_variance()
         sum_squares = np.sum(np.square(self._eig_image), axis=2)
 
         FA = np.zeros(np.shape(eig_variance))
-        FA[self._dwi.mask] = np.sqrt(3/2) * \
-                             np.sqrt(np.divide(eig_variance[self._dwi.mask], sum_squares[self._dwi.mask]))
+        FA[mask] = np.multiply(np.sqrt(3/2), np.sqrt(np.divide(eig_variance[mask], sum_squares[mask])))
         return FA
 
-    def _get_marker_VR(self):
+    #TODO
+    cpdef _get_marker_VR(self):
+        mask = np.array(self._dwi.mask) > 0.01
+
         MD = self._get_marker_MD()
 
         VR = np.zeros(np.shape(MD))
-        VR[self._dwi.mask] = np.divide(
-            (np.prod(self._eig_image, axis=2))[self._dwi.mask], np.power(MD[self._dwi.mask], 3)
+        VR[mask] = np.divide(
+            (np.prod(self._eig_image, axis=2))[mask], np.power(MD[mask], 3)
         )
         return VR
 
-    def _get_eig_variance(self):
+    #TODO
+    cpdef _get_eig_variance(self):
         MD = self._get_marker_MD()
-        return np.sum(np.square(self._eig_image - MD[:, :, np.newaxis]), axis=2)
+        return np.sum(np.square(np.subtract(self._eig_image, MD[:, :, None])), axis=2)
 
     """
     Plotting (debug)
     """
 
+    #TODO
     def plot_tensor(self):
         plot_dict = {
             331: [0, 'Dxx'],
@@ -234,6 +341,7 @@ class DTISolver(object):
             plt.axis('off')
             plt.title(value[1])
 
+    #TODO
     def plot_eig(self):
         plot_dict = {
             131: [0, r'$\lambda_1$'],
@@ -249,6 +357,7 @@ class DTISolver(object):
             plt.axis('off')
             plt.title(value[1])
 
+    #TODO
     def plot_biomarkers(self):
         plot_dict = {
             221: ['MD', 'MD (Mean Diffusivity)'],
@@ -265,6 +374,7 @@ class DTISolver(object):
             plt.axis('off')
             plt.title(value[1])
 
+    #TODO
     def plot_FA_rgb(self):
         plot_dict = {
             111: ['FA_rgb', 'FA (Fractional Anisotropy)']
@@ -281,45 +391,72 @@ class DTISolver(object):
     """
     Weighted Least Squares
     """
-    def _solve_wls(self, pixel):
+    #TODO
+    def _solve_wls(self, double[::1] pixel):
+        cdef double[:, ::1] weights
+        cdef double[::1] estimate
+
         weights = self._get_wls_weights(pixel)
-        estimate = np.linalg.pinv(self._design_matrix.T @ np.square(weights) @ self._design_matrix) @ \
-                   (weights @ self._design_matrix).T @ weights @ np.log(pixel)
+        estimate = \
+            np.matmul(
+                np.linalg.pinv(
+                    np.matmul(
+                        np.matmul(
+                            self._design_matrix.T, np.square(weights)
+                        ), self._design_matrix
+                    )
+                ), np.matmul(
+                        np.matmul(
+                            (np.matmul(
+                                weights, self._design_matrix
+                            )).T, weights
+                        ), np.log(pixel)
+                    )
+                )
 
         if np.isnan(np.sum(estimate)):
             estimate = np.zeros(np.shape(estimate))
         return estimate
 
-    def _get_wls_weights(self, pixel):
+    cdef double[:, ::1] _get_wls_weights(self, double[::1] pixel):
         """
+        # TODO: implement other?
         In order of increasing WLS complexity: pixel < LLS estimate < Rice noise estimate
         :param pixel:
         :return:
         """
-        # TODO: implement others
-        weights = np.eye(np.shape(pixel)[0]) * pixel[:, np.newaxis]
+        cdef double[:, ::1] weights
+
+        weights = np.multiply(np.eye(np.shape(pixel)[0]), pixel)
         return weights
 
-    def _get_wls_error_value(self, pixel, wls_estimate):
+    # TODO
+    def _get_wls_error_value(self, double[::1] pixel, double[::1] wls_estimate):
         weights = self._get_wls_weights(pixel)
         wls_residual = weights @ (np.log(pixel) - self._design_matrix @ wls_estimate)
         wls_error = 1/2 * wls_residual.T @ wls_residual
         return wls_error
 
-    def _get_wls_gradient(self, pixel, wls_estimate):
+    # TODO
+    def _get_wls_gradient(self, double[::1] pixel, double[::1] wls_estimate):
+        cdef double[:, ::1] weights
+        cdef double[:, ::1] J_matrix
+        cdef double[::1] wls_gradient
+
         weights = self._get_wls_weights(pixel)
 
         if self._fix_method == 'cholesky':
             J_matrix = self._get_cholesky_J_matrix(wls_estimate)
-            wls_gradient = (-1) * J_matrix.T @ self._design_matrix.T @ (weights.T @ weights) @ \
+            wls_gradient = np.multiply((-1), J_matrix.T) @ self._design_matrix.T @ (weights.T @ weights) @ \
                            (np.log(pixel) - self._design_matrix @ wls_estimate)
 
         else:
-            wls_gradient = (-1) * self._design_matrix.T @ (weights.T @ weights) @ \
+            wls_gradient = np.multiply((-1), self._design_matrix.T) @ (weights.T @ weights) @ \
                            (np.log(pixel) - self._design_matrix @ wls_estimate)
 
         return wls_gradient
 
+    # TODO
     def _get_wls_hessian(self, pixel, wls_estimate):
         weights = self._get_wls_weights(pixel)
 
@@ -329,7 +466,7 @@ class DTISolver(object):
             reduced_sum = np.zeros((7, 7))
             wls_residual = np.square(weights) @ (np.log(pixel) - self._design_matrix @ wls_estimate)
             for idx in range(np.shape(pixel)[0]):
-                reduced_sum += wls_residual[idx, np.newaxis] * np.squeeze(self._P_matrix[:, :, idx])
+                reduced_sum += np.multiply(wls_residual[idx, None], np.squeeze(self._P_matrix[:, :, idx]))
 
             wls_hessian = J_matrix.T @ self._design_matrix.T @ (weights.T @ weights) @ self._design_matrix @ \
                           J_matrix + reduced_sum
@@ -343,6 +480,7 @@ class DTISolver(object):
     Nonlinear Least Squares
     """
 
+    # TODO
     def _solve_nls(self, pixel):
         # Parameters
         lambda_param = 0
@@ -362,7 +500,9 @@ class DTISolver(object):
                 hessian_flag = False
 
             # Check error for new parameter vector
-            delta = (-1) * np.linalg.pinv(hessian + lambda_param*self._lambda_matrix) @ gradient
+            delta = np.multiply(
+                (-1), np.linalg.pinv(hessian + np.multiply(lambda_param, self._lambda_matrix))
+                ) @ gradient
             error_new = self._get_error_value(pixel, estimate+delta)
 
             # Check for convergence
@@ -394,11 +534,13 @@ class DTISolver(object):
 
         return mfn_estimate
 
+    # TODO
     def _get_nls_error_value(self, pixel, nls_estimate):
         nls_residual = pixel - np.exp(self._design_matrix @ nls_estimate)
         nls_error = 1/2 * nls_residual.T @ nls_residual
         return nls_error
 
+    # TODO
     def _get_nls_gradient(self, pixel, nls_estimate):
         pixel_estimated = np.exp(self._design_matrix @ nls_estimate)
         nls_residual = pixel - pixel_estimated
@@ -412,6 +554,7 @@ class DTISolver(object):
 
         return nls_gradient
 
+    # TODO
     def _get_nls_hessian(self, pixel, nls_estimate):
         pixel = np.eye(np.shape(pixel)[0]) * pixel[:, np.newaxis]
         pixel_estimated = np.exp(self._design_matrix @ nls_estimate)
@@ -441,19 +584,21 @@ class DTISolver(object):
     Cholesky parametrization
     """
 
-    def _get_cholesky_J_matrix(self, estimate):
+    cdef double[:, ::1] _get_cholesky_J_matrix(self, double[::1] estimate):
+        cdef double[:, ::1] J_matrix
         J_matrix = np.zeros((7, 7))
 
-        J_matrix[:, 0] = [1, 0, 0, 0, 0, 0, 0]
-        J_matrix[:, 1] = [0, 2 * estimate[1], 0, 0, estimate[4], 0, estimate[6]]
-        J_matrix[:, 2] = [0, 0, 2 * estimate[2], 0, 0, estimate[5], 0]
-        J_matrix[:, 3] = [0, 0, 0, 2 * estimate[3], 0, 0, 0]
-        J_matrix[:, 4] = [0, 0, 2 * estimate[4], 0, estimate[1], estimate[6], 0]
-        J_matrix[:, 5] = [0, 0, 0, 2 * estimate[5], 0, estimate[2], 0]
-        J_matrix[:, 6] = [0, 0, 0, 2 * estimate[6], 0, estimate[4], estimate[1]]
+        J_matrix[:, 0] = array.array('d', [1, 0, 0, 0, 0, 0, 0])
+        J_matrix[:, 1] = array.array('d', [0, 2 * estimate[1], 0, 0, estimate[4], 0, estimate[6]])
+        J_matrix[:, 2] = array.array('d', [0, 0, 2 * estimate[2], 0, 0, estimate[5], 0])
+        J_matrix[:, 3] = array.array('d', [0, 0, 0, 2 * estimate[3], 0, 0, 0])
+        J_matrix[:, 4] = array.array('d', [0, 0, 2 * estimate[4], 0, estimate[1], estimate[6], 0])
+        J_matrix[:, 5] = array.array('d', [0, 0, 0, 2 * estimate[5], 0, estimate[2], 0])
+        J_matrix[:, 6] = array.array('d', [0, 0, 0, 2 * estimate[6], 0, estimate[4], estimate[1]])
 
         return J_matrix
 
+    # TODO
     def _get_cholesky_P_matrix(self):
         W = self._design_matrix
         no_samples = np.shape(W)[0]
@@ -470,6 +615,7 @@ class DTISolver(object):
 
         self._P_matrix = (-1) * P_matrix
 
+    # TODO
     def _inverse_cholesky(self, estimate):
         pixel_log = estimate[0]
         tensor_estimate = estimate[1:]
@@ -485,13 +631,22 @@ class DTISolver(object):
         return cholesky_estimate
 
 
-def run_pipeline(diffusion_data, solver, fix_method, plotting=False):
-    dti_solver = DTISolver(diffusion_data, solver, fix_method)
+cdef dict run_pipeline(
+        DWI dwi,
+        str solver,
+        str fix_method,
+        bint plotting=0
+    ):
+
+    cdef DTISolver dti_solver
+    cdef dict biomarkers
+
+    dti_solver = DTISolver(dwi, solver, fix_method)
     dti_solver.estimate_tensor()
     dti_solver.estimate_eig()
     biomarkers = dti_solver.get_biomarkers()
 
-    if plotting is True:
+    if plotting == 1:
         dti_solver.plot_tensor()
         dti_solver.plot_eig()
         dti_solver.plot_biomarkers()
@@ -501,12 +656,25 @@ def run_pipeline(diffusion_data, solver, fix_method, plotting=False):
     return biomarkers
 
 
-def run_module(diffusion_data, solver, fix_method, plotting=False):
+cpdef object run_module(object diffusion_data, str solver, str fix_method, bint plotting):
     # importing here avoids cyclic import problems
     from .mri_data import DiffusionData
 
+    cdef DWI dwi
+
     if isinstance(diffusion_data, DiffusionData):
-        diffusion_data.biomarkers = run_pipeline(diffusion_data, solver, fix_method, plotting)
+
+        if not hasattr(diffusion_data, 'mask'):
+            diffusion_data = np.ones((np.shape(diffusion_data.data)[0], np.shape(diffusion_data)[1]))
+
+        dwi = DWI(
+            diffusion_data.data.copy(order='C'),
+            diffusion_data.bvecs.copy(order='C'),
+            diffusion_data.bvals.copy(order='C'),
+            (diffusion_data.mask.copy(order='C')).astype(np.ushort)
+        )
+
+        diffusion_data.biomarkers = run_pipeline(dwi, solver, fix_method, plotting)
         return diffusion_data
 
     else:
