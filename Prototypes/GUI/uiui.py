@@ -11,7 +11,7 @@ class ImageDialog(QMainWindow):
         super().__init__()
 
         # Set up the user interface from Designer.
-        self.ui = loadUi("nienazwany1/mainwindow.ui")
+        self.ui = loadUi("mainwindow.ui")
 
         self.ui.show()
 
