@@ -1,5 +1,32 @@
 %% Marker-controlled watershed segmentation
 function brain = skull_watershed(I)
+%preporoc
+se = strel('disk',1);
+image = imerode(I,se);
+[pixelCounts, grayLevels] = imhist(image, 256);
+upcut = 0.98 * max(grayLevels);
+downcut = 0.02 * max(grayLevels);
+for i = 1 : length(grayLevels)
+    if (grayLevels(i)<downcut) || (grayLevels(i) > upcut)
+        pixelCounts(i) = 0;
+    end
+end
+CSF = 0.1 * (max(grayLevels)- min(grayLevels(grayLevels>0)))+min(grayLevels(grayLevels>0));
+bin = imbinarize(I,CSF);
+bin = imerode(bin,se);
+measurements = regionprops(bin, image, 'WeightedCentroid');
+cog = measurements(1).WeightedCentroid;
+stats = regionprops('table',bin,'Centroid',...
+    'MajorAxisLength','MinorAxisLength');
+diameters = mean([stats.MajorAxisLength stats.MinorAxisLength],2);
+radii = diameters(1,1)/2;
+imageSize = size(image);
+ci = [cog(1,1), cog(1,2), radii];     % center and radius of circle ([c_row, c_col, r])
+[xx,yy] = ndgrid((1:imageSize(1))-ci(1),(1:imageSize(2))-ci(2));
+mask = (xx.^2 + yy.^2)<ci(3)^2;
+croppedImage = I.*mask;
+I = croppedImage;
+
 % Use the Sobel edge masks, imfilter, and some simple arithmetic to compute the gradient magnitude. 
 hy = fspecial('sobel');
 hx = hy';
