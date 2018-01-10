@@ -10,7 +10,7 @@ load('dane\SENSE_LSE_L_8_r_2_STD_2_RHO_0.mat')
 imshow3D(SENSE_LSE)
 brain = zeros(256,256,181);
 for i = 1:181
-     brain(:,:,i) = skull_watershed_prepoc(mat2gray(SENSE_LSE(:,:,i)), i);
+     brain(:,:,i) = skull_watershed_preproc(mat2gray(SENSE_LSE(:,:,i)));
      if i == 90
          i
      end
