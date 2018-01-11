@@ -41,3 +41,9 @@ __pycache__/
 ## Please don't upload our data...
 dane/
 dane_recon/
+
+## Cython compilation files and directiories
+*.html
+*.c
+*.pyd
+build/

@@ -8,3 +8,4 @@ print("Results:", result1.structural_data.shape)
 for i in range(result1.diffusion_data.shape[-2]):
     print(result1.diffusion_data[:, :, i, :].shape)
 # Print shapes of structural data array and all diffusion data directions
+print(result1.compression_rate, result1.noise_map)

@@ -39,5 +39,5 @@ if __name__ == '__main__':
     dwi.strip_skull()
 
     # Module 06 - Diffusion tensor estimation
-    # biomarkers is a dictionary of biomarkers: MD, RA, FA, VR
-    biomarkers = dwi.get_dti_biomarkers(solver, fix_method, plotting)
+    # biomarkers is a dictionary of biomarkers: MD, RA, FA, VR, FA_rgb
+    dwi.get_dti_biomarkers(solver, fix_method, plotting)
