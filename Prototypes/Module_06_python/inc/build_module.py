@@ -10,8 +10,8 @@ setup(
         'build_ext': build_ext
     },
     ext_modules=[
-        Extension("dti_solver_cy",
-                  ["dti_solver_cy.pyx"],
+        Extension("module_06_cy",
+                  ["module_06_cy.pyx"],
                   include_dirs=[numpy.get_include()]
                   ),
     ]

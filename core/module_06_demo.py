@@ -15,7 +15,7 @@ FIX_METHODS = {
 }
 
 # Data location in ROOT
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 DATASETS_ROOT = PROJECT_ROOT + '\\Data\\Module_06_test\\'
 DATASETS = {
     0: 'rec_35.mat',
