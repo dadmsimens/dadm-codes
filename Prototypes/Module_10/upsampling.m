@@ -1,4 +1,4 @@
-function [filtered_image, good, bad]=upsampling(image, N, M, window, display)
+function [filtered_image]=upsampling(image, N, M, window, display)
 %Initial B-spline interpolation
 % N and M - extensions
 image2=initial_interp(image, N, M, 0);
@@ -7,10 +7,8 @@ sigma=std2(image2);
 
 level=sigma/2; %degree of filering
 [X, Y]=meshgrid(-window:window, -window:window); 
-tol=0.002*std2(image);
 
 %%%%
-% while(1)
 % Reconstruction
 filtered_image=zeros(s);
 for i=2:s(1,1)
@@ -36,21 +34,8 @@ for i=2:s(1,1)
          
     end
 end
-%%%%
-good=0; bad=0;
-%Checking with tolerance - I have to do it better
-for i=2:1:s(1,1)
-    for j=2:1:s(1,2)
-       if (abs(filtered_image(i, j)-filtered_image(i-1, j-1)) < tol) 
-          good=good+1;
-       else
-           bad=bad+1;
-       end
-    end
-end
-% end
 
-%Mean correction - equation 7
+%Mean correction
 for i=1:N:s(1,1)
    for j=1:M:s(1,2)
       tmp=filtered_image(i:i+N-1, j:j+M-1);
