@@ -56,7 +56,9 @@ for id_x = 1:size(dwi.data,1)
         end
 
     end
-    fprintf('Progress: %.2f%%\n', 100*id_x/size(dwi.data,1))
+    if ~ mod(floor(100*id_x/size(dwi.data,1)), 10)
+        fprintf('Progress: %.2f%%\n', 100*id_x/size(dwi.data,1))
+    end
 end
 
 end
