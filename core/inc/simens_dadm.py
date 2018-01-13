@@ -99,10 +99,14 @@ def mri_read_module_06(filename):
             raise ValueError('BVECS should be an array of unit-length vectors.')
 
     def strip_skull(filename):
-        mask_path = os.path.dirname(filename) + '\\mask.mat'
-        matfile = sio.loadmat(mask_path, struct_as_record=False, squeeze_me=True)
-        mask = matfile['mask'] == 1
-        return mask
+        try:
+            mask_path = os.path.dirname(filename) + '\\mask.mat'
+            matfile = sio.loadmat(mask_path, struct_as_record=False, squeeze_me=True)
+            mask = matfile['mask'] == 1
+            return mask
+        except:
+            print('Skull stripping mask not found!')
+            return []
 
     try:
         data, bvecs, bvals = _load_matfile(filename)
@@ -117,7 +121,15 @@ def mri_read_module_06(filename):
             gradients=bvecs,
             b_value=bvals
         )
+        # all modules compatibility
+        dwi.structural_data = data[:, :, bvals == 0, None]
+        dwi.diffusion_data = data[:, :, bvals != 0, None]
+        dwi.b_value = bvals[bvals != 0]
+        dwi.gradients = bvecs[bvals != 0]
+
+        # try loading a mask
         dwi.skull_stripping_mask = mask
+
         return dwi
 
     except:
