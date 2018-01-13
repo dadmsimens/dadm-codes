@@ -68,10 +68,13 @@ def mri_read(filename):
     else:
         return "Error: could not recognize data in file"
 
+# TODO: ADD FUNCTIONS FOR EASY DATA ACCESS IN CLASSES.
 
 
 def mri_read_module_06(filename):
     """
+    Temporary wrapper loading reconstructed data while waiting for other modules to be implemented.
+    Module 06 assumes reconstructed, preprocessed diffusion data, so a small wrapper is needed.
     """
 
     def _load_matfile(dataset_path):
