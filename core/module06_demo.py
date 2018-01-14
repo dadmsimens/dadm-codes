@@ -34,6 +34,7 @@ if __name__ == '__main__':
     plotting = True
 
     # Dummy function to preprocess (implements other modules functionality)
+    # note: this loads a SINGLE SLICE and thus Module_06 currently assumes that dwi contains a single brain slice
     dwi = smns.mri_read_module_06(filename=DATASETS_ROOT + dataset_name)
 
     # Module 06 - Diffusion tensor estimation
