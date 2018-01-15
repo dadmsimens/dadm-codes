@@ -1,19 +1,13 @@
 import matplotlib.pyplot as plt
 from scipy.ndimage import morphology, center_of_mass, find_objects, maximum, minimum
 from scipy.ndimage import watershed_ift, maximum_filter, sobel
-from scipy.io import loadmat
 import numpy as np
 from scipy import ndimage
 
 
 class SkullStripping:
-    def __init__(self, filename):
-        self.filename = filename
-
-    def get_data(self):
-        mat_dict = loadmat(self.filename)
-        image = mat_dict['SENSE_LSE']
-        return image
+    def __init__(self, image):
+        self.image = image
 
     def recon(self, marker, mask):
         recon1 = marker
@@ -99,13 +93,12 @@ class SkullStripping:
         return bgm
 
     def run(self, verbose=False):
-        image = self.get_data()
-        skull_stripp_mask = np.zeros_like(image)
-        preproc_image, csf, cog, r = self.preprocessing(image)
+        skull_stripp_mask = np.zeros_like(self.image)
+        preproc_image, csf, cog, r = self.preprocessing(self.image)
         gradmag = self.grad_mag_sobel(preproc_image)
         log = self.foreground_markers(preproc_image, csf)
         bgm = self.background_markers(preproc_image, csf)
-        markers = np.zeros_like(image).astype(np.int16)
+        markers = np.zeros_like(self.image).astype(np.int16)
         markers[bgm == False] = 1
         markers[log == True] = 2
         l = watershed_ift(gradmag.astype(np.uint16), markers)
@@ -115,8 +108,8 @@ class SkullStripping:
             plt.gray()
             ax1 = fig.add_subplot(211)
             ax2 = fig.add_subplot(212)
-            result = image * skull_stripp_mask
-            ax1.imshow(image)
+            result = self.image * skull_stripp_mask
+            ax1.imshow(self.image)
             ax2.imshow(result)
             plt.show()
         return skull_stripp_mask
