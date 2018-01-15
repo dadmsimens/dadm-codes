@@ -40,10 +40,10 @@ sigmaValue = np.int(np.floor((2 *sizex)/3))
 
 blurred = signal.fftconvolve(gray, gauss2D((sigmaValue,sigmaValue),30), mode='same')
 
-# # 17 random points from the picture
+# # 150 random points from the picture
 
-coordx = np.int64(np.ceil(np.random.random((1, 17)) * (sizex-1)))
-coordy = np.int64(np.ceil(np.random.random((1, 17)) * (sizey-1)))
+coordx = np.int64(np.ceil(np.random.random((1, 150)) * (sizex-1)))
+coordy = np.int64(np.ceil(np.random.random((1, 150)) * (sizey-1)))
 values = blurred[coordx, coordy]
 
 data = np.vstack([coordx, coordy, values]).T
@@ -70,10 +70,10 @@ plt.imshow(gray, cmap='gray')
 plt.show()
 
 #plt.imshow((gray/F), cmap='gray')
-plt.imshow((gray-blurred+np.mean(blurred)), cmap='gray')
-plt.show()
-
-#plt.imshow((gray-F+np.mean(F)), cmap='gray')
+#plt.imshow((gray-blurred+np.mean(blurred)), cmap='gray')
 #plt.show()
+
+plt.imshow((gray-F-np.mean(F)), cmap='gray')
+plt.show()
 
 
