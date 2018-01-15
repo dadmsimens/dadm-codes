@@ -285,18 +285,36 @@ def segmentation(skullFreeImage,pitches):
         for i in range(rows):
             for j in range(columns):
                 for  k in range(clustersNum):
-                    xn = imageCopy[i,j]
-                    mun = mu[k]
-                    vn =  v [k]
-                    pn = p[k]
-                    print("xn:  " + str(xn))
-                    probab = []
-                    c[k] = gmm(xn,mu,v,p)
+                    c[k] = gmm(image[i,j],mu[k],v[k],p[k])
+                a = (c==c.max()).nonzero()
+                mri_segMask[i,j]=a[1]
+                
         print("c: " + str(c))
-    
         
+        return mri_segMask
+        
+"""
+    
+    % Image mask 
+    mu = mu+minImage-1;                                       % recover real range
+    imageMask = zeros([rows columns]);
 
-
+    for i = 1:rows
+        for j = 1:columns
+            for n = 1:clastersNum
+                c(n) = module9GaussDist(imageCopy(i,j),mu(n),v(n),p(n)); 
+            end
+            
+            a = find(c == max(c));  
+            imageMask(i,j) = a(1);
+        end
+    end
+    
+    imageMaskFull(:,:,pitch) = imageMask;
+%     pitch
+end
+"""
+        
 skullFreeImage = array([[[ 1,  1,  2],[ 3,  1,  2],[ 1, 1,  3]],[[ 2, 3, 1],[2, 1, 1],[1, 2, 2]],[[2, 3, 2],[1, 2, 3],[1, 2, 2]]])
 print("SkullFreeImage: " + str(skullFreeImage))
 
