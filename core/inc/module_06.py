@@ -1,4 +1,3 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -10,9 +9,13 @@ class DTISolver(object):
     MFN_GRADIENT_EPSILON = 1e-5
     MFN_LAMBDA_MATRIX_FUN = 'identity'
 
-    def __init__(self, dwi, solver, fix_method):
+    def __init__(self, data, gradients, b_value, mask, solver, fix_method):
 
-        self._dwi = dwi
+        self._data = data
+        self._bvecs = gradients
+        self._bvals = b_value
+        self._mask = mask
+
         self._solver = solver
         self._fix_method = fix_method
 
@@ -27,20 +30,20 @@ class DTISolver(object):
     """
 
     def _check_mask(self):
-        if not hasattr(self._dwi, 'mask'):
-            self._dwi.mask = np.ones((self._dwi.data.shape[0], self._dwi.data.shape[1]))
+        if np.shape(self._mask)[0] == 0:
+            self._mask = np.ones((self._data.shape[0], self._data.shape[1])) == 1
 
     def _get_design_matrix(self):
         design_matrix = np.column_stack((
-            np.square(self._dwi.bvecs[:, 0]),
-            np.square(self._dwi.bvecs[:, 1]),
-            np.square(self._dwi.bvecs[:, 2]),
-            2 * np.multiply(self._dwi.bvecs[:, 0], self._dwi.bvecs[:, 1]),
-            2 * np.multiply(self._dwi.bvecs[:, 1], self._dwi.bvecs[:, 2]),
-            2 * np.multiply(self._dwi.bvecs[:, 0], self._dwi.bvecs[:, 2])
+            np.square(self._bvecs[:, 0]),
+            np.square(self._bvecs[:, 1]),
+            np.square(self._bvecs[:, 2]),
+            2 * np.multiply(self._bvecs[:, 0], self._bvecs[:, 1]),
+            2 * np.multiply(self._bvecs[:, 1], self._bvecs[:, 2]),
+            2 * np.multiply(self._bvecs[:, 0], self._bvecs[:, 2])
         ))
-        design_matrix *= (-1)*self._dwi.bvals[:, np.newaxis]
-        design_matrix = np.insert(design_matrix, 0, np.ones(self._dwi.bvals.shape), axis=1)
+        design_matrix *= (-1)*self._bvals[:, np.newaxis]
+        design_matrix = np.insert(design_matrix, 0, np.ones(self._bvals.shape), axis=1)
 
         return design_matrix
 
@@ -102,24 +105,24 @@ class DTISolver(object):
 
     def _pixel_loop(self, image_depth, function_handle):
 
-        output_image = np.zeros((np.shape(self._dwi.data)[0], np.shape(self._dwi.data)[1], image_depth))
+        output_image = np.zeros((np.shape(self._data)[0], np.shape(self._data)[1], image_depth))
 
         # very naive implementation
-        for id_x in range(np.shape(self._dwi.data)[0]):
-            for id_y in range(np.shape(self._dwi.data)[1]):
+        for id_x in range(np.shape(self._data)[0]):
+            for id_y in range(np.shape(self._data)[1]):
 
-                if self._dwi.mask[id_x, id_y]:
+                if self._mask[id_x, id_y]:
                     output_image[id_x, id_y, :] = function_handle(self, id_x, id_y)
 
-            if not np.floor(100*id_x/np.shape(self._dwi.data)[0]) % 10:
-                print('Progress: {0:0.2f}%'.format(100*id_x/np.shape(self._dwi.data)[0]))
+            if not np.floor(100*id_x/np.shape(self._data)[0]) % 10:
+                print('Progress: {0:0.2f}%'.format(100*id_x/np.shape(self._data)[0]))
 
         return output_image
 
     def estimate_tensor(self):
 
         def estimate_tensor_pixel_func(DTISolver, id_x, id_y):
-            pixel = np.squeeze(DTISolver._dwi.data[id_x, id_y, :])
+            pixel = np.squeeze(DTISolver._data[id_x, id_y, :])
             estimate = self._solver_func(pixel)
             return estimate[1:]
 
@@ -141,9 +144,7 @@ class DTISolver(object):
             # we take absolute value because we care about the axis in general, not direction specifically
             rgb = np.abs(eig_vectors[:, -1])
 
-            if self._fix_method == 'zero':
-                eig_vals[eig_vals < 0] = 0
-            elif self._fix_method == 'abs':
+            if self._fix_method == 'abs':
                 eig_vals = np.abs(eig_vals)
 
             return np.hstack((eig_vals, rgb))
@@ -184,7 +185,7 @@ class DTISolver(object):
         eig_variance = self._get_eig_variance()
 
         RA = np.zeros(np.shape(MD))
-        RA[self._dwi.mask] = np.sqrt(np.divide(eig_variance[self._dwi.mask], 3*MD[self._dwi.mask]))
+        RA[self._mask] = np.sqrt(np.divide(eig_variance[self._mask], 3*MD[self._mask]))
         return RA
 
     def _get_marker_FA(self):
@@ -192,16 +193,16 @@ class DTISolver(object):
         sum_squares = np.sum(np.square(self._eig_image), axis=2)
 
         FA = np.zeros(np.shape(eig_variance))
-        FA[self._dwi.mask] = np.sqrt(3/2) * \
-                             np.sqrt(np.divide(eig_variance[self._dwi.mask], sum_squares[self._dwi.mask]))
+        FA[self._mask] = np.sqrt(3/2) * \
+                             np.sqrt(np.divide(eig_variance[self._mask], sum_squares[self._mask]))
         return FA
 
     def _get_marker_VR(self):
         MD = self._get_marker_MD()
 
         VR = np.zeros(np.shape(MD))
-        VR[self._dwi.mask] = np.divide(
-            (np.prod(self._eig_image, axis=2))[self._dwi.mask], np.power(MD[self._dwi.mask], 3)
+        VR[self._mask] = np.divide(
+            (np.prod(self._eig_image, axis=2))[self._mask], np.power(MD[self._mask], 3)
         )
         return VR
 
@@ -485,8 +486,27 @@ class DTISolver(object):
         return cholesky_estimate
 
 
-def run_pipeline(diffusion_data, solver, fix_method, plotting=False):
-    dti_solver = DTISolver(diffusion_data, solver, fix_method)
+def run_pipeline(dwi, solver, fix_method, plotting=False):
+
+    # convert data for compatibility with CORE
+    structural_data = dwi.structural_data
+    diffusion_data = dwi.diffusion_data
+    data = np.concatenate((structural_data, diffusion_data), axis=2)
+
+    b_value = np.concatenate((np.zeros((np.shape(structural_data)[2])), dwi.b_value), axis=0)
+    gradients = np.concatenate((np.zeros((np.shape(structural_data)[2], 3)), dwi.gradients), axis=0)
+
+    # only one slice
+    data = np.squeeze(data)
+
+    dti_solver = DTISolver(
+        data=data,
+        gradients=gradients,
+        b_value=b_value,
+        mask=dwi.skull_stripping_mask,
+        solver=solver,
+        fix_method=fix_method
+    )
     dti_solver.estimate_tensor()
     dti_solver.estimate_eig()
     biomarkers = dti_solver.get_biomarkers()
@@ -501,13 +521,13 @@ def run_pipeline(diffusion_data, solver, fix_method, plotting=False):
     return biomarkers
 
 
-def run_module(diffusion_data, solver, fix_method, plotting=False):
+def run_module(mri_diff, solver, fix_method, plotting=False):
     # importing here avoids cyclic import problems
-    from .mri_data import DiffusionData
+    from . import simens_dadm as smns
 
-    if isinstance(diffusion_data, DiffusionData):
-        diffusion_data.biomarkers = run_pipeline(diffusion_data, solver, fix_method, plotting)
-        return diffusion_data
+    if isinstance(mri_diff, smns.mri_diff):
+        mri_diff.biomarkers = run_pipeline(mri_diff, solver, fix_method, plotting)
+        return mri_diff
 
     else:
         raise ValueError("Unexpected data format in module number 6!")

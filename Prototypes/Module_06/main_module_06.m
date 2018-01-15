@@ -11,6 +11,8 @@ EPSILON = 1e-8;
 FIX = FIX_ENUM{2};  % method error: ZERO > ABS >> CHOLESKY
 SOLVER = SOLVER_ENUM{2};  % use 2 or 3
 
+DATASET_ROOT = '../../Data/Module_06_test';
+
 % TODO: take sqrt of tensor image after CHOLESKY?
 % ^ right now the values are smaller than they should be
 
@@ -18,8 +20,8 @@ SOLVER = SOLVER_ENUM{2};  % use 2 or 3
 
 filenameIndex = 40;
 
-load(sprintf('data/rec_%d.mat', filenameIndex));
-load('data/mask.mat');
+load(sprintf('%s/rec_%d.mat', DATASET_ROOT, filenameIndex));
+load(sprintf('%s/mask.mat', DATASET_ROOT));
 dwi.mask = mask;
 
 % important: equations assume that data is in signal units, not pixels
