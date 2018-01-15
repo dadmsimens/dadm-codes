@@ -63,9 +63,9 @@ def imHist(image):
     imageHistogram=imageHistogram/(imageHistogram.sum())
     return imageHistogram
 
-image= array([[1.,3.,6.],[1.,2.,6.]])
-imageHistogram = imHist(image)
-print(imageHistogram)
+#image= array([[1.,3.,6.],[1.,2.,6.]])
+#imageHistogram = imHist(image)
+#print(imageHistogram)
 
 """ Create Gauss mixture model function """
 """
@@ -95,22 +95,211 @@ def gmm(x,mu,v,p):
     #v - column vector of variation
     #p - column vector of probability
     
-    x = x.flatten()
+    #x = x.flatten()
     mu = mu.flatten()
     v = v.flatten()
     p = p.flatten()
     
-    y = []
+    probab = []
     
     for i in range(mu.size):
         differ=x-mu[i]
         amplitude = p[i]/(math.sqrt(2*math.pi*v[i]))
         app = amplitude*(np.exp((-0.5*(differ*differ))/v[i]))
-        y.append(app)
-        
-    y = np.transpose(y)
-    return(y)
+        probab.extend(app)
+    probab = np.array(probab)
+    probab = np.transpose(probab)
+    return(probab)
     
 """ Segmentation - main function """
-def segmentation(skullFreeImage):
-    print(imageSegmentation)
+"""
+Matlab prototype:
+%% GMM for all images
+
+imageAll = ima.imagesSkullFree;
+% imageAll = ima;
+
+for pitch = 1:pitches
+      
+    image = imageAll(:,:,pitch);
+    
+    imageCopy = image;
+    image = double(image);
+    im = image(:);
+    lenghIm = length(im);                               
+    minImage = min(im);
+    maxImage = max(im);
+    image = image - minImage + 1; 
+    
+    [histIm] = module9Histogram(image);
+    x = find(histIm)';
+    hx = histIm(x)';      
+
+    clastersNum = 4; 
+    mu = (1:clastersNum)*maxImage/(clastersNum+1); 
+    v = ones(1,clastersNum)*maxImage; 
+    p = ones(1,clastersNum)*1/clastersNum;
+    
+    while(1)
+        
+        % Expectation Step  
+        probab = module9GaussDist(x,mu,v,p); 
+        distrDens = sum(probab,2);
+        llh=sum(hx.*log(distrDens));
+        
+        %Maximization Step
+        for j=1:clastersNum
+                resp = hx.*probab(:,j)./distrDens;   
+                p(j) = sum(resp);                       
+                mu(j) = sum(x.*resp)/p(j);          
+                differ = (x-mu(j)); 
+                v(j)=sum(differ.*differ.*resp)/p(j);
+        end
+        p = p + 1e-3;
+        p = p/sum(p);                                   
+        
+        % Exit alghoritm condition
+        
+        probab = module9GaussDist(x,mu,v,p);
+        distrDens = sum(probab,2);
+        nllh=sum(hx.*log(distrDens));                
+        if((nllh-llh)<0.0001) 
+            break; 
+        end;        
+    end
+
+    % Image mask 
+    mu = mu+minImage-1;                                       % recover real range
+    imageMask = zeros([rows columns]);
+
+    for i = 1:rows
+        for j = 1:columns
+            for n = 1:clastersNum
+                c(n) = module9GaussDist(imageCopy(i,j),mu(n),v(n),p(n)); 
+            end
+            
+            a = find(c == max(c));  
+            imageMask(i,j) = a(1);
+        end
+    end
+    
+    imageMaskFull(:,:,pitch) = imageMask;
+%     pitch
+end
+"""
+
+
+def segmentation(skullFreeImage,pitches):
+    
+    #pobranie wszystkich danych z modułu 8
+    pitches = 3
+    
+    for pitch in range(pitches):
+        
+        image = skullFreeImage[pitch,:,:]
+        print("I: " + str(image))
+        
+        imageCopy = image
+        image = double(image)
+        im = image.flatten()
+        imLength = im.size
+        imMin = im.min()
+        imMax = im.max()
+        
+        image = image-imMin + 1
+        print ("image: " + str(image))
+        
+        imageHistogram = imHist(image)
+        print("imageHistigram: " + str(imageHistogram))
+        x = imageHistogram.nonzero()
+        print("x: " + str(x))
+        hx = imageHistogram[x]
+        print("hx: " + str(hx))
+        
+        clustersNum = 2
+        mu = arange(1,clustersNum+1)*imMax/(clustersNum+1)
+        v = np.ones(clustersNum)*imMax
+        p = np.ones(clustersNum)/clustersNum
+        print("mu: " + str(mu) + " v: " + str(v) + " p: " + str(p))
+        
+        condition = 1
+        while condition == 1:
+            
+            #Expectation Step
+            probab = gmm(x,mu,v,p)
+            #probab = np.array(probab)
+            #probab = array([[1,2,3],[1,1,1],[4,5,6]])
+            print("probab trans: " + str(probab))
+            distrDens = probab.sum(axis=1)
+            print("distr Dens: " + str(distrDens))
+            llh = (hx*np.log(distrDens)).sum()
+            print("llh: " + str(llh))
+            
+            #Maximization Step
+            for j in range(clustersNum):
+                print(j)
+                hxsh = hx.shape
+                probabxh = probab.shape
+                distsh=distrDens.shape
+                print(" hx  " + str(hxsh) + " probab  " + str(probabxh) + " dist  " + str(distsh))
+                resp = hx*probab[:,j]/distrDens
+                print("resp: " + str(resp))
+                p[j]=resp.sum()
+                print("p(j): " + str(p))
+                mu[j]=(x*resp/p[j]).sum()
+                print("mu(j): " + str(mu))
+                differ=x-mu[j]
+                print("differ: " + str(differ))
+                v[j]=(differ*differ*resp/p[j]).sum()
+                print("v: " + str(v))
+                
+            print("P1: " + str(p[:]))
+            p = p+0.001
+            print("P2: " + str(p))
+            p = p/p.sum()
+            print("P3: " + str(p))
+            
+            #Exit alghoritm condition
+            """ Błąd w warunku wyjściowym """
+            probab = gmm(x,mu,v,p)
+            distrDens = probab.sum(axis=1)
+            nllh = (hx*np.log(distrDens)).sum()
+            diffLlh = nllh-llh
+            print("llh: " + str(llh))
+            print("nlhh: " + str(nllh))
+            print("diffLlh: " + str(diffLlh))
+            
+            #condition = 0
+            if diffLlh<0.0001:
+                break
+            
+        print("pitch number: " + str(pitch))
+        #Image mask
+        mu = mu+imMin-1             #recover real range
+        imageMask = np.zeros([rows, columns])
+        print("imageMask: " + str(imageMask))
+        
+        c = np.zeros(clustersNum)
+        print("c: " + str(c))
+        
+        for i in range(rows):
+            for j in range(columns):
+                for  k in range(clustersNum):
+                    xn = imageCopy[i,j]
+                    mun = mu[k]
+                    vn =  v [k]
+                    pn = p[k]
+                    print("xn:  " + str(xn))
+                    probab = []
+                    c[k] = gmm(xn,mu,v,p)
+        print("c: " + str(c))
+    
+        
+
+
+skullFreeImage = array([[[ 1,  1,  2],[ 3,  1,  2],[ 1, 1,  3]],[[ 2, 3, 1],[2, 1, 1],[1, 2, 2]],[[2, 3, 2],[1, 2, 3],[1, 2, 2]]])
+print("SkullFreeImage: " + str(skullFreeImage))
+
+[pitches, rows, columns]=skullFreeImage.shape
+print("size pitches: " + str(pitches) + " size rows: " + str(rows) + " size columns: " + str(columns))
+segmentation(skullFreeImage,pitches)
