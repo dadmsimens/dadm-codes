@@ -3,7 +3,7 @@ from scipy.ndimage import morphology, center_of_mass, find_objects, maximum, min
 from scipy.ndimage import watershed_ift, maximum_filter, sobel
 import numpy as np
 from scipy import ndimage
-
+from . import simens_dadm as smns
 
 class SkullStripping:
     def __init__(self, image):
@@ -114,3 +114,18 @@ class SkullStripping:
             plt.show()
         return skull_stripp_mask
 
+
+def main8(mri_input, verbose=False):
+    if isinstance(mri_input, smns.mri_diff):  # instructions for diffusion mri
+        mri_output = mri_input
+        for i in range(mri_input.diffusion_data.shape[2]):
+            mri_output.skull_stripping_mask = SkullStripping(mri_input.diffusion_data[:, :, 1]).run(verbose)
+        print("This file contains diffusion MRI")
+        # it should works, I make tests when 3D data will be available,
+    elif isinstance(mri_input, smns.mri_struct):
+        print("This file contains structural MRI")
+        mri_output = mri_input
+        mri_output.skull_stripping_mask = SkullStripping(mri_input.structural_data).run(verbose)
+    else:
+        return "Unexpected data format in module number 8!"
+    return mri_output
