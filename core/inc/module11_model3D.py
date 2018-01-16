@@ -22,7 +22,7 @@ class model3D():
         #marching cubes
         model = vtk.vtkMarchingCubes()
         model.SetInputData(image)
-        model.SetValue(0,3)
+        model.SetValue(0,1)
         return image, model
 
     def setup_render_window(self):
