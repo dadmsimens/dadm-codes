@@ -30,8 +30,8 @@ class DTISolver(object):
     """
 
     def _check_mask(self):
-        if self._mask is []:
-            self._mask = np.ones((self._data.shape[0], self._data.shape[1]))
+        if np.shape(self._mask)[0] == 0:
+            self._mask = np.ones((self._data.shape[0], self._data.shape[1])) == 1
 
     def _get_design_matrix(self):
         design_matrix = np.column_stack((
@@ -489,18 +489,21 @@ class DTISolver(object):
 def run_pipeline(dwi, solver, fix_method, plotting=False):
 
     # convert data for compatibility with CORE
-    structural_data = dwi.structural_data[:, :, :, None]
+    structural_data = dwi.structural_data
     diffusion_data = dwi.diffusion_data
     data = np.concatenate((structural_data, diffusion_data), axis=2)
+
+    b_value = np.concatenate((np.zeros((np.shape(structural_data)[2])), dwi.b_value), axis=0)
+    gradients = np.concatenate((np.zeros((np.shape(structural_data)[2], 3)), dwi.gradients), axis=0)
 
     # only one slice
     data = np.squeeze(data)
 
     dti_solver = DTISolver(
         data=data,
-        gradients = dwi.gradients,
-        b_value = dwi.b_value,
-        mask = dwi.skull_stripping_mask,
+        gradients=gradients,
+        b_value=b_value,
+        mask=dwi.skull_stripping_mask,
         solver=solver,
         fix_method=fix_method
     )

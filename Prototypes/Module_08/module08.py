@@ -1,10 +1,9 @@
 import matplotlib.pyplot as plt
 from scipy.ndimage import morphology, center_of_mass, find_objects, maximum, minimum
-from scipy.ndimage import label, watershed_ift, maximum_filter, sobel
-from scipy.io import loadmat, savemat
+from scipy.ndimage import watershed_ift, maximum_filter, sobel
+from scipy.io import loadmat
 import numpy as np
-from strel import strel
-from imimposemin import imimposemin
+from scipy import ndimage
 
 
 class SkullStriping:
@@ -12,21 +11,39 @@ class SkullStriping:
         self.filename = filename
         self.verbose = verbose
 
-    def get_data(self, all = False):
-        if True == all:
-            mat_dict = loadmat(self.filename)
-            image = mat_dict['SENSE_LSE']
-        else:
-            mat_dict = loadmat(self.filename)
-            image = mat_dict['SENSE_Tikhonov']
-            # image = mat_dict['SENSE_Tikhonov_ref_01']
-            # image = mat_dict['SENSE_LSE']
+    def get_data(self):
+        mat_dict = loadmat(self.filename)
+        image = mat_dict['SENSE_LSE']
         return image
+
+    def recon(self, marker, mask):
+        recon1 = marker
+        recon1_old = np.zeros([256, 256], 'uint8')
+        while sum(sum(recon1 - recon1_old)) != 0:
+            recon1_old = recon1
+            recon1 = ndimage.grey_dilation(recon1, 5)
+            bw = recon1 > mask
+            recon1[bw] = mask[bw]
+        return recon1
+
+    def strel(self, type, size):
+        a, b = size, size
+        n = 2 * size + 1
+        if type == 'disk':
+            y, x = np.ogrid[-a:n - a, -b:n - b]
+            mask = x * x + y * y <= size * size
+            array = np.ones((size * 2 + 1, size * 2 + 1))
+            array[mask] = 0
+        elif type == 'array':
+            mask = np.ones((a, b), dtype=bool)
+            array = np.ones((a, b))
+            array[mask] = 0
+        return array
 
     def preprocessing(self, image):
         #preprocessing to get cfs and crop image
-        se = strel('disk', 1)
-        imag = morphology.grey_erosion(image, 5)
+        se = self.strel('disk', 1)
+        imag = image
         pixel_counts, gray_levels = np.histogram(imag, bins=256)
         upcut = 0.98 * maximum(gray_levels)
         downcut = 0.02 * maximum(gray_levels)
@@ -38,26 +55,17 @@ class SkullStriping:
         bin = np.where(image > threshold, upper, lower)
         bin = morphology.binary_erosion(bin, se)
         cog = center_of_mass(bin, image)
-        labels = label(bin)[0]
-        bboxes = find_objects(labels)[0]
+        bboxes = find_objects(bin.astype(np.uint16))[0]
         y = bboxes[0]
         x = bboxes[1]
-        diamx = x.stop - x.start + 20
-        diamy = y.stop - y.start + 20
+        diamx = x.stop - x.start
+        diamy = y.stop - y.start
         diameters = np.mean([diamx, diamy])
-        r = diameters / 2
-
+        r = diameters / 2 + 10
         [xx, yy] = np.mgrid[(1-cog[0]):(257-cog[0]), (1-cog[1]):(257-cog[1])]
         mask = (xx ** 2 + yy ** 2) < r ** 2
         cropped_image = image * mask
-        # fig = plt.figure()
-        # plt.gray()
-        # ax1 = fig.add_subplot(121)
-        # ax2 = fig.add_subplot(122)
-        # ax1.imshow(mask)
-        # ax2.imshow(cropped_image)
-        # plt.show()
-        return cropped_image, csf
+        return cropped_image, csf, cog, r
 
     def grad_mag_sobel(self, image):
         # gradient magnitude using of the Sobel edge mask
@@ -83,68 +91,41 @@ class SkullStriping:
 
     def background_markers(self, image, csf):
         # mark the background objects
-        threshold, upper, lower = csf, 1, 0
-        bw = np.where(image > threshold, upper, lower)
+        threshold, upper, lower = csf+20, 0, 1
+        bw = np.where(image >= threshold, upper, lower)
         d = morphology.distance_transform_edt(bw)
-        markers = label(bw)[0]
-        dl = watershed_ift(d.astype(np.uint8), markers)
+        dl = watershed_ift(bw.astype(np.uint8), d.astype(np.int16))
         bgm = dl == 1
         bgm = np.invert(bgm)
-        se = strel('disk', 2)
-        bgm = morphology.binary_opening(bgm, se)
         return bgm
 
-    def watershed_skull_stripping(self):
-        image = self.get_data(all=True)
-        if 3 == len(image.shape):
-            boundaries = np.zeros((256, 256, 181))
-            for i in range(0, 180):
-                preproc_image, csf = self.preprocessing(image[:, :, i])
-                gradmag = self.grad_mag_sobel(preproc_image)
-                log = self.foreground_markers(preproc_image, csf)
-                bgm = self.background_markers(preproc_image, csf)
-                gradmag2 = imimposemin(gradmag, bgm | log)
-                markers = label(gradmag2)[0]
-                l = watershed_ift(gradmag2.astype(np.uint8), markers)
-                boundaries[:, :, i] = l == 0
-                if self.verbose:
-                    fig = plt.figure()
-                    plt.gray()
-                    ax1 = fig.add_subplot(121)
-                    ax2 = fig.add_subplot(122)
-                    result = image[:, :, i] * boundaries[:, :, i]
-                    saving = {"skull_stripped": result}
-                    savemat('skull_stripped2.mat', saving)
-                    ax1.imshow(image[:, :, i])
-                    ax2.imshow(result)
-                    plt.show()
-        else:
-            preproc_image, csf = self.preprocessing(image)
-            gradmag = self.grad_mag_sobel(preproc_image)
-            log = self.foreground_markers(preproc_image, csf)
-            bgm = self.background_markers(preproc_image, csf)
-            gradmag2 = imimposemin(gradmag, bgm | log)
-            markers = label(gradmag2)[0]
-            l = watershed_ift(gradmag2.astype(np.uint8), markers)
-            boundaries = l == 0
-            if self.verbose:
-                fig = plt.figure()
-                plt.gray()
-                ax1 = fig.add_subplot(121)
-                ax2 = fig.add_subplot(122)
-                result = image * boundaries
-                saving = {"skull_stripped": result}
-                savemat('skull_stripped2.mat', saving)
-                ax1.imshow(image)
-                ax2.imshow(result)
-                plt.show()
-        return boundaries
+    def skull_stripping(self):
+        image = self.get_data()
+        skull_stripp_mask = np.zeros_like(image)
+        preproc_image, csf, cog, r = self.preprocessing(image)
+        gradmag = self.grad_mag_sobel(preproc_image)
+        log = self.foreground_markers(preproc_image, csf)
+        bgm = self.background_markers(preproc_image, csf)
+        markers = np.zeros_like(image).astype(np.int16)
+        markers[bgm == False] = 1
+        markers[log == True] = 2
+        l = watershed_ift(gradmag.astype(np.uint16), markers)
+        skull_stripp_mask = l == l[cog[0].astype(np.int), cog[1].astype(np.int)]
+        if self.verbose:
+            fig = plt.figure()
+            plt.gray()
+            ax1 = fig.add_subplot(211)
+            ax2 = fig.add_subplot(212)
+            result = image * skull_stripp_mask
+            ax1.imshow(image)
+            ax2.imshow(result)
+            plt.show()
+        return skull_stripp_mask
 
 if __name__ == '__main__':
-    ss = SkullStriping('recon_T1_synthetic_normal_1mm_L8_r2.mat', verbose=True)
-    # ss = SkullStriping('recon_T1_synthetic_multiple_sclerosis_lesions_1mm_L16_r2.mat', verbose=True)
-    # ss = SkullStriping('brain.mat')
-    # ss = SkullStriping('SENSE_LSE_L_8_r_2_STD_2_RHO_0.mat', verbose=True)
-    ss.watershed_skull_stripping()
+    ss = SkullStriping('dane/recon_T1_synthetic_normal_1mm_L8_r2.mat', verbose=True)
+    # ss = SkullStriping('dane/recon_T1_synthetic_multiple_sclerosis_lesions_1mm_L16_r2.mat', verbose=True)
+    # ss = SkullStriping('dane/SENSE_LSE_L_8_r_2_STD_2_RHO_0.mat', verbose=True)
+    ss.skull_stripping()
 
 
