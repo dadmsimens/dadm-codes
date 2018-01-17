@@ -11,8 +11,14 @@ DATASETS_ROOT = PROJECT_ROOT + '/Data/Module_11_test/'
 
 
 if __name__ == "__main__":
-    mat_data = sio.loadmat(DATASETS_ROOT + 'segmentationMask.mat')
-    mat_data = mat_data['imageMaskFull']
+
+    segmentation = sio.loadmat(DATASETS_ROOT + 'segmentationMask.mat')
+    segmentation = segmentation['imageMaskFull']
+
+    data = sio.loadmat(DATASETS_ROOT + 'originData.mat')
+    data = data['imagesSkullFree']
+
     struct = smns.mri_struct()
-    struct.segmentation = mat_data
+    struct.structural_data = data
+    struct.segmentation = segmentation
     result1 = module11.main11(struct)

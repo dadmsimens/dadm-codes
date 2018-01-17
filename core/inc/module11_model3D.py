@@ -22,7 +22,7 @@ class model3D():
         #marching cubes
         model = vtk.vtkMarchingCubes()
         model.SetInputData(image)
-        model.SetValue(0,3)
+        model.SetValue(0,1)
         return image, model
 
     def setup_render_window(self):
@@ -57,55 +57,53 @@ class model3D():
         if mode == 0:
             self.renderer.RemoveActor(self.actor_clipped)
             self.preview_model()
-            self.planeWidgetX.Off()
-            
         else:
             self.renderer.RemoveActor(self.actor)
             self.renderer.RemoveActor(self.actor_clipped)
 
     def cut_model(self):
-        self.renderer.AddActor(self.actor)
+        #self.renderer.AddActor(self.actor)
+        self.actor.VisibilityOn()
 
-        self.planeWidgetX = vtk.vtkImagePlaneWidget()
-        self.planeWidgetX.SetInputData(self.image)
-        self.planeWidgetX.TextureVisibilityOff()
-        self.planeWidgetX.SetPlaneOrientationToZAxes()
-        prop1 = self.planeWidgetX.GetPlaneProperty()
-        prop1.SetColor(1, 0, 0)
-        style=vtk.vtkInteractorStyleTrackballCamera()
-        self.iren.SetInteractorStyle(style)
-        self.planeWidgetX.SetInteractor(self.iren)
-        self.planeWidgetX.On()
-        self.renderer.ResetCamera();
-        cam1 = self.renderer.GetActiveCamera()
-        cam1.Elevation(110)
-        cam1.SetViewUp(0, 0, 1)
-        cam1.Azimuth(45)
-        self.renderer.ResetCameraClippingRange()
+        self.plane = vtk.vtkPlane()
+        clipper = vtk.vtkClipPolyData()
+        clipper.SetInputConnection(self.model.GetOutputPort())
+        clipper.SetClipFunction(self.plane)
+        clipper.InsideOutOn()
+        clipMapper = vtk.vtkPolyDataMapper()
+        clipMapper.SetInputConnection(clipper.GetOutputPort())
+        clipMapper.ScalarVisibilityOff()
+
+        self.clipActor = vtk.vtkActor()
+        self.clipActor.SetMapper(clipMapper)
+        self.clipActor.VisibilityOff()
+
+        self.clipActor.SetScale(1.01, 1.01, 1.01)
+
+        # The callback function
+        def myCallback(obj, event):
+            self.plane.SetNormal(obj.GetNormal())
+            self.plane.SetOrigin(obj.GetCenter())
+            self.actor.VisibilityOff()
+            self.clipActor.VisibilityOn()
+            
+        planeWidget = vtk.vtkImagePlaneWidget()
+        planeWidget.SetInteractor(self.iren)
+        planeWidget.SetPlaceFactor(1.25)
+        planeWidget.SetInputData(self.image)
+        planeWidget.PlaceWidget()
+        planeWidget.On()
+        planeWidget.SetPlaneOrientationToZAxes()
         
-        def MouseMoveCallback(obj, event):
-            plane = vtk.vtkPlane()
-            plane.SetNormal(self.planeWidgetX.GetNormal())
-            plane.SetOrigin(self.planeWidgetX.GetCenter())
-            clipper = vtk.vtkClipPolyData()
-            clipper.SetInputConnection(self.model.GetOutputPort())
-            clipper.SetClipFunction(plane)
-            clipper.SetValue(0)
-            clipper.Update()
-            mapper = vtk.vtkDataSetMapper()
-            mapper.SetInputData(clipper.GetOutput())
-            mapper.ScalarVisibilityOff()
-            self.actor_clipped = vtk.vtkActor()
-            self.actor_clipped.SetMapper(mapper)
-            self.actor_clipped.GetProperty().SetInterpolationToFlat()
-            self.renderer.RemoveActor(self.actor)
-            self.renderer.AddActor(self.actor_clipped)
-            self.planeWidgetX.Off()
-
-
+        
+        planeWidget.AddObserver("InteractionEvent", myCallback)
+        planeWidget.TextureVisibilityOff()
+        
+        self.renderer.AddActor(self.actor)
+        self.renderer.AddActor(self.clipActor)
+        
+        
         self.iren.Initialize()
         self.vtkWidget.GetRenderWindow().Render()
-        #style.AddObserver("MiddleButtonReleaseEvent", MouseMoveCallback)
-        style.AddObserver("RightButtonPressEvent", MouseMoveCallback)
         self.iren.Start()
 
