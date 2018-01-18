@@ -146,14 +146,20 @@ Sylwia Mól &10-Dec-2017 & "Structure" \& "Assumptions" chapters changed\tabular
 \hline 
 Klaudia Gugulska &10-Dec-2017 &  Update of description of 2nd module\tabularnewline
 \hline
-\hline 
 Jacek Fidos &4-Jan-2018 &  Short SciPy description\tabularnewline
+\hline 
+Eliza Kowalczyk &14-Jan-2018 &  Upsampling documentation update\tabularnewline
+\hline 
+Sylwia Mól &17-Jan-2018 &  Structure and assumptions changed\tabularnewline
+\hline 
+Eliza Kowalczyk &17-Jan-2018 &  Upsampling documentation update\tabularnewline
 \hline 
 \end{tabular}
 
 \chapter{Assumptions}
 
-The aim of this project is to create the system for MRI data pre-processing and post-processing using Python, SciPy, Cython and Qt5 (detailed description of tools available in chapter {\it Implementation}, section {\it Tools}). The project is divided into 11 modules. The application allows to <... to be continued - detailed description what you can do in this app, possiblities, choose etc.>
+The aim of this project is to create the system for MRI data pre-processing and post-processing using Python, SciPy, Cython and Qt5 (detailed description of tools available in chapter {\it Implementation}, section {\it Tools}). The project is divided into 11 modules (more: chapter {\it Structure}). \\
+The application is called SieMRI (the abbreviation for Siemens MRI). It allows to recontruct MRI images, correct intensity inhomogenities, estimate non-stationary noise and remove it using one of two methonds, show diffusion tensors, strip the skull, show specific parts of human brain, upsample the image or visualize brain in 3D or using specific plane. MRI image reconstruction starts automatically when user choose the file with data. Other functionalities are non-obligatory - the user decide if specific functionality should be used.
 
 \chapter{Structure}
 
@@ -171,6 +177,7 @@ As mentioned in chapter {\it Assumptions} the project is divided into 11 modules
 \item Module 11.: Brain 3D visualization using marching cubes method
 \item Module 12.: Oblique imaging
 \end{itemize}
+Module 7. is excluded due to limited human resources and time. 
  
 The input and output signals for each module are listed in the table. \\
 \begin{tabular}{|c|c|c|c|}
@@ -178,7 +185,7 @@ The input and output signals for each module are listed in the table. \\
 
 Dependencies between modules are shown on the picture. 11th module is divided into two parts, because every part of module requires other pre-procesing activities. 
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.7]{figures/drzewo}\caption{Dependencies between modules}
+\centering{}\includegraphics[scale=0.7]{figures/drzewo2}\caption{Dependencies between modules}
 \label{fig:figures/drzewo } 
 \end{figure}
 

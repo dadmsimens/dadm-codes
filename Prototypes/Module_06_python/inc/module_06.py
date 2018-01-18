@@ -30,7 +30,9 @@ class DTISolver(object):
     """
 
     def _check_mask(self):
-        if np.shape(self._mask)[0] == 0:
+        if np.shape(self._mask)[0] == 0 or \
+                (np.shape(self._mask)[0] != np.shape(self._data)[0]
+                 and (np.shape(self._mask)[1] != np.shape(self._data)[1])):
             self._mask = np.ones((self._data.shape[0], self._data.shape[1])) == 1
 
     def _get_design_matrix(self):
@@ -137,7 +139,7 @@ class DTISolver(object):
             # eigenvalues in ascending order, flip array
             eig_vals = eig_vals[::-1]
 
-            # get RGB values (from eigenvectr corresponding to largest eigenvalue)
+            # get RGB values (from eigenvector corresponding to largest eigenvalue)
             # red: transversal (left-right)
             # green: anterior-posterior (front-back)
             # blue: cranio-caudal (head-feet)
@@ -491,32 +493,42 @@ def run_pipeline(dwi, solver, fix_method, plotting=False):
     # convert data for compatibility with CORE
     structural_data = dwi.structural_data
     diffusion_data = dwi.diffusion_data
-    data = np.concatenate((structural_data, diffusion_data), axis=2)
+    data_mri = np.concatenate((structural_data, diffusion_data), axis=2)
 
     b_value = np.concatenate((np.zeros((np.shape(structural_data)[2])), dwi.b_value), axis=0)
     gradients = np.concatenate((np.zeros((np.shape(structural_data)[2], 3)), dwi.gradients), axis=0)
 
-    # only one slice
-    data = np.squeeze(data)
+    num_slices = np.shape(data_mri)[3]
+    biomarkers = []
+    for slice_idx in range(num_slices):
+        print('Performing DTI on slice {} out of {}'.format(slice_idx, num_slices))
+        # only one slice
+        data = np.squeeze(data_mri[:, :, :, slice_idx])
 
-    dti_solver = DTISolver(
-        data=data,
-        gradients=gradients,
-        b_value=b_value,
-        mask=dwi.skull_stripping_mask,
-        solver=solver,
-        fix_method=fix_method
-    )
-    dti_solver.estimate_tensor()
-    dti_solver.estimate_eig()
-    biomarkers = dti_solver.get_biomarkers()
+        try:
+            mask = np.squeeze(dwi.skull_stripping_mask[:, :, :, slice_idx])
+        except:
+            # if mask is not defined for given slice
+            mask = []
 
-    if plotting is True:
-        dti_solver.plot_tensor()
-        dti_solver.plot_eig()
-        dti_solver.plot_biomarkers()
-        dti_solver.plot_FA_rgb()
-        plt.show()
+        dti_solver = DTISolver(
+            data=data,
+            gradients=gradients,
+            b_value=b_value,
+            mask=mask,
+            solver=solver,
+            fix_method=fix_method
+        )
+        dti_solver.estimate_tensor()
+        dti_solver.estimate_eig()
+        biomarkers.append(dti_solver.get_biomarkers())
+
+        if plotting is True:
+            dti_solver.plot_tensor()
+            dti_solver.plot_eig()
+            dti_solver.plot_biomarkers()
+            dti_solver.plot_FA_rgb()
+            plt.show()
 
     return biomarkers
 
