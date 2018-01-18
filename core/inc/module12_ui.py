@@ -164,7 +164,6 @@ class Window(QtWidgets.QDialog):
 
         ax.plot(x, [0] * len(x), [max(z)]*len(x), 'red')
         ax.plot([max(x)] * len(y), y, [max(z)]*len(y), 'red')
-        start_time = time.time()
         ax.plot([0] * len(y), y, [max(z)]*len(y), 'red')
         ax.plot(x, [max(y)] * len(x), [max(z)]*len(x), 'red')
 
