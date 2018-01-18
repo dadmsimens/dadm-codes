@@ -8,7 +8,7 @@ import vtk
 import sys
 
 class Brain3D_App(QtWidgets.QMainWindow):
-    def __init__(self,mri_data = None):
+    def __init__(self, mri_data = None):
         super().__init__()
         self.mri_data = mri_data
         self.ui = Ui.Ui_MainWindow()
@@ -16,7 +16,7 @@ class Brain3D_App(QtWidgets.QMainWindow):
         self.set_action()
         self.layout = QtWidgets.QHBoxLayout()
         self.model3D = model3D.model3D(self.mri_data, self.ui.frame, self.layout)
-        self.ui.actionReturn.setEnabled(False)
+        #self.ui.actionReturn.setEnabled(False)
 
     def exit(self):
         reply = QMessageBox.question(self, 'Message',

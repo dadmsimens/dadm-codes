@@ -33,6 +33,8 @@ class model3D():
         self.renderer.SetBackground(0.2, 0.2,0.2)
         self.vtkWidget.GetRenderWindow().AddRenderer(self.renderer)
         self.iren = self.vtkWidget.GetRenderWindow().GetInteractor()
+        style = vtk.vtkInteractorStyleTrackballCamera()
+        self.iren.SetInteractorStyle(style)
         self.preview_model()
 
 
@@ -77,15 +79,70 @@ class model3D():
         self.clipActor = vtk.vtkActor()
         self.clipActor.SetMapper(clipMapper)
         self.clipActor.VisibilityOff()
+        #self.clipActor.GetProperty().SetOpacity(0.1)
 
         self.clipActor.SetScale(1.01, 1.01, 1.01)
+        
+        plane = vtk.vtkPlane()
+        circleCutter = vtk.vtkCutter()
+        circleCutter.SetInputConnection(self.model.GetOutputPort())
 
+        circleCutter.SetCutFunction(self.plane)
+        stripper = vtk.vtkStripper()
+        stripper.SetInputConnection(circleCutter.GetOutputPort()) # valid circle
+        stripper.Update()
+        # that's our circle
+        circle = stripper.GetOutput()
+        
+        boundaryPoly = vtk.vtkPolyData()
+        boundaryPoly.SetPoints(circle.GetPoints())
+        boundaryPoly.SetPolys(circle.GetLines())
+        boundaryMapper = vtk.vtkPolyDataMapper()
+        boundaryMapper.SetInputData(boundaryPoly)
+        boundaryMapper.ScalarVisibilityOff()
+
+        
+        boundaryActor = vtk.vtkActor()
+
+        #boundaryActor.VisibilityOff()
         # The callback function
         def myCallback(obj, event):
+            boundaryActor.VisibilityOff()
             self.plane.SetNormal(obj.GetNormal())
             self.plane.SetOrigin(obj.GetCenter())
             self.actor.VisibilityOff()
             self.clipActor.VisibilityOn()
+            
+            
+        def myCallback2(obj, event):
+            plane = vtk.vtkPlane()
+            circleCutter = vtk.vtkCutter()
+            circleCutter.SetInputConnection(self.model.GetOutputPort())
+
+            circleCutter.SetCutFunction(self.plane)
+            stripper = vtk.vtkStripper()
+            stripper.SetInputConnection(circleCutter.GetOutputPort()) # valid circle
+            stripper.Update()
+            # that's our circle
+            circle = stripper.GetOutput()
+            
+            boundaryPoly = vtk.vtkPolyData()
+            boundaryPoly.SetPoints(circle.GetPoints())
+            boundaryPoly.SetPolys(circle.GetLines())
+            boundaryMapper = vtk.vtkPolyDataMapper()
+            boundaryMapper.SetInputData(boundaryPoly)
+            boundaryMapper.ScalarVisibilityOff()
+
+            
+            boundaryActor = vtk.vtkActor()
+
+            boundaryActor.SetMapper(boundaryMapper)
+            #boundaryActor.GetProperty().SetColor(0.8900,0.8100,0.3400)
+            plane.SetNormal(obj.GetNormal())
+            plane.SetOrigin(obj.GetCenter())
+            boundaryActor.VisibilityOn()
+            #boundaryActor.GetProperty().SetOpacity(0.5)
+            #self.renderer.AddActor(boundaryActor)
             
         planeWidget = vtk.vtkImagePlaneWidget()
         planeWidget.SetInteractor(self.iren)
@@ -97,6 +154,8 @@ class model3D():
         
         
         planeWidget.AddObserver("InteractionEvent", myCallback)
+        planeWidget.AddObserver("EndInteractionEvent", myCallback2)
+        
         planeWidget.TextureVisibilityOff()
         
         self.renderer.AddActor(self.actor)
