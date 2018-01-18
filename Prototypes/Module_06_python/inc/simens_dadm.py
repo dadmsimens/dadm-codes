@@ -122,13 +122,13 @@ def mri_read_module_06(filename):
             b_value=bvals
         )
         # all modules compatibility
-        dwi.structural_data = data[:, :, bvals == 0, None]
-        dwi.diffusion_data = data[:, :, bvals != 0, None]
+        dwi.structural_data = np.repeat(data[:, :, bvals == 0, None], repeats=3, axis=3)
+        dwi.diffusion_data = np.repeat(data[:, :, bvals != 0, None], repeats=3, axis=3)
         dwi.b_value = bvals[bvals != 0]
         dwi.gradients = bvecs[bvals != 0]
 
         # try loading a mask
-        dwi.skull_stripping_mask = mask
+        dwi.skull_stripping_mask = np.repeat(mask[:, :, None, None], repeats=3, axis=3)
 
         return dwi
 
