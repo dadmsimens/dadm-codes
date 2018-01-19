@@ -8,15 +8,13 @@ import vtk
 import sys
 
 class Brain3D_App(QtWidgets.QMainWindow):
-    def __init__(self,mri_data = None):
+    def __init__(self, mri_data = None):
         super().__init__()
-        self.mri_data = mri_data
         self.ui = Ui.Ui_MainWindow()
         self.ui.setupUi(self)
         self.set_action()
-        self.layout = QtWidgets.QHBoxLayout()
-        self.model3D = model3D.model3D(self.mri_data, self.ui.frame, self.layout)
-        self.ui.actionReturn.setEnabled(False)
+        self.model3D = model3D.model3D(mri_data, self.ui.frame, self.ui.frame_layout)
+
 
     def exit(self):
         reply = QMessageBox.question(self, 'Message',
@@ -28,14 +26,12 @@ class Brain3D_App(QtWidgets.QMainWindow):
     def set_action(self):
         self.ui.actionHelp.triggered.connect(self.show_help)
         self.ui.actionExit.triggered.connect(self.exit)
-        self.ui.actionClip.triggered.connect(self.cut_mode_enable)
-        self.ui.actionReturn.triggered.connect(self.undo)
+        self.ui.button_model.clicked.connect(self.previewModel)
+        self.ui.button_clipper.clicked.connect(self.clip_model)
+        self.ui.button_clipper_plane.clicked.connect(self.clip_model_plane)
 
-
-    def undo(self):
-        self.model3D.change_mode(0)
-        self.ui.actionReturn.setEnabled(False)
-        self.ui.actionClip.setEnabled(True)
+    def previewModel(self):
+        self.model3D.preview_model()
 
     def show_help(self):
         '''information about program in help'''
@@ -46,8 +42,9 @@ class Brain3D_App(QtWidgets.QMainWindow):
         msg.setWindowTitle("Help")
         msg.exec()
 
-
-    def cut_mode_enable(self):
-        self.ui.actionReturn.setEnabled(True)
-        self.model3D.change_mode(1)
+    def clip_model(self):
         self.model3D.cut_model()
+
+    def clip_model_plane(self):
+        self.model3D.cut_model(plane_mode=True)
+
