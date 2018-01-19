@@ -45,10 +45,10 @@ class mri_diff(mri_struct):
     """
 
     def __init__(self, raw_data, compression_rate=1, coils_n=0, sensitivity_maps=None, gradients=None, b_value=None):
-        super().__init__(compression_rate, coils_n, sensitivity_maps)
-        self.structural_data = raw_data[:, :, 0, :]
+        super().__init__(raw_data, compression_rate, coils_n, sensitivity_maps)
+        self.structural_data = np.take(raw_data, 0, axis=-2)
 
-        self.diffusion_data = raw_data[:, :, 1:, :]
+        self.diffusion_data = np.delete(raw_data, 0, axis=-2)
         self.gradients = gradients
         self.b_value = b_value
 
@@ -61,10 +61,10 @@ def mri_read(filename):
     mfile = sio.loadmat(filename)
     if ('raw_data' in mfile and 'r' in mfile and 'L' in mfile and 'sensitivity_maps' in mfile):
         if ('gradients' in mfile and 'b_value' in mfile):
-            return mri_diff(mfile['raw_data'], mfile['r'], mfile['L'], mfile['sensitivity_maps'], mfile['gradients'],
-                            mfile['b_value'])
+            return mri_diff(raw_data=mfile['raw_data'], compression_rate=mfile['r'], coils_n=mfile['L'], sensitivity_maps=mfile['sensitivity_maps'], gradients= mfile['gradients'],
+                            b_value=mfile['b_value'])
         else:
-            return mri_struct(mfile['raw_data'], mfile['r'], mfile['L'], mfile['sensitivity_maps'])
+            return mri_struct(structural_data=mfile['raw_data'], compression_rate=mfile['r'], coils_n=mfile['L'], sensitivity_maps=mfile['sensitivity_maps'])
     else:
         return "Error: could not recognize data in file"
 
