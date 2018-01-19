@@ -206,4 +206,3 @@ def run_module(mri_input, other_arguments = None):
     
     else:
         return "Unexpected data format in module number 0!"
-    
