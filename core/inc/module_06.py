@@ -9,7 +9,10 @@ class DTISolver(object):
     MFN_GRADIENT_EPSILON = 1e-5
     MFN_LAMBDA_MATRIX_FUN = 'identity'
 
-    def __init__(self, data, gradients, b_value, mask, solver, fix_method):
+    ACCEPTED_SOLVERS = ['wls', 'nls']
+    ACCEPTED_FIX_METHODS = ['abs', 'cholesky']
+
+    def __init__(self, data, gradients, b_value, mask, solver, fix_method, mute_progress=True):
 
         self._data = data
         self._bvecs = gradients
@@ -18,12 +21,21 @@ class DTISolver(object):
 
         self._solver = solver
         self._fix_method = fix_method
+        self._mute_progress = mute_progress
 
         self._design_matrix = self._get_design_matrix()
 
         self._check_mask()
+        self._check_solver()
+
         self._setup_MFN()
         self._setup_solver()
+
+        # Attributes assigned during pipeline execution
+        self._tensor_image = None
+        self._eig_image = None
+        self._rgb_image = None
+        self._biomarkers = None
 
     """
     Initialization
@@ -81,6 +93,12 @@ class DTISolver(object):
         else:
             raise ValueError('Invalid DTI SOLVER type.')
 
+    def _check_solver(self):
+        if self._solver not in self.ACCEPTED_SOLVERS:
+            raise ValueError('Invalid DTI SOLVER type.')
+        if self._fix_method not in self.ACCEPTED_FIX_METHODS:
+            raise ValueError('Invalid DTI FIX_METHOD type.')
+
     """
     Solvers
     """
@@ -116,7 +134,7 @@ class DTISolver(object):
                 if self._mask[id_x, id_y]:
                     output_image[id_x, id_y, :] = function_handle(self, id_x, id_y)
 
-            if not np.floor(100*id_x/np.shape(self._data)[0]) % 10:
+            if not np.floor(100*id_x/np.shape(self._data)[0]) % 10 and self._mute_progress is False:
                 print('Progress: {0:0.2f}%'.format(100*id_x/np.shape(self._data)[0]))
 
         return output_image
@@ -488,7 +506,7 @@ class DTISolver(object):
         return cholesky_estimate
 
 
-def run_pipeline(dwi, solver, fix_method, plotting=False):
+def run_pipeline(dwi, solver, fix_method, plotting=False, mute_progress=True):
 
     # convert data for compatibility with CORE
     structural_data = dwi.structural_data
@@ -501,7 +519,7 @@ def run_pipeline(dwi, solver, fix_method, plotting=False):
     num_slices = np.shape(data_mri)[3]
     biomarkers = []
     for slice_idx in range(num_slices):
-        print('Performing DTI on slice {} out of {}'.format(slice_idx, num_slices))
+        print('Computing DTI on slice {} out of {}...'.format(slice_idx, num_slices))
         # only one slice
         data = np.squeeze(data_mri[:, :, :, slice_idx])
 
@@ -517,7 +535,8 @@ def run_pipeline(dwi, solver, fix_method, plotting=False):
             b_value=b_value,
             mask=mask,
             solver=solver,
-            fix_method=fix_method
+            fix_method=fix_method,
+            mute_progress=mute_progress
         )
         dti_solver.estimate_tensor()
         dti_solver.estimate_eig()
@@ -533,13 +552,13 @@ def run_pipeline(dwi, solver, fix_method, plotting=False):
     return biomarkers
 
 
-def run_module(mri_diff, solver, fix_method, plotting=False):
+def run_module(mri_diff, solver, fix_method, plotting=False, mute_progress=True):
     # importing here avoids cyclic import problems
     from . import simens_dadm as smns
 
     if isinstance(mri_diff, smns.mri_diff):
-        mri_diff.biomarkers = run_pipeline(mri_diff, solver, fix_method, plotting)
+        mri_diff.biomarkers = run_pipeline(mri_diff, solver, fix_method, plotting, mute_progress)
         return mri_diff
 
     else:
-        raise ValueError("Unexpected data format in module number 6!")
+        raise ValueError("Expected MRI_DIFF object instance, received unknown type.")
