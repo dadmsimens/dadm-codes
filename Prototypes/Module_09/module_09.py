@@ -2,7 +2,6 @@
 
 import math, copy
 import scipy.io as scio
-import matplotlib.pyplot as plt
 import scipy as sc
 import numpy as np
 from scipy import *
@@ -10,34 +9,8 @@ from numpy import *
 
 import simens_dadm as smns
 
+
 """ Create histogrm function """
-"""
-Matlab prototype:
-function [histIm] = module9Histogram(image)
-
-image = image(:);         % vector of image
-
-lengthImage = length(image);      % vector length
-maxValue = ceil(max(image))+1;  % rounds each element of image to the nearest
-                                % integer greater than or equal to that element.
-histIm = zeros(1,maxValue);
-
-for i = 1:lengthImage,            % create histogram of nanzero image value
-    f = floor(image(i));          % round floor
-
-    if (f>0 && f<(maxValue -1))
-        odds = image(i)-f;        % difference between image and round floor image value
-        a1 = 1-odds;
-        histIm(f) = histIm(f)  + a1;
-        histIm(f+1) = histIm(f+1)+ odds;
-    end;
-
-end;
-
-histIm = conv(histIm,[1,2,3,2,1]);
-histIm = histIm(3:(length(histIm)-2));
-histIm = histIm/sum(histIm);
-"""
 
 def imHist(image):
     image = image.flatten()
@@ -46,8 +19,8 @@ def imHist(image):
     maxValue = int(ceil(image.max())+1)     # rounds each element of image to the nearest
                                             # integer greater than or equal to that element.
     
-    imageHistogram = zeros((1,maxValue))
-    imageHistogram=imageHistogram.flatten()
+    imageHistogram = np.zeros((1,maxValue))
+    imageHistogram = imageHistogram.flatten()
     
     for i in range(lengthImage):
         f = int(floor(image[i]))
@@ -63,31 +36,9 @@ def imHist(image):
     imageHistogram=imageHistogram/(imageHistogram.sum())
     return imageHistogram
 
-#image= array([[1.,3.,6.],[1.,2.,6.]])
-#imageHistogram = imHist(image)
-#print(imageHistogram)
 
 """ Create Gauss mixture model function """
-"""
-Matlab prototype
-function y = module9GaussDist(x,mu,v,p)
 
-% x - column vector with non-zeros elemnts of histogram
-% mu - column vector expected value of each clasters
-% v - column vector of variation
-% p - column vector of probability
-
-mu = mu(:);
-v = v(:);
-p = p(:);
-
-for i=1:size(mu,1)
-   differ = x-mu(i);
-   amplitude = p(i)/sqrt(2*pi*v(i)); 
-   y(:,i) = amplitude*exp(-0.5 * (differ.*differ)/v(i));
-end
-
-"""
 def gmm(x,mu,v,p):
         
     #x - column vector with non-zeros elemnts of histogram
@@ -95,22 +46,22 @@ def gmm(x,mu,v,p):
     #v - column vector of variation
     #p - column vector of probability
     
-    #x = x.flatten()
+    x = (np.array(x)).flatten()
     mu = mu.flatten()
     v = v.flatten()
     p = p.flatten()
     
-    probab = []
+    probab = np.zeros([x.size, mu.size])   
     
     for i in range(mu.size):
         differ=x-mu[i]
         amplitude = p[i]/(math.sqrt(2*math.pi*v[i]))
         app = amplitude*(np.exp((-0.5*(differ*differ))/v[i]))
-        probab.extend(app)
-    probab = np.array(probab)
-    probab = np.transpose(probab)
+        probab[:,i] = app
+
     return(probab)
-    
+
+
 """ Segmentation - main function """
 """
 Matlab prototype:
@@ -189,109 +140,91 @@ end
 """
 
 
-def segmentation(skullFreeImage,pitches):
+def segmentation(skullFreeImage, pitches):
     
-    #pobranie wszystkich danych z modułu 8
-    pitches = 3
+    [rows, columns, pitches]=skullFreeImage.shape
+    print ("Pitche: " + str(pitches))
+    print("size rows: " + str(rows) +  "    size columns: " + str(columns) + "    size pitches: " + str(pitches))
+    pitches = pitches
+    print ("pit: " + str(pitches))
     
-    for pitch in range(pitches):
+    for pitch in range(0,pitches):
         
-        image = skullFreeImage[pitch,:,:]
-        print("I: " + str(image))
+        print("pitch number: " + str(pitch))
+        
+        image = skullFreeImage[:,:,pitch]
         
         imageCopy = image
-        image = double(image)
         im = image.flatten()
         imLength = im.size
         imMin = im.min()
         imMax = im.max()
         
         image = image-imMin + 1
-        print ("image: " + str(image))
-        
         imageHistogram = imHist(image)
-        print("imageHistigram: " + str(imageHistogram))
-        x = imageHistogram.nonzero()
-        print("x: " + str(x))
+        x = np.nonzero(imageHistogram)
         hx = imageHistogram[x]
-        print("hx: " + str(hx))
-        
-        clustersNum = 2
+
+        clustersNum = 4
         mu = arange(1,clustersNum+1)*imMax/(clustersNum+1)
         v = np.ones(clustersNum)*imMax
         p = np.ones(clustersNum)/clustersNum
-        print("mu: " + str(mu) + " v: " + str(v) + " p: " + str(p))
         
         condition = 1
         while condition == 1:
             
             #Expectation Step
+            
             probab = gmm(x,mu,v,p)
-            #probab = np.array(probab)
-            #probab = array([[1,2,3],[1,1,1],[4,5,6]])
-            print("probab trans: " + str(probab))
             distrDens = probab.sum(axis=1)
-            print("distr Dens: " + str(distrDens))
             llh = (hx*np.log(distrDens)).sum()
-            print("llh: " + str(llh))
+
             
             #Maximization Step
+            
             for j in range(clustersNum):
-                print(j)
                 hxsh = hx.shape
                 probabxh = probab.shape
                 distsh=distrDens.shape
-                print(" hx  " + str(hxsh) + " probab  " + str(probabxh) + " dist  " + str(distsh))
                 resp = hx*probab[:,j]/distrDens
-                print("resp: " + str(resp))
                 p[j]=resp.sum()
-                print("p(j): " + str(p))
                 mu[j]=(x*resp/p[j]).sum()
-                print("mu(j): " + str(mu))
                 differ=x-mu[j]
-                print("differ: " + str(differ))
                 v[j]=(differ*differ*resp/p[j]).sum()
-                print("v: " + str(v))
                 
-            print("P1: " + str(p[:]))
             p = p+0.001
-            print("P2: " + str(p))
             p = p/p.sum()
-            print("P3: " + str(p))
+            
             
             #Exit alghoritm condition
-            """ Błąd w warunku wyjściowym """
+            
             probab = gmm(x,mu,v,p)
             distrDens = probab.sum(axis=1)
             nllh = (hx*np.log(distrDens)).sum()
             diffLlh = nllh-llh
-            print("llh: " + str(llh))
-            print("nlhh: " + str(nllh))
-            print("diffLlh: " + str(diffLlh))
             
-            #condition = 0
             if diffLlh<0.0001:
-                break
+                condition = 0
             
-        print("pitch number: " + str(pitch))
+
         #Image mask
-        mu = mu+imMin-1             #recover real range
-        imageMask = np.zeros([rows, columns])
-        print("imageMask: " + str(imageMask))
         
+        mu = mu+imMin-1             #recover real range
+
         c = np.zeros(clustersNum)
-        print("c: " + str(c))
+        
+        mri_segMask = np.zeros([rows, columns, pitches])
+        print(mri_segMask.shape)
         
         for i in range(rows):
             for j in range(columns):
                 for  k in range(clustersNum):
                     c[k] = gmm(image[i,j],mu[k],v[k],p[k])
                 a = (c==c.max()).nonzero()
-                mri_segMask[i,j]=a[1]
                 
-        print("c: " + str(c))
-        
-        return mri_segMask
+                mri_segMask[i,j,pitch]=a[0]            
+    
+    return mri_segMask
         
 """
     
@@ -315,9 +248,15 @@ def segmentation(skullFreeImage,pitches):
 end
 """
         
-skullFreeImage = array([[[ 1,  1,  2],[ 3,  1,  2],[ 1, 1,  3]],[[ 2, 3, 1],[2, 1, 1],[1, 2, 2]],[[2, 3, 2],[1, 2, 3],[1, 2, 2]]])
-print("SkullFreeImage: " + str(skullFreeImage))
+#skullFreeImage = np.array([[[ 1,  1,  2],[ 3,  1,  2],[ 1, 1,  3]],[[ 2, 3, 1],[2, 1, 1],[1, 2, 2]],[[2, 3, 2],[1, 2, 3],[1, 2, 2]]])
+#skullFreeImage = np.ndarray(shape=(3,2,2), dtype=float, order='F')+10
+data = scio.loadmat('skullFreeImage_test.mat')
+print(data)
+skullFreeImage = data['imagesSkullFree']
+#print("SkullFreeImage: " + str(skullFreeImage))
+[rows, columns, pitches]=skullFreeImage.shape
+#print(" size rows: " + str(rows) +  "size columns: " + str(columns) + "size pitches: " + str(pitches))
+mri_segMask = segmentation(skullFreeImage,pitches)
 
-[pitches, rows, columns]=skullFreeImage.shape
-print("size pitches: " + str(pitches) + " size rows: " + str(rows) + " size columns: " + str(columns))
-segmentation(skullFreeImage,pitches)
+scio.savemat('test.mat', {'mri_segMask':mri_segMask})
+

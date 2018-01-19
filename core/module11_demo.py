@@ -1,18 +1,44 @@
+from PyQt5 import QtGui, QtCore, QtWidgets
+import sys
 import scipy.io as sio
 import inc.module11 as module11
 import inc.simens_dadm as smns
 import os
-import time
 
 
 # Data location in ROOT
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 DATASETS_ROOT = PROJECT_ROOT + '/Data/Module_11_test/'
+segmentation = sio.loadmat(DATASETS_ROOT + 'segmentationMask.mat')
+segmentation = segmentation['imageMaskFull']
+
+data = sio.loadmat(DATASETS_ROOT + 'originData.mat')
+data = data['imagesSkullFree']
+
+struct = smns.mri_struct()
+struct.structural_data = data
+struct.segmentation = segmentation
+
+
+class MainWindow(QtWidgets.QMainWindow):
+    def __init__(self, parent=None):
+        super(MainWindow, self).__init__(parent)
+
+        self.pushButton = QtWidgets.QPushButton("Click to enable module 11")
+        self.setCentralWidget(self.pushButton)
+        self.pushButton.clicked.connect(self.on_pushButton_clicked)
+
+    def on_pushButton_clicked(self):
+        self.module_11_dialog = module11.main11(struct)
+        self.module_11_dialog.show()
+
+def main():
+    app = QtWidgets.QApplication(sys.argv)
+    main = MainWindow()
+    main.show()
+    sys.exit(app.exec_())
+
 
 
 if __name__ == "__main__":
-    mat_data = sio.loadmat(DATASETS_ROOT + 'segmentationMask.mat')
-    mat_data = mat_data['imageMaskFull']
-    struct = smns.mri_struct()
-    struct.segmentation = mat_data
-    result1 = module11.main11(struct)
+    main()

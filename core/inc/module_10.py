@@ -1,6 +1,12 @@
 
 # coding: utf-8
 
+# In[1]:
+
+
+
+# coding: utf-8
+
 # In[3]:
 
 
@@ -30,7 +36,8 @@ def initial_interp(image, N, M, display):
 def Euclidean_dist(x1,y1,x2,y2):
     return(sqrt((x1-x2)**2+(y1-y2)**2))
 
-def upsampling(image, N, M, window, plotting):
+def upsampling(image, N, M, plotting):
+    window=2;
     image2 = initial_interp(image, N, M, 0);
     s = image2.shape
 
