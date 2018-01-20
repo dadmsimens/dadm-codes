@@ -23,10 +23,11 @@ class DTISolver(object):
         self._fix_method = fix_method
         self._mute_progress = mute_progress
 
-        self._design_matrix = self._get_design_matrix()
-
+        self._check_input()
         self._check_mask()
         self._check_solver()
+
+        self._design_matrix = self._get_design_matrix()
 
         self._setup_MFN()
         self._setup_solver()
@@ -41,8 +42,26 @@ class DTISolver(object):
     Initialization
     """
 
+    def _check_input(self):
+        data_dims = np.shape(self._data)
+        bvecs_dims = np.shape(self._bvecs)
+        bvals_dims = np.shape(self._bvals)
+
+        if (
+            len(data_dims) != 3 or
+            len(bvecs_dims) != 2 or
+            len(bvals_dims) != 1 or
+            bvecs_dims[1] != 3 or
+            bvecs_dims[0] != bvals_dims[0] or
+            bvals_dims[0] != data_dims[2]
+        ):
+            raise ValueError('Incompatible shapes of input data (mri_data, gradients, b_value).')
+
+        if np.amin(self._data) <= 0:
+            raise ValueError('Voxel value cannot be negative.')
+
     def _check_mask(self):
-        if np.shape(self._mask)[0] == 0 or \
+        if np.shape(self._mask)[0] == 0 or not np.array_equal(self._mask, self._mask.astype(bool)) or \
                 (np.shape(self._mask)[0] != np.shape(self._data)[0]
                  and (np.shape(self._mask)[1] != np.shape(self._data)[1])):
             self._mask = np.ones((self._data.shape[0], self._data.shape[1])) == 1
@@ -549,6 +568,7 @@ def run_pipeline(dwi, solver, fix_method, plotting=False, mute_progress=True):
             dti_solver.plot_FA_rgb()
             plt.show()
 
+    print("DTI done.")
     return biomarkers
 
 
