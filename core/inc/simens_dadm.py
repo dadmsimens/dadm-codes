@@ -52,7 +52,7 @@ class mri_diff(mri_struct):
         self.gradients = gradients
         self.b_value = b_value
 
-        self.biomarkers = dict()
+        self.biomarkers = list(dict())
         self.noise_map = []
         self.skull_stripping_mask = []
 
@@ -61,10 +61,12 @@ def mri_read(filename):
     mfile = sio.loadmat(filename)
     if ('raw_data' in mfile and 'r' in mfile and 'L' in mfile and 'sensitivity_maps' in mfile):
         if ('gradients' in mfile and 'b_value' in mfile):
-            return mri_diff(raw_data=mfile['raw_data'], compression_rate=mfile['r'], coils_n=mfile['L'], sensitivity_maps=mfile['sensitivity_maps'], gradients= mfile['gradients'],
+            return mri_diff(raw_data=mfile['raw_data'], compression_rate=mfile['r'], coils_n=mfile['L'],
+                            sensitivity_maps=mfile['sensitivity_maps'], gradients=mfile['gradients'],
                             b_value=mfile['b_value'])
         else:
-            return mri_struct(structural_data=mfile['raw_data'], compression_rate=mfile['r'], coils_n=mfile['L'], sensitivity_maps=mfile['sensitivity_maps'])
+            return mri_struct(structural_data=mfile['raw_data'], compression_rate=mfile['r'], coils_n=mfile['L'],
+                              sensitivity_maps=mfile['sensitivity_maps'])
     else:
         return "Error: could not recognize data in file"
 
@@ -122,13 +124,13 @@ def mri_read_module_06(filename):
             b_value=bvals
         )
         # all modules compatibility
-        dwi.structural_data = np.repeat(data[:, :, bvals == 0, None], repeats=3, axis=3)
-        dwi.diffusion_data = np.repeat(data[:, :, bvals != 0, None], repeats=3, axis=3)
+        dwi.structural_data = np.repeat(data[:, :, bvals == 0, None], repeats=1, axis=3)
+        dwi.diffusion_data = np.repeat(data[:, :, bvals != 0, None], repeats=1, axis=3)
         dwi.b_value = bvals[bvals != 0]
         dwi.gradients = bvecs[bvals != 0]
 
         # try loading a mask
-        dwi.skull_stripping_mask = np.repeat(mask[:, :, None, None], repeats=3, axis=3)
+        dwi.skull_stripping_mask = np.repeat(mask[:, :, None, None], repeats=1, axis=3)
 
         return dwi
 

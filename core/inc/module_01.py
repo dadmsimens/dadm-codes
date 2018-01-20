@@ -12,14 +12,8 @@ def run_module(mri_input, other_arguments = None):
         mri_diff_data = mri_input.diffusion_data
         mri_struct_data = mri_input.structural_data
         sens_maps = mri_input.sensitivity_maps
-        
-        dim = np.shape(mri_diff_data)
-        if len(np.shape(mri_diff_data)) == 5:
-            data = np.zeros((dim[0], dim[1], dim[2]+1, dim[3], dim[4]))
-            data = np.concatenate((mri_diff_data, mri_struct_data[:,:,:,None,:]), axis=3)
-        elif len(np.shape(mri_diff_data)) == 4:
-            data = np.zeros((dim[0], dim[1], dim[2]+1, dim[3]))
-            data = np.concatenate((mri_diff_data, mri_struct_data[:,:,None,:]), axis=2)
+        struct_data = np.expand_dims(mri_struct_data, axis=-2)
+        data = np.concatenate((struct_data, mri_diff_data), axis=-2)
 
         dim = np.shape(data)
         
@@ -108,11 +102,11 @@ def run_module(mri_input, other_arguments = None):
                         recon_img_Tikhonov[ind,m,gg] = Sr
         
         if len(np.shape(recon_img_Tikhonov)) == 4:
-            mri_input.mri_diffusion_data = np.absolute(recon_img_Tikhonov[:,:,:,1:]) 
-            mri_input.mri_structural_data = np.absolute(recon_img_Tikhonov[:,:,:,0])
+            mri_input.diffusion_data = np.absolute(recon_img_Tikhonov[:,:,:,1:]) 
+            mri_input.structural_data = np.absolute(recon_img_Tikhonov[:,:,:,0])
         elif len(np.shape(recon_img_Tikhonov)) == 3:
-            mri_input.mri_diffusion_data = np.absolute(recon_img_Tikhonov[:,:,1:]) 
-            mri_input.mri_structural_data = np.absolute(recon_img_Tikhonov[:,:,0])
+            mri_input.diffusion_data = np.absolute(recon_img_Tikhonov[:,:,1:]) 
+            mri_input.structural_data = np.absolute(recon_img_Tikhonov[:,:,0])
 
         return mri_input
 
