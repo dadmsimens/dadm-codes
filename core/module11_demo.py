@@ -12,11 +12,7 @@ DATASETS_ROOT = PROJECT_ROOT + '/Data/Module_11_test/'
 segmentation = sio.loadmat(DATASETS_ROOT + 'segmentationMask.mat')
 segmentation = segmentation['imageMaskFull']
 
-data = sio.loadmat(DATASETS_ROOT + 'originData.mat')
-data = data['imagesSkullFree']
-
 struct = smns.mri_struct()
-struct.structural_data = data
 struct.segmentation = segmentation
 
 
