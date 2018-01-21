@@ -19,6 +19,8 @@ class mri_struct:
 
     def __init__(self, structural_data=None, compression_rate=1, coils_n=0, sensitivity_maps=None):
         self.structural_data = structural_data
+        if self.structural_data.ndim==3:
+            self.structural_data = np.expand_dims(structural_data, 2)
         self.compression_rate = compression_rate
         self.coils_n = coils_n
         self.sensitivity_maps = sensitivity_maps
@@ -47,6 +49,8 @@ class mri_diff(mri_struct):
 
     def __init__(self, raw_data, compression_rate=1, coils_n=0, sensitivity_maps=None, gradients=None, b_value=None):
         super().__init__(raw_data, compression_rate, coils_n, sensitivity_maps)
+        if raw_data.ndim==4:
+            raw_data = np.expand_dims(raw_data, 2)
         self.structural_data = np.take(raw_data, 0, axis=-2)
 
         self.diffusion_data = np.delete(raw_data, 0, axis=-2)
