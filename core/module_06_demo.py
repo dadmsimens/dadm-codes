@@ -29,7 +29,7 @@ if __name__ == '__main__':
     fix_method = FIX_METHODS[0]
 
     # True to plot results
-    plotting = True
+    plotting = False
 
     # Dummy function to preprocess (implements other modules functionality)
     dwi = smns.load_object(file_path=DATASETS_ROOT+dataset_name)

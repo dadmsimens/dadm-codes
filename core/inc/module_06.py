@@ -166,10 +166,17 @@ class DTISolver(object):
             estimate = self._solver_func(pixel)
             return estimate[1:]
 
-        self._tensor_image = self._pixel_loop(image_depth=6, function_handle=estimate_tensor_pixel_func)
+        #self._tensor_image = self._pixel_loop(image_depth=6, function_handle=estimate_tensor_pixel_func)
+        # TODO: check mask
+        self._tensor_image = self._solver_func()
+
+        # First value in each voxel is an estimate of ln(pixel_measurement); thus ignore
+        self._tensor_image = self._tensor_image[:, :, 1:]
+
 
     def estimate_eig(self):
 
+        # TODO: check mask
         tensor_image_reshaped = self._reshape_tensor_image()
         eig_values, eig_vectors = np.linalg.eigh(tensor_image_reshaped)
 
@@ -313,23 +320,54 @@ class DTISolver(object):
     """
     Weighted Least Squares
     """
-    def _solve_wls(self, pixel):
-        weights = self._get_wls_weights(pixel)
-        estimate = np.linalg.pinv(self._design_matrix.T @ np.square(weights) @ self._design_matrix) @ \
-                   (weights @ self._design_matrix).T @ weights @ np.log(pixel)
 
-        if np.isnan(np.sum(estimate)):
-            estimate = np.zeros(np.shape(estimate))
+    def _solve_wls(self):
+
+        weights = self._get_wls_weights()
+        estimate = np.matmul(
+            np.matmul(
+                self._design_matrix.T[None, None, :, :],
+                np.square(weights)
+            ),
+            self._design_matrix[None, None, :, :]
+        )
+        estimate = np.matmul(
+            np.linalg.inv(estimate),
+            np.transpose(
+                np.matmul(
+                    weights,
+                    self._design_matrix[None, None, :, :]
+                ), axes=(0, 1, 3, 2))
+        )
+        estimate = np.matmul(
+            np.matmul(
+                estimate,
+                weights
+            ),
+            np.log(self._data)[:, :, :, None]
+        )
+        estimate = np.squeeze(estimate)
+
+        # check for NaNs and convert them to zeros
+        estimate_isnan = np.isnan(estimate)
+        if np.amax(estimate_isnan) == True:
+            estimate = np.where(estimate_isnan, 0, estimate)
+
         return estimate
 
-    def _get_wls_weights(self, pixel):
+    def _get_wls_weights(self):
         """
-        In order of increasing WLS complexity: pixel < LLS estimate < Rice noise estimate
-        :param pixel:
-        :return:
+        Chosen WLS Model: weights equal to measurement in each pixel.
+
+        Other models, in order of increasing complexity:
+        pixel < LLS estimate < Rice noise estimate
         """
-        # TODO: implement others
-        weights = np.eye(np.shape(pixel)[0]) * pixel[:, np.newaxis]
+        # Chosen WLS Model: weights equal to measurement in each pixel
+        dims = np.shape(self._data)
+        eye_matrix = np.eye(dims[2])
+        eye_matrix = np.expand_dims(eye_matrix, axis=0)
+        eye_matrix = np.expand_dims(eye_matrix, axis=0)
+        weights = eye_matrix * self._data[:, :, :, np.newaxis]
         return weights
 
     def _get_wls_error_value(self, pixel, wls_estimate):
