@@ -1,4 +1,5 @@
-import os
+import pickle
+import queue
 import scipy.io as sio
 import numpy as np
 
@@ -18,6 +19,8 @@ class mri_struct:
 
     def __init__(self, structural_data=None, compression_rate=1, coils_n=0, sensitivity_maps=None):
         self.structural_data = structural_data
+        if self.structural_data.ndim==3:
+            self.structural_data = np.expand_dims(structural_data, 2)
         self.compression_rate = compression_rate
         self.coils_n = coils_n
         self.sensitivity_maps = sensitivity_maps
@@ -45,14 +48,16 @@ class mri_diff(mri_struct):
     """
 
     def __init__(self, raw_data, compression_rate=1, coils_n=0, sensitivity_maps=None, gradients=None, b_value=None):
-        super().__init__(compression_rate, coils_n, sensitivity_maps)
-        self.structural_data = raw_data[:, :, 0, :]
+        super().__init__(raw_data, compression_rate, coils_n, sensitivity_maps)
+        if raw_data.ndim==4:
+            raw_data = np.expand_dims(raw_data, 2)
+        self.structural_data = np.take(raw_data, 0, axis=-2)
 
-        self.diffusion_data = raw_data[:, :, 1:, :]
+        self.diffusion_data = np.delete(raw_data, 0, axis=-2)
         self.gradients = gradients
         self.b_value = b_value
 
-        self.biomarkers = dict()
+        self.biomarkers = list(dict())
         self.noise_map = []
         self.skull_stripping_mask = []
 
@@ -61,76 +66,35 @@ def mri_read(filename):
     mfile = sio.loadmat(filename)
     if ('raw_data' in mfile and 'r' in mfile and 'L' in mfile and 'sensitivity_maps' in mfile):
         if ('gradients' in mfile and 'b_value' in mfile):
-            return mri_diff(mfile['raw_data'], mfile['r'], mfile['L'], mfile['sensitivity_maps'], mfile['gradients'],
-                            mfile['b_value'])
+            return mri_diff(raw_data=mfile['raw_data'], compression_rate=mfile['r'], coils_n=mfile['L'],
+                            sensitivity_maps=mfile['sensitivity_maps'], gradients=mfile['gradients'],
+                            b_value=mfile['b_value'])
         else:
-            return mri_struct(mfile['raw_data'], mfile['r'], mfile['L'], mfile['sensitivity_maps'])
+            return mri_struct(structural_data=mfile['raw_data'], compression_rate=mfile['r'], coils_n=mfile['L'],
+                              sensitivity_maps=mfile['sensitivity_maps'])
     else:
         return "Error: could not recognize data in file"
 
 # TODO: ADD FUNCTIONS FOR EASY DATA ACCESS IN CLASSES.
 
 
-def mri_read_module_06(filename):
-    """
-    Temporary wrapper loading reconstructed data while waiting for other modules to be implemented.
-    Module 06 assumes reconstructed, preprocessed diffusion data, so a small wrapper is needed.
-    """
+class simens_communicator():
+    def __init__(self, exit_event):
+        self.gui_says = queue.Queue()
+        self.core_says = queue.Queue()
+        self.exit_event = exit_event
 
-    def _load_matfile(dataset_path):
-        matfile = sio.loadmat(dataset_path, struct_as_record=False, squeeze_me=True)
 
-        # data is not in correct range (can be negative); normalize to range <EPSILON, 1>
-        EPSILON = 1e-8
-        data = matfile['dwi'].data
-        data_minimum = np.amin(data)
-        data_maximum = np.amax(data)
-        if not data_maximum - data_minimum == 0:
-            data = EPSILON + (1 - EPSILON) * (np.divide(data - data_minimum, data_maximum - data_minimum))
-        else:
-            raise ValueError('Data normalization results in division by zero.')
+class simens_msg():
+    def __init__(self, module, arguments=None):
+        self.module = module
+        self.arguments = arguments
 
-        return data, matfile['dwi'].bvecs, matfile['dwi'].bvals
 
-    def _check_bvecs(bvecs):
-        EPSILON = 1e-4
-        vector_norm = np.linalg.norm(bvecs, axis=1)
-        if np.amin(vector_norm) <= 1 - EPSILON or np.amax(vector_norm) >= 1 + EPSILON:
-            raise ValueError('BVECS should be an array of unit-length vectors.')
+def save_object(file_path, data_object):
+    with open(file_path + '.pkl', 'wb') as output_path:
+        pickle.dump(data_object, output_path, pickle.HIGHEST_PROTOCOL)
 
-    def strip_skull(filename):
-        try:
-            mask_path = os.path.dirname(filename) + '\\mask.mat'
-            matfile = sio.loadmat(mask_path, struct_as_record=False, squeeze_me=True)
-            mask = matfile['mask'] == 1
-            return mask
-        except:
-            print('Skull stripping mask not found!')
-            return []
-
-    try:
-        data, bvecs, bvals = _load_matfile(filename)
-        _check_bvecs(bvecs)
-        mask = strip_skull(filename)
-
-        dwi = mri_diff(
-            raw_data=data[:, :, :, None],
-            compression_rate=1,
-            coils_n=0,
-            sensitivity_maps=[],
-            gradients=bvecs,
-            b_value=bvals
-        )
-        # all modules compatibility
-        dwi.structural_data = data[:, :, bvals == 0, None]
-        dwi.diffusion_data = data[:, :, bvals != 0, None]
-        dwi.b_value = bvals[bvals != 0]
-        dwi.gradients = bvecs[bvals != 0]
-
-        # try loading a mask
-        dwi.skull_stripping_mask = mask
-
-        return dwi
-
-    except:
-        raise ValueError("Error: could not recognize data in file")
+def load_object(file_path):
+    with open(file_path + '.pkl', 'rb') as input_path:
+        return pickle.load(input_path)

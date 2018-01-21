@@ -1,4 +1,4 @@
-from . import simens_dadm as smns
+from core.inc import simens_dadm as smns
 import numpy as np
 import scipy.signal as sig
 
@@ -26,18 +26,31 @@ def lmmse_filter(image,noise_map,window):
 def main4(mri_input):
 
     if isinstance(mri_input, smns.mri_diff): # instructions for diffusion mri
+        print("diffusion data")
         mri_output = mri_input
         window = np.ones((5, 5))
-        for i in range(mri_input.diffusion_data.shape[2]):
-            mri_output.diffusion_data[:, :, i] = lmmse_filter(mri_input.diffusion_data[:,:,i],mri_input.noise_map[:,:,i],window)
-        print("This file contains diffusion MRI")
+        [m, n, slices, gradients] = mri_input.diffusion_data.shape
+        data_out = np.zeros([m, n, slices, gradients])
+
+        for i in range(slices):
+            for j in range(gradients):
+                data_out[:, :, i, j]=lmmse_filter(mri_input.diffusion_data[:,:,i,j],mri_input.noise_map[:,:,i,j],window)
+
+        mri_output.diffusion_data=data_out
+
     #it should works, I make tests when 3D data will be available,
 
     elif (isinstance(mri_input, smns.mri_struct)):
-        print("This file contains structural MRI")
+        mri_output = mri_input
+        print("struct data")
         window = np.ones((5, 5))
-        mri_output=mri_input
-        mri_output.structural_data= lmmse_filter(mri_input.structural_data, mri_input.noise_map, window)
+        [m, n, slices] = mri_input.structural_data.shape
+        data_out = np.zeros([m, n, slices])
+
+        for i in range(slices):
+            data_out[:, :, i] = lmmse_filter(mri_input.structural_data[:,:,i],mri_input.noise_map, window)
+
+        mri_output.structural_data=data_out
 
     else:
         return "Unexpected data format in module number 4!"

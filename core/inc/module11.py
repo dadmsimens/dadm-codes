@@ -1,19 +1,21 @@
-#import simens_dadm as smns
 from . import module11_app as m11_app
-from PyQt5 import QtWidgets
-import sys
 import numpy as np
+
 def main11(mri_input):
-    segmentation = mri_input.segmentation
-    segmentation_np = np.asarray(segmentation)
-    cortex_mask = segmentation_np != 3 
-    segmentation_np[cortex_mask] = 0
-    #print(segmentation_np[50][50])
-    data = mri_input.structural_data
-    data[cortex_mask] = 0
-    #print (data[50][50])
-    app = QtWidgets.QApplication(sys.argv)
-    myApp = m11_app.Brain3D_App(data)
-    myApp.mri_data
-    myApp.show()
-    sys.exit(app.exec_())
+    '''check input data'''
+    if type(mri_input.segmentation) != np.ndarray:
+        raise ValueError('Incorrect type of input data from module 9')
+
+    if mri_input.segmentation.ndim != 3 :
+        raise ValueError('Incorrect dimension of input data from module 9')
+
+    #seperation of cortex basing on segmentaion mask
+    segmentation_data = mri_input.segmentation
+    cortex_mask = segmentation_data != 3
+    segmentation_data[cortex_mask]=0
+
+    #initialization of new window
+    myApp = m11_app.Brain3D_App(segmentation_data)
+
+    return myApp
+

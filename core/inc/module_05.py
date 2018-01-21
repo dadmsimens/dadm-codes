@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.stats as st
 import cmath
-from . import simens_dadm as smns
+#from . import simens_dadm as smns
 
 
 def gk4(rsim):
@@ -84,17 +84,27 @@ def unlm(image, n_map):
 
 def run_module(mri_input, other_arguments=None):
 
-    if (isinstance(mri_input, smns.mri_diff)):
-        # waiting for data structures
+    if isinstance(mri_input, smns.mri_diff):
+        [m, n, grad, slices] = mri_input.diffusion_data.shape
+        data_out = np.zeros([m, n, slices, grad])
 
-        mri_output = mri_input
+        for i in range(slices):
+            for j in range(grad):
+                data_out[:, :, i, j] = unlm(mri_input.diffusion_data[:, :, i, j], mri_input.noise_map[:, :, i, j])
 
-    elif (isinstance(mri_input, smns.mri_struct)):
-        # waiting for data structures
+        mri_input.diffusion_data = data_out
 
-        mri_output = mri_input
+    elif isinstance(mri_input, smns.mri_struct):
+        [m, n, slices] = mri_input.structural_data.shape
+        data_out = np.zeros([m, n, slices])
+
+        for i in range(slices):
+            data_out[:, :, i] = unlm(mri_input.structural_data[:, :, i], mri_input.noise_map[:, :, i])
+
+        mri_input.structural_data = data_out
+
 
     else:
         return "Unexpected data format in module number 5!"
 
-    return mri_output
+    return mri_input

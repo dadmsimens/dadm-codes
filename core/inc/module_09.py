@@ -12,7 +12,10 @@ import simens_dadm as smns
 
 """ Create histogrm function """
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6f6576e55c3d70d04896d30483db57c08082ac21
 def imHist(image):
     image = image.flatten()
 
@@ -38,9 +41,16 @@ def imHist(image):
     return imageHistogram
 
 
+<<<<<<< HEAD
 """ Create Gauss mixture model function """
 
 
+=======
+
+
+""" Create Gauss mixture model function """
+
+>>>>>>> 6f6576e55c3d70d04896d30483db57c08082ac21
 def gmm(x,mu,v,p):
 
     #x - column vector with non-zeros elemnts of histogram
@@ -64,6 +74,7 @@ def gmm(x,mu,v,p):
     return(probab)
 
 
+<<<<<<< HEAD
 """ Segmentation - main function """
 
 
@@ -84,6 +95,53 @@ def segmentation(skullFreeImage):
         #scio.savemat('test'+str(pitch)+'.mat', {'im_test':im_test})
 
         image = skullFreeImage[:,:,pitch]
+=======
+
+
+""" Part of image to segmentation """
+
+def imPart(skullFreeImage, firstPitch, lastPitch, rows, columns, pitches):
+
+    rangePitch = lastPitch - firstPitch
+    imageToSeg = np.zeros([rows, columns, rangePitch])
+
+    rPit = 0
+
+    for pitch in range (pitches):
+        if pitch < firstPitch:
+            continue
+        if pitch >= firstPitch:
+
+            if pitch < lastPitch:
+                imageToSeg [:,:,rPit] = skullFreeImage [:,:,pitch]
+                rPit = rPit+1
+            else:
+                break
+
+    return imageToSeg
+
+
+
+
+""" Segmentation """
+
+def segmentation(skullFreeImage):
+
+    [rows, columns, pitches]=skullFreeImage.shape
+    firstPitch = 70
+    lastPitch = 140
+    imageToSeg = imPart(skullFreeImage, firstPitch, lastPitch, rows, columns, pitches)
+
+    pitches = lastPitch - firstPitch
+
+    mri_segMask = np.zeros([rows,columns, pitches])
+
+    for pitch in range (pitches):
+
+        print("Pitch:   " + str(pitch))
+
+        image = imageToSeg[:,:,pitch]
+>>>>>>> 6f6576e55c3d70d04896d30483db57c08082ac21
 
         imageCopy = image
         im = image.flatten()
@@ -137,12 +195,24 @@ def segmentation(skullFreeImage):
             if diffLlh<0.0001:
                 condition = 0
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6f6576e55c3d70d04896d30483db57c08082ac21
         #Image mask
 
         mu = mu+imMin-1             #recover real range
         c = np.zeros(clustersNum)
+<<<<<<< HEAD
         imageMask = np.zeros([rows, columns])
+=======
+
+        imageMask = np.zeros([rows, columns])
+       #print (imageMask.shape)
+
+
+        #print("mri_segMask: " + str(mri_segMask))
+>>>>>>> 6f6576e55c3d70d04896d30483db57c08082ac21
 
         for i in range(rows):
             for j in range(columns):
@@ -150,6 +220,7 @@ def segmentation(skullFreeImage):
                     c[k] = gmm(image[i,j],mu[k],v[k],p[k])
                 a = (c==c.max()).nonzero()
                 imageMask[i,j]=a[0]
+<<<<<<< HEAD
         
         mri_segMask=imageMask
      
@@ -191,3 +262,34 @@ mri_segMask = segmentation(skullFreeImage)
 sio.savemat('test.mat', {'mri_segMask':mri_segMask})
 	
 
+=======
+
+        #sio.savemat('test1.mat', {'test1':imageMask})
+        print("imageMask shape: " + str(imageMask.shape))
+        mri_segMask[:,:,pitch] = imageMask[:]
+
+    return mri_segMask
+
+
+
+
+""" Main body """
+
+def main9(mri_input, other_arguments = None):
+
+    if (isinstance(mri_input, smns.mri_struct)):
+        [m,n,slices] = mri_input.structural_data.shape
+
+        segmentationMask = segmentation(mri_input.structural_data)
+        [rows, columns, sliceSeg] = segmentationMask.shape
+
+        mri_output = np.zeros([m,n,sliceSeg])
+        mri_output = segmentationMask
+
+        mri_input.structural_data = mri_output
+
+    else:
+        return "Unexpected data format in module number 9!"
+
+    return mri_input
+>>>>>>> 6f6576e55c3d70d04896d30483db57c08082ac21
