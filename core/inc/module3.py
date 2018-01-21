@@ -53,33 +53,33 @@ def estimate_map(image):
 
     h1 = np.ones((5, 5))
     h1 /= 25
-    local_mean = filter2b(h = h1, I0 = In)
+    local_mean = filter2b(h = h1, I0 = image)
 
-    noise = In - local_mean
+    noise = image - local_mean
 
-    x = np.size(In, 1)
-    y = np.size(In, 0)
+    x = np.size(image, 1)
+    y = np.size(image, 0)
     Mask = np.ones((3, 3))
     Mask /= np.prod((3, 3))
-    ak = filter2b(Mask, np.power(In, 2))
+    ak = filter2b(Mask, np.power(image, 2))
     ak = np.multiply(ak, 2)
     ak = np.power(ak, 2)
-    ak = ak - filter2b(Mask, np.power(In, 4))
+    ak = ak - filter2b(Mask, np.power(image, 4))
     ak[ak<0] = 0
     ak = np.sqrt(ak)
     ak = np.sqrt(ak)
-    sigmak = filter2b(Mask, np.power(In, 2))
+    sigmak = filter2b(Mask, np.power(image, 2))
     sigmak = sigmak - np.power(ak, 2)
     sigmak[sigmak<0.01] = 0.01
     sigmak = np.multiply(sigmak, 0.5)
     for i in range(0,9):
-        temp = np.multiply(ak, np.power(In,2))
+        temp = np.multiply(ak, np.power(image,2))
         temp = temp/sigmak
         temp = appro(temp)
         temp = filter2b(Mask, temp)
         ak = temp
         ak[ak<0] = 0
-        temp2 = abs(In)
+        temp2 = abs(image)
         temp2 = np.power(temp2, 2)
         temp2 = filter2b(Mask, temp2)
         temp2 /= 2
