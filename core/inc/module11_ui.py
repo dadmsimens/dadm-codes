@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'inc/module11_gui.ui'
+# Form implementation generated from reading ui file 'module11_gui.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
@@ -26,12 +26,28 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.button_model.sizePolicy().hasHeightForWidth())
         self.button_model.setSizePolicy(sizePolicy)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        font.setBold(True)
+        font.setItalic(False)
+        font.setWeight(75)
+        self.button_model.setFont(font)
         self.button_model.setObjectName("button_model")
         self.horizontalLayout_2.addWidget(self.button_model)
         self.button_clipper = QtWidgets.QPushButton(self.centralwidget)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        font.setBold(True)
+        font.setWeight(75)
+        self.button_clipper.setFont(font)
         self.button_clipper.setObjectName("button_clipper")
         self.horizontalLayout_2.addWidget(self.button_clipper)
         self.button_clipper_plane = QtWidgets.QPushButton(self.centralwidget)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        font.setBold(True)
+        font.setWeight(75)
+        self.button_clipper_plane.setFont(font)
         self.button_clipper_plane.setObjectName("button_clipper_plane")
         self.horizontalLayout_2.addWidget(self.button_clipper_plane)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
@@ -65,16 +81,6 @@ class Ui_MainWindow(object):
         self.actionExit.setObjectName("actionExit")
         self.actionHelp = QtWidgets.QAction(MainWindow)
         self.actionHelp.setObjectName("actionHelp")
-        self.actionSagittal = QtWidgets.QAction(MainWindow)
-        self.actionSagittal.setObjectName("actionSagittal")
-        self.actionAxial = QtWidgets.QAction(MainWindow)
-        self.actionAxial.setObjectName("actionAxial")
-        self.actionCoronal = QtWidgets.QAction(MainWindow)
-        self.actionCoronal.setObjectName("actionCoronal")
-        self.actionReturn = QtWidgets.QAction(MainWindow)
-        self.actionReturn.setObjectName("actionReturn")
-        self.actionClip = QtWidgets.QAction(MainWindow)
-        self.actionClip.setObjectName("actionClip")
         self.menuMenu.addSeparator()
         self.menuMenu.addAction(self.actionHelp)
         self.menuMenu.addAction(self.actionExit)
@@ -92,9 +98,4 @@ class Ui_MainWindow(object):
         self.menuMenu.setTitle(_translate("MainWindow", "Menu"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
         self.actionHelp.setText(_translate("MainWindow", "Help"))
-        self.actionSagittal.setText(_translate("MainWindow", "Sagittal"))
-        self.actionAxial.setText(_translate("MainWindow", "Axial"))
-        self.actionCoronal.setText(_translate("MainWindow", "Coronal"))
-        self.actionReturn.setText(_translate("MainWindow", "Return to model view"))
-        self.actionClip.setText(_translate("MainWindow", "Clip model"))
 
