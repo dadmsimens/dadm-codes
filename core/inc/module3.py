@@ -1,4 +1,4 @@
-import simens_dadm as smns
+from core.inc import simens_dadm as smns
 import scipy.io as sio
 from scipy import signal
 from scipy.linalg import logm, expm
@@ -50,8 +50,6 @@ def appro(z):
     return z
 	
 def estimate_map(image):
-    mat = sio.loadmat('In.mat')
-    In = mat['In']
 
     h1 = np.ones((5, 5))
     h1 /= 25
@@ -123,7 +121,7 @@ def estimate_map(image):
     noise = np.exp(noise)
     return noise
 
-def main3(mri_input, image):
+def main3(mri_input):
 
     if (isinstance(mri_input, smns.mri_diff)):
         [m, n, slices, gradients] = mri_input.diffusion_data.shape
@@ -131,7 +129,7 @@ def main3(mri_input, image):
 
         for i in range(slices):
             for j in range(gradients):
-                data_out[:, :, i, j] = estimate_map(my_data[:, :, i, j])
+                data_out[:, :, i, j] = estimate_map(mri_input.diffusion_data[:, :, i, j])
 
         mri_input.noise_map = data_out
 
@@ -140,10 +138,10 @@ def main3(mri_input, image):
         data_out = np.zeros([m, n, slices])
 
         for i in range(slices):
-            data_out[:, :, i] = estimate_map(my_data[:, :, i])
+            data_out[:, :, i] = estimate_map(mri_input.structural_data[:, :, i])
 
         mri_input.noise_map = data_out
     else:
         return "Unexpected data format in module number 0!"
 
-    return noise_map	
+    return mri_input	
