@@ -94,13 +94,30 @@ def upsampling(image, N, M, plotting):
 
 from . import simens_dadm as smns
 
-def main10(mri_input, N, M, window, plotting=True):
-
-    if (isinstance(mri_input, smns.mri_struct)):
-        mri_output = upsampling(mri.input, N, M, window, plotting)
+def main10(mri_input, other_arguments = None):
+    if (isinstance(mri_input, smns.mri_diff)): # instructions for diffusion mri
+        print("This file contains diffusion MRI")
+        [m, n, slices, gradients] = mri_input.diffusion_data.shape
+        data_out = np.zeros([m, n, slices, gradients])
+   
+        for i in range(slices):
+            for j in range(gradients):
+                data_out[:, :, i, j] = upsampling(mri_input.diffusion_data[:, :, i, j])
+        	
+        mri_input.diffusion_data = data_out
+        
+    
+    elif (isinstance(mri_input, smns.mri_struct)): # instructions specific for structural mri. The case of diffusion MRI is excluded here by elif.
         print("This file contains structural MRI")
+        [m, n, slices] = mri_input.structural_data.shape
+        data_out = np.zeros([m, n, slices])
+        
+        for i in range(slices):
+            data_out[:, :, i] = upsampling(mri_input.structural_data[:, :, i], N, M, plotting)
+        	
+        mri_input.structural_data = data_out
+        
     else:
         return "Unexpected data format in module number 10!"
-
-return mri_output
+return mri_input
 
