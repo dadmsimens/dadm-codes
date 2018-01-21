@@ -1,4 +1,5 @@
-import os
+import pickle
+
 import scipy.io as sio
 import numpy as np
 
@@ -77,66 +78,10 @@ def mri_read(filename):
 # TODO: ADD FUNCTIONS FOR EASY DATA ACCESS IN CLASSES.
 
 
-def mri_read_module_06(filename):
-    """
-    Temporary wrapper loading reconstructed data while waiting for other modules to be implemented.
-    Module 06 assumes reconstructed, preprocessed diffusion data, so a small wrapper is needed.
-    """
+def save_object(file_path, data_object):
+    with open(file_path + '.pkl', 'wb') as output_path:
+        pickle.dump(data_object, output_path, pickle.HIGHEST_PROTOCOL)
 
-    def _load_matfile(dataset_path):
-        matfile = sio.loadmat(dataset_path, struct_as_record=False, squeeze_me=True)
-
-        # data is not in correct range (can be negative); normalize to range <EPSILON, 1>
-        EPSILON = 1e-8
-        data = matfile['dwi'].data
-        data_minimum = np.amin(data)
-        data_maximum = np.amax(data)
-        if not data_maximum - data_minimum == 0:
-            data = EPSILON + (1 - EPSILON) * (np.divide(data - data_minimum, data_maximum - data_minimum))
-        else:
-            raise ValueError('Data normalization results in division by zero.')
-
-        return data, matfile['dwi'].bvecs, matfile['dwi'].bvals
-
-    def _check_bvecs(bvecs):
-        EPSILON = 1e-4
-        vector_norm = np.linalg.norm(bvecs, axis=1)
-        if np.amin(vector_norm) <= 1 - EPSILON or np.amax(vector_norm) >= 1 + EPSILON:
-            raise ValueError('BVECS should be an array of unit-length vectors.')
-
-    def strip_skull(filename):
-        try:
-            mask_path = os.path.dirname(filename) + '\\mask.mat'
-            matfile = sio.loadmat(mask_path, struct_as_record=False, squeeze_me=True)
-            mask = matfile['mask'] == 1
-            return mask
-        except:
-            print('Skull stripping mask not found!')
-            return []
-
-    try:
-        data, bvecs, bvals = _load_matfile(filename)
-        _check_bvecs(bvecs)
-        mask = strip_skull(filename)
-
-        dwi = mri_diff(
-            raw_data=data[:, :, :, None],
-            compression_rate=1,
-            coils_n=0,
-            sensitivity_maps=[],
-            gradients=bvecs,
-            b_value=bvals
-        )
-        # all modules compatibility
-        dwi.structural_data = np.repeat(data[:, :, bvals == 0, None], repeats=1, axis=3)
-        dwi.diffusion_data = np.repeat(data[:, :, bvals != 0, None], repeats=1, axis=3)
-        dwi.b_value = bvals[bvals != 0]
-        dwi.gradients = bvecs[bvals != 0]
-
-        # try loading a mask
-        dwi.skull_stripping_mask = np.repeat(mask[:, :, None, None], repeats=1, axis=3)
-
-        return dwi
-
-    except:
-        raise ValueError("Error: could not recognize data in file")
+def load_object(file_path):
+    with open(file_path + '.pkl', 'rb') as input_path:
+        return pickle.load(input_path)
