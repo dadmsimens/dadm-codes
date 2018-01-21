@@ -31,13 +31,11 @@ class Module06Tests(unittest.TestCase):
             1: 'cholesky'
         }
         cls.datasets = {
-            0: DATASETS_ROOT + 'rec_35.mat',
-            1: DATASETS_ROOT + 'rec_40.mat',
-            2: DATASETS_ROOT + 'rec_48.mat'
+            0: DATASETS_ROOT + 'diffusion_synthetic_normal_L8_r2_slices_41_50_gr15_b1200'
         }
 
         # Dummy function to preprocess (implements other modules functionality)
-        cls.dwi_input = smns.mri_read_module_06(filename=cls.datasets[0])
+        cls.dwi_input = smns.load_object(file_path=cls.datasets[0])
 
     def tearDown(self):
         """
@@ -122,7 +120,7 @@ class Module06Tests(unittest.TestCase):
             for fix_method in self.fix_methods.values():
                 self.dwi_input.biomarkers = []
                 output_object = module_06.run_module(self.dwi_input, solver=solver, fix_method=fix_method)
-                num_slices = np.shape(output_object.diffusion_data)[3]
+                num_slices = np.shape(output_object.diffusion_data)[2]
                 num_biomarkers = np.shape(output_object.biomarkers)[0]
                 self.assertEqual(num_slices, num_biomarkers)
 
@@ -172,27 +170,20 @@ class DTISolverTests(unittest.TestCase):
             1: 'cholesky'
         }
         cls.datasets = {
-            0: DATASETS_ROOT + 'rec_35.mat',
-            1: DATASETS_ROOT + 'rec_40.mat',
-            2: DATASETS_ROOT + 'rec_48.mat'
+            0: DATASETS_ROOT + 'diffusion_synthetic_normal_L8_r2_slices_41_50_gr15_b1200'
         }
 
-        # Dummy function to preprocess (implements other modules functionality)
-        dwi = smns.mri_read_module_06(filename=cls.datasets[0])
+        # Load pickled reconstructed data
+        dwi = smns.load_object(file_path=cls.datasets[0])
 
-        # Decompose input into objects
         slice_idx = 0
 
-        structural_data = dwi.structural_data
-        diffusion_data = dwi.diffusion_data
-        data_merged = np.concatenate((structural_data, diffusion_data), axis=2)
-        cls.data = np.squeeze(data_merged[:, :, :, slice_idx])
-
-        cls.b_value = np.concatenate((np.zeros((np.shape(structural_data)[2])), dwi.b_value), axis=0)
-        cls.gradients = np.concatenate((np.zeros((np.shape(structural_data)[2], 3)), dwi.gradients), axis=0)
+        cls.data, cls.b_value, cls.gradients = module_06._prepare_data(dwi)
+        cls.data = cls.data[:, :, slice_idx, :]
 
         try:
-            cls.mask = np.squeeze(dwi.skull_stripping_mask[:, :, :, slice_idx])
+            # TODO: Change this when dwi.skull_stripping_mask data format is known
+            cls.mask = np.squeeze(dwi.skull_stripping_mask[:, :, slice_idx, :])
         except:
             # if mask is not defined for given slice
             cls.mask = []
@@ -280,6 +271,9 @@ class DTISolverTests(unittest.TestCase):
         self.assertEqual(np.amin(dti_solver._mask), True)
 
     def test_input_skull_mask_present(self):
+        """
+        Fails if loaded data object does not contain skull stripping mask.
+        """
         dti_solver = module_06.DTISolver(
             data=self.data,
             gradients=self.gradients,

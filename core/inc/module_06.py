@@ -525,25 +525,48 @@ class DTISolver(object):
         return cholesky_estimate
 
 
+def _prepare_data(dwi):
+
+    structural_data = dwi.structural_data
+    if len(np.shape(structural_data)) < 3:
+        # add diffusion dummy dimension
+        structural_data = np.expand_dims(structural_data, axis=2)
+    if len(np.shape(structural_data)) < 4:
+        # single slice; reshape
+        structural_data = np.expand_dims(structural_data, axis=3)
+
+    diffusion_data = dwi.diffusion_data
+    if len(np.shape(diffusion_data)) < 4:
+        # single slice; reshape
+        diffusion_data = np.expand_dims(diffusion_data, axis=2)
+
+    data_mri = np.concatenate((structural_data, diffusion_data), axis=3)
+
+    if np.shape(dwi.b_value)[0] == 1:
+        b_value = np.repeat(dwi.b_value, repeats=np.shape(diffusion_data)[3])
+    else:
+        b_value = dwi.b_value
+
+    b_value = np.concatenate((np.zeros((np.shape(structural_data)[3])), b_value), axis=0)
+    gradients = np.concatenate((np.zeros((np.shape(structural_data)[3], 3)), dwi.gradients), axis=0)
+
+    return data_mri, b_value, gradients
+
+
 def run_pipeline(dwi, solver, fix_method, plotting=False, mute_progress=True):
 
-    # convert data for compatibility with CORE
-    structural_data = dwi.structural_data
-    diffusion_data = dwi.diffusion_data
-    data_mri = np.concatenate((structural_data, diffusion_data), axis=2)
+    data_mri, b_value, gradients = _prepare_data(dwi)
 
-    b_value = np.concatenate((np.zeros((np.shape(structural_data)[2])), dwi.b_value), axis=0)
-    gradients = np.concatenate((np.zeros((np.shape(structural_data)[2], 3)), dwi.gradients), axis=0)
-
-    num_slices = np.shape(data_mri)[3]
+    num_slices = np.shape(data_mri)[2]
     biomarkers = []
+
     for slice_idx in range(num_slices):
         print('Computing DTI on slice {} out of {}...'.format(slice_idx, num_slices))
         # only one slice
-        data = np.squeeze(data_mri[:, :, :, slice_idx])
+        data = np.squeeze(data_mri[:, :, slice_idx, :])
 
         try:
-            mask = np.squeeze(dwi.skull_stripping_mask[:, :, :, slice_idx])
+            mask = np.squeeze(dwi.skull_stripping_mask[:, :, slice_idx, :])
         except:
             # if mask is not defined for given slice
             mask = []
