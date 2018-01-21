@@ -73,8 +73,8 @@ class Window(QtWidgets.QDialog):
         self.transsliderx = QtWidgets.QSlider(Qt.Horizontal)
         self.transsliderx.setFocusPolicy(Qt.StrongFocus)
         self.transsliderx.setTickPosition(QtWidgets.QSlider.TicksBelow)
-        self.transsliderx.setMaximum(1000)
-        self.transsliderx.setMinimum(-1000)
+        self.transsliderx.setMaximum(2.5*max(mri_data.shape))
+        self.transsliderx.setMinimum(-2.5*max(mri_data.shape))
         self.transsliderx.setTickInterval(100)
         self.transsliderx.setSingleStep(1)
         self.transsliderx.setValue(0)
@@ -84,8 +84,8 @@ class Window(QtWidgets.QDialog):
         self.transslidery = QtWidgets.QSlider(Qt.Horizontal)
         self.transslidery.setFocusPolicy(Qt.StrongFocus)
         self.transslidery.setTickPosition(QtWidgets.QSlider.TicksBelow)
-        self.transslidery.setMaximum(1000)
-        self.transslidery.setMinimum(-1000)
+        self.transslidery.setMaximum(2.5*max(mri_data.shape))
+        self.transslidery.setMinimum(-2.5*max(mri_data.shape))
         self.transslidery.setTickInterval(100)
         self.transslidery.setSingleStep(1)
         self.transslidery.setValue(0)
@@ -95,8 +95,8 @@ class Window(QtWidgets.QDialog):
         self.transsliderz = QtWidgets.QSlider(Qt.Horizontal)
         self.transsliderz.setFocusPolicy(Qt.StrongFocus)
         self.transsliderz.setTickPosition(QtWidgets.QSlider.TicksBelow)
-        self.transsliderz.setMaximum(1000)
-        self.transsliderz.setMinimum(-1000)
+        self.transsliderz.setMaximum(2.5*max(mri_data.shape))
+        self.transsliderz.setMinimum(-2.5*max(mri_data.shape))
         self.transsliderz.setTickInterval(100)
         self.transsliderz.setSingleStep(1)
         self.transsliderz.setValue(0)
@@ -191,7 +191,7 @@ class Window(QtWidgets.QDialog):
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_zlabel('z')
-        
+
         # refresh canvas
         self.canvas.draw()
 
