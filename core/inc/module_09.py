@@ -12,7 +12,6 @@ import simens_dadm as smns
 
 """ Create histogrm function """
 
-
 def imHist(image):
     image = image.flatten()
 
@@ -38,8 +37,9 @@ def imHist(image):
     return imageHistogram
 
 
-""" Create Gauss mixture model function """
 
+
+""" Create Gauss mixture model function """
 
 def gmm(x,mu,v,p):
 
@@ -64,26 +64,51 @@ def gmm(x,mu,v,p):
     return(probab)
 
 
-""" Segmentation - main function """
 
+
+""" Part of image to segmentation """
+
+def imPart(skullFreeImage, firstPitch, lastPitch, rows, columns, pitches):
+
+    rangePitch = lastPitch - firstPitch
+    imageToSeg = np.zeros([rows, columns, rangePitch])
+
+    rPit = 0
+
+    for pitch in range (pitches):
+        if pitch < firstPitch:
+            continue
+        if pitch >= firstPitch:
+
+            if pitch < lastPitch:
+                imageToSeg [:,:,rPit] = skullFreeImage [:,:,pitch]
+                rPit = rPit+1
+            else:
+                break
+
+    return imageToSeg
+
+
+
+
+""" Segmentation """
 
 def segmentation(skullFreeImage):
 
     [rows, columns, pitches]=skullFreeImage.shape
-    print ("Pitche: " + str(pitches))
-    print("size rows: " + str(rows) +  "    size columns: " + str(columns) + "    size pitches: " + str(pitches))
-    pitches = pitches
-    print ("pit: " + str(pitches))
-    
+    firstPitch = 70
+    lastPitch = 140
+    imageToSeg = imPart(skullFreeImage, firstPitch, lastPitch, rows, columns, pitches)
 
+    pitches = lastPitch - firstPitch
 
-    for pitch in range(0,pitches-37):
+    mri_segMask = np.zeros([rows,columns, pitches])
 
-        print("pitch number: " + str(pitch))
-        im_test = skullFreeImage[:,:,pitch]
-        #scio.savemat('test'+str(pitch)+'.mat', {'im_test':im_test})
+    for pitch in range (pitches):
 
-        image = skullFreeImage[:,:,pitch]
+        print("Pitch:   " + str(pitch))
+
+        image = imageToSeg[:,:,pitch]
 
         imageCopy = image
         im = image.flatten()
@@ -137,12 +162,16 @@ def segmentation(skullFreeImage):
             if diffLlh<0.0001:
                 condition = 0
 
-
         #Image mask
 
         mu = mu+imMin-1             #recover real range
         c = np.zeros(clustersNum)
+
         imageMask = np.zeros([rows, columns])
+       #print (imageMask.shape)
+
+
+        #print("mri_segMask: " + str(mri_segMask))
 
         for i in range(rows):
             for j in range(columns):
@@ -150,44 +179,32 @@ def segmentation(skullFreeImage):
                     c[k] = gmm(image[i,j],mu[k],v[k],p[k])
                 a = (c==c.max()).nonzero()
                 imageMask[i,j]=a[0]
-        
-        mri_segMask=imageMask
-     
+
+        #sio.savemat('test1.mat', {'test1':imageMask})
+        print("imageMask shape: " + str(imageMask.shape))
+        mri_segMask[:,:,pitch] = imageMask[:]
+
     return mri_segMask
+
 
 
 
 """ Main body """
 
-
-"""
 def main9(mri_input, other_arguments = None):
-	
-    if (isinstance(mri_input, smns.mri_diff)): # instructions for diffusion mri
 
-    # isinstance(mri_input, smns.mri_struct) returns TRUE for diffusion AND structural MRI because of inheritance.
-    # It should be used if you have some code to work with BOTH structural and diffusion data (which may be frequent).
+    if (isinstance(mri_input, smns.mri_struct)):
+        [m,n,slices] = mri_input.structural_data.shape
 
-        mri_output = mri_input
-        print("This file contains diffusion MRI")
-        #some_code
+        segmentationMask = segmentation(mri_input.structural_data)
+        [rows, columns, sliceSeg] = segmentationMask.shape
 
-    elif (isinstance(mri_input, smns.mri_struct)): # instructions specific for structural mri. The case of diffusion MRI is excluded here by elif.
-        mri_data = mri_input
-        print("This file contains structural MRI")
-        #Segmentation
-        mri_output = segmentation(mri_data)
+        mri_output = np.zeros([m,n,sliceSeg])
+        mri_output = segmentationMask
+
+        mri_input.structural_data = mri_output
+
     else:
         return "Unexpected data format in module number 9!"
 
-    return mri_output """
-
-
-data = sio.loadmat('skullFreeImage_test.mat')
-skullFreeImage = data['imagesSkullFree']
-mri_segMask = segmentation(skullFreeImage)
-
-
-sio.savemat('test.mat', {'mri_segMask':mri_segMask})
-	
-
+    return mri_input
