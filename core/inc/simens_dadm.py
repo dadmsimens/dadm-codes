@@ -1,5 +1,5 @@
 import pickle
-
+import queue
 import scipy.io as sio
 import numpy as np
 
@@ -76,6 +76,19 @@ def mri_read(filename):
         return "Error: could not recognize data in file"
 
 # TODO: ADD FUNCTIONS FOR EASY DATA ACCESS IN CLASSES.
+
+
+class simens_communicator():
+    def __init__(self, exit_event):
+        self.gui_says = queue.Queue()
+        self.core_says = queue.Queue()
+        self.exit_event = exit_event
+
+
+class simens_msg():
+    def __init__(self, module, arguments=None):
+        self.module = module
+        self.arguments = arguments
 
 
 def save_object(file_path, data_object):
