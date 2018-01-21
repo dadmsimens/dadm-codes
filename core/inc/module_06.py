@@ -528,17 +528,10 @@ class DTISolver(object):
 def _prepare_data(dwi):
 
     structural_data = dwi.structural_data
-    if len(np.shape(structural_data)) < 3:
-        # add diffusion dummy dimension
-        structural_data = np.expand_dims(structural_data, axis=2)
-    if len(np.shape(structural_data)) < 4:
-        # single slice; reshape
-        structural_data = np.expand_dims(structural_data, axis=3)
-
     diffusion_data = dwi.diffusion_data
-    if len(np.shape(diffusion_data)) < 4:
-        # single slice; reshape
-        diffusion_data = np.expand_dims(diffusion_data, axis=2)
+    if len(np.shape(structural_data)) < 4:
+        # add dummy diffusion direction
+        structural_data = np.expand_dims(structural_data, axis=3)
 
     data_mri = np.concatenate((structural_data, diffusion_data), axis=3)
 
