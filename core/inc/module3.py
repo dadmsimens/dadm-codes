@@ -117,7 +117,7 @@ def estimate_map(image):
     correct = np.zeros((x,y))
 
     for i in range(0,7):
-        orrect = correct + np.multiply(coefs[i], np.power(SNR,i))
+        correct = correct + np.multiply(coefs[i], np.power(SNR,i))
     noise = noise - correct
 
     noise = np.exp(noise)
