@@ -122,25 +122,26 @@ class DTISolver(object):
     Solvers
     """
 
-    def _build_tensor(self, tensor_vector):
-        tensor = np.zeros((3, 3))
+    def _reshape_tensor_image(self):
+        dims = np.shape(self._tensor_image)
+        tensor_image_reshaped = np.zeros((dims[0], dims[1], 3, 3))
 
         # x-row
-        tensor[0, 0] = tensor_vector[0]
-        tensor[0, 1] = tensor_vector[3]
-        tensor[0, 2] = tensor_vector[5]
+        tensor_image_reshaped[:, :, 0, 0] = self._tensor_image[:, :, 0]
+        tensor_image_reshaped[:, :, 0, 1] = self._tensor_image[:, :, 3]
+        tensor_image_reshaped[:, :, 0, 2] = self._tensor_image[:, :, 5]
 
         # y-row
-        tensor[1, 0] = tensor_vector[3]
-        tensor[1, 1] = tensor_vector[1]
-        tensor[1, 2] = tensor_vector[4]
+        tensor_image_reshaped[:, :, 1, 0] = self._tensor_image[:, :, 3]
+        tensor_image_reshaped[:, :, 1, 1] = self._tensor_image[:, :, 1]
+        tensor_image_reshaped[:, :, 1, 2] = self._tensor_image[:, :, 4]
 
         # z-row
-        tensor[2, 0] = tensor_vector[5]
-        tensor[2, 1] = tensor_vector[4]
-        tensor[2, 2] = tensor_vector[2]
+        tensor_image_reshaped[:, :, 2, 0] = self._tensor_image[:, :, 5]
+        tensor_image_reshaped[:, :, 2, 1] = self._tensor_image[:, :, 4]
+        tensor_image_reshaped[:, :, 2, 2] = self._tensor_image[:, :, 2]
 
-        return tensor
+        return tensor_image_reshaped
 
     def _pixel_loop(self, image_depth, function_handle):
 
@@ -169,30 +170,21 @@ class DTISolver(object):
 
     def estimate_eig(self):
 
-        def estimate_eig_pixel_func(DTISolver, id_x, id_y):
-            tensor = self._build_tensor(np.squeeze(DTISolver._tensor_image[id_x, id_y, :]))
-            eig_vals, eig_vectors = np.linalg.eigh(tensor)
+        tensor_image_reshaped = self._reshape_tensor_image()
+        eig_values, eig_vectors = np.linalg.eigh(tensor_image_reshaped)
 
-            # eigenvalues in ascending order, flip array
-            eig_vals = eig_vals[::-1]
+        # eigenvalues in ascending order, flip array
+        self._eig_image = np.flip(eig_values, axis=2)
 
-            # get RGB values (from eigenvector corresponding to largest eigenvalue)
-            # red: transversal (left-right)
-            # green: anterior-posterior (front-back)
-            # blue: cranio-caudal (head-feet)
-            # we take absolute value because we care about the axis in general, not direction specifically
-            rgb = np.abs(eig_vectors[:, -1])
+        # get RGB values (from eienvector corresponding to largest eigenvalue)
+        # red: transversal (left-right)
+        # green: anterior-posterior (front-back)
+        # blue: cranio-caudal (head-feet)
+        # we take absolute value because we care about the axis in general, not direction specifically
+        self._rgb_image = np.abs(eig_vectors[:, :, :, -1])
 
-            if self._fix_method == 'abs':
-                eig_vals = np.abs(eig_vals)
-
-            return np.hstack((eig_vals, rgb))
-
-        results = self._pixel_loop(image_depth=6, function_handle=estimate_eig_pixel_func)
-
-        # split results into eigenvalues and rgb map
-        self._eig_image = results[:, :, 0:3]
-        self._rgb_image = results[:, :, 3:]
+        if self._fix_method == 'abs':
+            self._eig_image = np.abs(self._eig_image)
 
     """
     Biomarkers
