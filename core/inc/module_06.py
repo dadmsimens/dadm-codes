@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 class DTISolver(object):
 
-    MFN_MAX_ITER = 2
+    MFN_MAX_ITER = 3
     MFN_ERROR_EPSILON = 1e-5
     MFN_GRADIENT_EPSILON = 1e-5
     MFN_LAMBDA_MATRIX_FUN = 'identity'
@@ -354,42 +354,107 @@ class DTISolver(object):
         # Chosen WLS Model: weights equal to measurement in each pixel
         return self._last_dim_to_eye(self._data)
 
-    def _get_wls_error_value(self, pixel, wls_estimate):
-        weights = self._get_wls_weights(pixel)
-        wls_residual = weights @ (np.log(pixel) - self._design_matrix @ wls_estimate)
-        wls_error = 1/2 * wls_residual.T @ wls_residual
+    def _get_wls_error_value(self, wls_estimate):
+        weights = self._get_wls_weights()
+        wls_residual = np.matmul(
+            weights,
+            (np.log(self._data)[:, :, :, None] - np.matmul(
+                self._design_matrix[None, None, :, :],
+                wls_estimate[:, :, :, None]
+            ))
+        )
+        wls_error = 1/2 * np.sum(np.square(np.squeeze(wls_residual)), axis=2)
         return wls_error
 
-    def _get_wls_gradient(self, pixel, wls_estimate):
-        weights = self._get_wls_weights(pixel)
-
-        if self._fix_method == 'cholesky':
-            J_matrix = self._get_cholesky_J_matrix(wls_estimate)
-            wls_gradient = (-1) * J_matrix.T @ self._design_matrix.T @ (weights.T @ weights) @ \
-                           (np.log(pixel) - self._design_matrix @ wls_estimate)
-
-        else:
-            wls_gradient = (-1) * self._design_matrix.T @ (weights.T @ weights) @ \
-                           (np.log(pixel) - self._design_matrix @ wls_estimate)
-
-        return wls_gradient
-
-    def _get_wls_hessian(self, pixel, wls_estimate):
-        weights = self._get_wls_weights(pixel)
+    def _get_wls_gradient(self, wls_estimate):
+        weights = self._get_wls_weights()
 
         if self._fix_method == 'cholesky':
             J_matrix = self._get_cholesky_J_matrix(wls_estimate)
 
-            reduced_sum = np.zeros((7, 7))
-            wls_residual = np.square(weights) @ (np.log(pixel) - self._design_matrix @ wls_estimate)
-            for idx in range(np.shape(pixel)[0]):
-                reduced_sum += wls_residual[idx, np.newaxis] * np.squeeze(self._P_matrix[:, :, idx])
-
-            wls_hessian = J_matrix.T @ self._design_matrix.T @ (weights.T @ weights) @ self._design_matrix @ \
-                          J_matrix + reduced_sum
+            wls_gradient = (-1) * np.matmul(
+                np.transpose(J_matrix, axes=(0, 1, 3, 2)),
+                np.matmul(
+                    np.matmul(
+                        self._design_matrix.T[None, None, :, :],
+                        np.matmul(
+                            np.transpose(weights, axes=(0, 1, 3, 2)),
+                            weights
+                        )
+                    ),
+                    (np.log(self._data)[:, :, :, None] - np.matmul(
+                        self._design_matrix[None, None, :, :],
+                        wls_estimate[:, :, :, None]
+                    ))
+                )
+            )
 
         else:
-            wls_hessian = self._design_matrix.T @ (weights.T @ weights) @ self._design_matrix
+            wls_gradient = (-1) * np.matmul(
+                np.matmul(
+                    self._design_matrix.T[None, None, :, :],
+                    np.matmul(
+                        np.transpose(weights, axes=(0, 1, 3, 2)),
+                        weights
+                    )
+                ),
+                (np.log(self._data)[:, :, :, None] - np.matmul(
+                    self._design_matrix[None, None, :, :],
+                    wls_estimate[:, :, :, None]
+                ))
+            )
+
+        return np.squeeze(wls_gradient)
+
+    def _get_wls_hessian(self, wls_estimate):
+        weights = self._get_wls_weights()
+
+        if self._fix_method == 'cholesky':
+            dims = np.shape(self._data)
+            J_matrix = self._get_cholesky_J_matrix(wls_estimate)
+
+            reduced_sum = np.zeros((dims[0], dims[1], 7, 7))
+
+            wls_residual = np.matmul(
+                np.square(weights),
+                np.log(self._data)[:, :, :, None]
+            ) - np.matmul(
+                self._design_matrix[None, None, :, :],
+                wls_estimate[:, :, :, None]
+            )
+
+            for idx in range(dims[2]):
+                reduced_sum += wls_residual[:, :, idx, None] * self._P_matrix[:, :, :, :, idx]
+
+            wls_hessian = np.matmul(
+                np.matmul(
+                    np.matmul(
+                        np.matmul(
+                            np.transpose(J_matrix, axes=(0, 1, 3, 2)),
+                            self._design_matrix.T[None, None, :, :]
+                        ),
+                        np.matmul(
+                            np.transpose(weights, axes=(0, 1, 3, 2)),
+                            weights
+                        )
+                    ),
+                    self._design_matrix[None, None, :, :]
+                ),
+                J_matrix
+            ) + reduced_sum
+
+        else:
+
+            wls_hessian = np.matmul(
+                np.matmul(
+                    self._design_matrix.T[None, None, :, :],
+                    np.matmul(
+                        np.transpose(weights, axes=(0, 1, 3, 2)),
+                        weights
+                    )
+                ),
+                self._design_matrix[None, None, :, :]
+            )
 
         return wls_hessian
 
@@ -397,58 +462,6 @@ class DTISolver(object):
     Nonlinear Least Squares
     """
 
-    '''
-    def _solve_nls(self, pixel):
-        # Parameters
-        lambda_param = 0
-        hessian_flag = True
-
-        # Initial solution
-        estimate = self._solve_wls(pixel)
-        error_best = self._get_error_value(pixel, estimate)
-
-        # Iterate until convergence
-        for k in range(self._max_iter):
-
-            # Recalculate hessian if necessary
-            if hessian_flag is True:
-                gradient = self._get_gradient(pixel, estimate)
-                hessian = self._get_hessian(pixel, estimate)
-                hessian_flag = False
-
-            # Check error for new parameter vector
-            delta = (-1) * np.linalg.pinv(hessian + lambda_param*self._lambda_matrix) @ gradient
-            error_new = self._get_error_value(pixel, estimate+delta)
-
-            # Check for convergence
-            if abs(error_new - error_best) < self._error_epsilon \
-                    and (0 <= (-1)*delta.T @ gradient < self._gradient_epsilon):
-                if error_new < error_best:
-                    estimate += delta
-                break
-
-            # Check if current estimate is better than previous
-            if error_new < error_best:
-                lambda_param *= 0.1
-                estimate += delta
-                hessian_flag = True
-                error_best = error_new
-
-            else:
-                # Check if first iteration
-                if lambda_param == 0:
-                    lambda_param = 1e-4
-                else:
-                    lambda_param *= 10
-
-        # Loop ended, get the final estimate
-        if self._fix_method == 'cholesky':
-            mfn_estimate = self._inverse_cholesky(estimate)
-        else:
-            mfn_estimate = estimate
-
-        return mfn_estimate
-    '''
     def _solve_nls(self):
         dims = np.shape(self._data)
 
