@@ -120,19 +120,19 @@ class SkullStripping:
                         zero_crossing[i][j] = 255
         return zero_crossing
 
-    def background_markers(self, csf):
+    def background_markers(self, preproc_image, csf):
         # mark the background markers
         threshold, upper, lower = csf+20, 0, 1
-        bw = np.where(self.image >= threshold, upper, lower)
+        bw = np.where(preproc_image >= threshold, upper, lower)
         d = morphology.distance_transform_edt(bw)
         dl = watershed_ift(bw.astype(np.uint8), d.astype(np.int16))
         bgm = dl == 1
         bgm = np.invert(bgm)
         return bgm
 
-    def foreground_markers(self, csf):
+    def foreground_markers(self, preproc_image, csf):
         # mark the foreground objects
-        i_erode = morphology.grey_erosion(self.image, 20)
+        i_erode = morphology.grey_erosion(preproc_image, 20)
         i_obr = morphology.grey_closing(i_erode, 10)
         i_obrd = morphology.grey_dilation(i_obr, 20)
         i_obrcbr = morphology.grey_closing(1 - i_obrd, 10)
@@ -173,32 +173,36 @@ class SkullStripping:
 
     def run(self, verbose):
         preproc_image, csf, cog, r, st = self.preprocessing()
-        if 97 <= r or r <= 56 or st > 1.3:
+        print(r)
+        print(csf)
+        if r <= 56 or st > 1.3: # 97 <= r don't working with diff data
             skull_stripping_mask = np.zeros_like(self.image)
         else:
             skull_stripping_mask = self.bse(cog)
             check = np.sum(skull_stripping_mask)
             if check < 4000 or check > np.pi * r**2:
                 skull_stripping_mask = self.watershed(preproc_image, csf, cog)
-            if verbose:
-                plt.figure()
-                plt.imshow(self.image, 'gray', interpolation='none')
-                plt.imshow(skull_stripping_mask, 'jet', interpolation='none', alpha=0.5)
-                plt.show()
+        if verbose:
+            plt.figure()
+            plt.imshow(self.image, 'gray', interpolation='none')
+            plt.imshow(skull_stripping_mask, 'jet', interpolation='none', alpha=0.5)
+            plt.show()
         return skull_stripping_mask
 
 
 def main8(mri_input, verbose=False):
     if isinstance(mri_input, smns.mri_diff):  # instructions for diffusion mri
+        [m, n, slices, grad] = mri_input.diffusion_data.shape
         mri_output = mri_input
-        for i in range(mri_input.diffusion_data.shape[2]):
-            mri_output.skull_stripping_mask = SkullStripping(mri_input.diffusion_data[:, :, 1]).run(verbose)
-        print("This file contains diffusion MRI")
-        # it should works, I make tests when 3D data will be available,
+        mri_output.skull_stripping_mask = np.zeros([m, n, slices, grad])
+        for i in range(slices):
+            for j in range(grad):
+                mri_output.skull_stripping_mask[:, :, i, j] = SkullStripping(mri_input.diffusion_data[:, :, i, j]).run(verbose)
     elif isinstance(mri_input, smns.mri_struct):
-        print("This file contains structural MRI")
-        mri_output = mri_input
-        mri_output.skull_stripping_mask = SkullStripping(mri_input.structural_data).run(verbose)
+        [m, n, slices] = mri_input.structural_data.shape
+        mri_output = np.zeros([m, n, slices])
+        for i in range(slices):
+            mri_output.skull_stripping_mask[:, :, i] = SkullStripping(mri_input.structural_data[:, :, i]).run(verbose)
     else:
         return "Unexpected data format in module number 8!"
     return mri_output

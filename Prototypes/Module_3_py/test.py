@@ -125,9 +125,9 @@ noise = noise + eg
 coefs = [-0.2895, -0.0389, 0.4099, -0.3552, 0.1493, -0.0358, 0.0050, -3.7476e-04, 1.1802e-05]
 correct = np.zeros((x,y))
 
-#for i in range(0,7):
- #   correct = correct + np.multiply(coefs[i], np.power(SNR,i))
-#noise = noise - correct
+for i in range(0,7):
+    correct = correct + np.multiply(coefs[i], np.power(SNR,i))
+noise = noise - correct
 
 # exp
 noise = np.exp(noise)

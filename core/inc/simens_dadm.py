@@ -1,5 +1,5 @@
 import pickle
-
+import queue
 import scipy.io as sio
 import numpy as np
 
@@ -17,7 +17,7 @@ class mri_struct:
     segmentation is a matrix with segmentation module result
     """
 
-    def __init__(self, structural_data=None, compression_rate=1, coils_n=0, sensitivity_maps=None):
+    def __init__(self, structural_data=np.array([]), compression_rate=1, coils_n=0, sensitivity_maps=None):
         self.structural_data = structural_data
         if self.structural_data.ndim==3:
             self.structural_data = np.expand_dims(structural_data, 2)
@@ -47,7 +47,7 @@ class mri_diff(mri_struct):
     biomarkers is the result of diffusion tensor imaging module
     """
 
-    def __init__(self, raw_data, compression_rate=1, coils_n=0, sensitivity_maps=None, gradients=None, b_value=None):
+    def __init__(self, raw_data=np.array([]), compression_rate=1, coils_n=0, sensitivity_maps=None, gradients=None, b_value=None):
         super().__init__(raw_data, compression_rate, coils_n, sensitivity_maps)
         if raw_data.ndim==4:
             raw_data = np.expand_dims(raw_data, 2)
@@ -76,6 +76,19 @@ def mri_read(filename):
         return "Error: could not recognize data in file"
 
 # TODO: ADD FUNCTIONS FOR EASY DATA ACCESS IN CLASSES.
+
+
+class simens_communicator():
+    def __init__(self, exit_event):
+        self.gui_says = queue.Queue()
+        self.core_says = queue.Queue()
+        self.exit_event = exit_event
+
+
+class simens_msg():
+    def __init__(self, module, arguments=None):
+        self.module = module
+        self.arguments = arguments
 
 
 def save_object(file_path, data_object):
