@@ -93,7 +93,7 @@ def upsampling(image, N, M, plotting):
         
 
 
-from inc import simens_dadm as smns
+from . import simens_dadm as smns
 
 def main10(mri_input, other_arguments = None):
     if (isinstance(mri_input, smns.mri_diff)): # instructions for diffusion mri
