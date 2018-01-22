@@ -71,21 +71,8 @@ def module10(image, N):
 
 from . import simens_dadm as smns
 
-def main10(mri_input, other_arguments = None):
-    if (isinstance(mri_input, smns.mri_diff)): 
-        print("This file contains diffusion MRI")
-        [m, n, slices, gradients] = mri_input.diffusion_data.shape
-        data_out = np.zeros([m, n, slices, gradients])
-   
-        for i in range(slices):
-            for j in range(gradients):
-                data_out[:, :, i, j] = module10(mri_input.diffusion_data[:, :, i, j])
-        	
-        mri_input.diffusion_data = data_out
-        
-    
-    elif (isinstance(mri_input, smns.mri_struct)): 
-        print("This file contains structural MRI")
+def main10(mri_input, N):
+    if (isinstance(mri_input, smns.mri_struct)):
         [m, n, slices] = mri_input.structural_data.shape
         data_out = np.zeros([m, n, slices])
         
