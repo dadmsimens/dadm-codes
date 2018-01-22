@@ -26,7 +26,6 @@ def lmmse_filter(image,noise_map,window):
 def main4(mri_input):
 
     if isinstance(mri_input, smns.mri_diff): # instructions for diffusion mri
-        print("diffusion data")
         mri_output = mri_input
         window = np.ones((5, 5))
         [m, n, slices, gradients] = mri_input.diffusion_data.shape
@@ -42,7 +41,6 @@ def main4(mri_input):
 
     elif (isinstance(mri_input, smns.mri_struct)):
         mri_output = mri_input
-        print("struct data")
         window = np.ones((5, 5))
         [m, n, slices] = mri_input.structural_data.shape
         data_out = np.zeros([m, n, slices])
