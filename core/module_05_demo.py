@@ -10,7 +10,8 @@ import numpy as np
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 DATASETS_ROOT = PROJECT_ROOT + '/Data/Module_05_test/'
 DATASETS = {
-    0: 'diffusion_synthetic_normal_L8_r2_slices_41_50_gr15_b1200'
+    0: 'diffusion_synthetic_normal_L8_r2_slices_41_50_gr15_b1200',
+    1: ''
 }
 
 
@@ -26,7 +27,8 @@ if __name__ == "__main__":
 
     real_example = 1
     if real_example:
-        mri_data = smns.load_object(file_path=DATASETS_ROOT)
+        dataset_name = DATASETS[1]
+        mri_data = smns.load_object(file_path=DATASETS_ROOT + dataset_name)
 
         noisy = data.diffusion_data[:, :, 1, 10]
         filtered = mri_data.diffusion_data[:, :, 1, 10]

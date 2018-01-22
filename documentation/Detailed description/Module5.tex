@@ -1,4 +1,4 @@
-\section{Module 5. . Non-stationary noise filtering 2}
+\section{Module 5. Non-stationary noise filtering 2}
 
 Magnetic Resonance images are endangered of being corrupted by noise
 and artifacts. Since they are used as a basis for medical diagnosis
@@ -24,7 +24,7 @@ of point \textit{p} accordingly to the equation:
 It can be seen that value of \textit{p} is calculated as weighted
 average of pixels in the image (\textit{q}), having fulfilled restrictions
 from \ref{m5e1}. To determine before mentioned average the similarity
-between squared neighbourhoods widows centered around pixels \textit{p}
+between square neighbourhoods widows centered around pixels \textit{p}
 and \textit{q} are calculated. The size of the window can determined
 by the user, defined by parameter $R_{sim}$. Equation \ref{m5e2}
 shows how to determine this similarity.
@@ -48,6 +48,7 @@ d(p,q)=G_{p}||Y(N_{p})-Y(N_{q})||_{R_{sim}}^{2}\label{m5e6}
 In above equation $G_{p}$ stands for a Gaussian weighting function
 that has a 0 mean and standard deviation usually equal to 1.
 
+
 Once NLM filter is fully explained, unbiased extension of it can be
 examined. It builds on the properties of MRI signal. According to
 \cite{5a1} the magnitude signal of MRI follows a Rician distribution.
@@ -60,10 +61,10 @@ can be deleted with ease. The blueprint for UNLM can be summarized
 in:
 \begin{itemize}
 \item noise estimation - which can be done by calculating standard deviation
-of background in the image, following formula \ref{m5e4}, where $\mu$
-is the mean value of background of squared magnitude image. To distinguish
+of background in the image. To distinguish
 background and the body on the MRI scan the Otsu thresholding method
-\cite{5a4} can be successfully used, 
+\cite{5a4} can be successfully used. In this version noise maps are used, to achieve
+non-stationary noise filtration, 
 \item calculating NLM values for each point of image as in \ref{m5e1}, 
 \item assessing the unbiased value of each point accordingly to the equation
 \ref{m5e3}.
@@ -72,16 +73,13 @@ background and the body on the MRI scan the Otsu thresholding method
 UNLM(Y)=\sqrt{NLM(Y)^{2}-2\sigma^{2}}\label{m5e3}
 \end{equation}
 
-\begin{equation}
-\sigma=\sqrt{\frac{\mu}{2}}\label{m5e4}
-\end{equation}
+In above equation $\sigma$ refers to value of non-stationary noise in the signal, more precisely
+it is a value for each pixel from the original image, stored in a form of noise map.
 
 % dwi, if it has to be joint implementation 
 UNML implementation for diffusion weighted data becomes a bit less
-trivial task. Noise estimation is done in different fashion. From
-distribution of local averages of voxels in the background, the mode
-has to be calculated and then corrected with a factor of $\sqrt{\frac{2}{\pi}}$
-\cite{5a2}. Based on assumption that gradients in similar directions
+trivial task, due to the new dimension of data associated with different gradients for each slice.
+Based on assumption that gradients in similar directions
 present related behaviours, UNLM for DWI can be formulated as:
 
 \begin{equation}
@@ -89,18 +87,15 @@ Y_{i}(p)=\sqrt{\sum_{j\in\Theta_{i}^{N}}^ {}\sum_{q\in N_{p}}^ {}w_{i}^{j}(p,q)M
 \end{equation}
 
 Where weights are calculated as for structural data and \textit{M}
-is a vector containing gray values. Another difference can be found
-in way the distance between voxels is calculated. It is, the distance
-in domain of gray levels in the image.
+is a vector containing gray values.
 
 \begin{equation}
 d_{i}^{j}(p,q)=(M_{i}(N_{p})-M_{j}(N_{q}))^{T}G_{p}(M_{i}(N_{p})-M_{j}(N_{q}))\label{m5e7}
 \end{equation}
 
-UNLM in this case not only looks for in the same gradient image \textit{i},
-but also searches images \textit{j} near the mainly investigated direction
-\textit{i}. Working in that manner allows the objective of using joint
-information (including correlation between channels) to be met \cite{5a2}.
+However it was reported in \cite{5a2} that denoising diffusion weighted data using
+UNLM method gives no significant results, so gradients related data can be ignored, or 
+filtered as structural data.
 
 It is worth mentioning that UNLM filter's performance is highly dependent
 on parameter values. The optimal values of them were examined in \cite{5a1}
@@ -109,7 +104,7 @@ filter can significantly increase SNR of the scans while preserving
 body structures.
 
 \textbf{\emph{Module input}}: Previously reconstructed, normalized
-and corrected data.
+and corrected data, noise maps.
 
 \textbf{\emph{Module output}}: Image with deleted Rician noise by
 unbiased non-local means filter. \\
