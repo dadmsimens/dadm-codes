@@ -42,7 +42,7 @@ def inhomogeneityCorrection(gray):
   
 def main2(mri_input, other_arguments = None):
     if (isinstance(mri_input, smns.mri_diff)): # instructions for diffusion mri
-        print("This file contains diffusion MRI")
+        #print("This file contains diffusion MRI")
         [m, n, slices, gradients] = mri_input.diffusion_data.shape
         data_out = np.zeros([m, n, slices, gradients])
         # isinstance(mri_input, smns.mri_struct) returns TRUE for diffusion AND structural MRI because of inheritance.
@@ -55,7 +55,7 @@ def main2(mri_input, other_arguments = None):
         
     
     elif (isinstance(mri_input, smns.mri_struct)): # instructions specific for structural mri. The case of diffusion MRI is excluded here by elif.
-        print("This file contains structural MRI")
+        #print("This file contains structural MRI")
         [m, n, slices] = mri_input.structural_data.shape
         data_out = np.zeros([m, n, slices])
         
