@@ -30,6 +30,7 @@ if __name__ == '__main__':
 
     # True to plot results
     plotting = True
+    verbose = True
 
     # Dummy function to preprocess (implements other modules functionality)
     dwi = smns.load_object(file_path=DATASETS_ROOT+dataset_name)
@@ -37,7 +38,7 @@ if __name__ == '__main__':
     # Module 06 - Diffusion tensor estimation
     # dwi.biomarkers is a dictionary of biomarkers: MD, RA, FA, VR, FA_rgb
     time.perf_counter()
-    dwi = module_06.run_module(dwi, solver, fix_method, plotting)
+    dwi = module_06.run_module(dwi, solver, fix_method, plotting, verbose)
     print("Module 6 (DTI) time: {} seconds.\n".format(time.perf_counter()))
 
     # Save object using pickle library

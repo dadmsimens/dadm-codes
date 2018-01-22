@@ -51,7 +51,8 @@ class Module06Tests(unittest.TestCase):
     """
 
     def test_invalid_input_data(self):
-        invalid_data_instance = smns.mri_struct()
+        invalid_data_instance = self.dwi_input
+        invalid_data_instance.structural_data = None
         self.assertRaises(ValueError, module_06.run_module,
                           invalid_data_instance, solver='wls', fix_method='abs')
 
@@ -269,20 +270,6 @@ class DTISolverTests(unittest.TestCase):
             fix_method='abs'
         )
         self.assertEqual(np.amin(dti_solver._mask), True)
-
-    def test_input_skull_mask_present(self):
-        """
-        Fails if loaded data object does not contain skull stripping mask.
-        """
-        dti_solver = module_06.DTISolver(
-            data=self.data,
-            gradients=self.gradients,
-            b_value=self.b_value,
-            mask=self.mask,
-            solver='wls',
-            fix_method='abs'
-        )
-        self.assertEqual(np.amin(dti_solver._mask), False)
 
     def test_input_skull_mask_shape(self):
         dti_solver = module_06.DTISolver(
