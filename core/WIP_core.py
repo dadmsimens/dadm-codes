@@ -1,7 +1,7 @@
 import threading, time, queue, multiprocessing
 from inc import simens_dadm as smns
 import uiui as gui
-from inc import module_01, module2, module3, module4, module_05, module_06, module08, module_10, module11, module12
+from inc import module_01, module2, module3, module4, module_05, module_06, module08, module_09, module_10, module11, module12
 from inc.constants import *
 
 def simens_core(communicator):
@@ -85,8 +85,8 @@ def simens_core(communicator):
 
             elif x.module == MODULE_9_STR: # Segmentation
                 communicator.core_says.put('Segmentation running...')
-                # MODULE DOES NOT IMPORT PROPERLY!!!! data[current_instance] = module_09.main9(data[current_instance])
-                communicator.core_says.put('Segmentation NOT IMPLEMENTED YET')
+                data[current_instance] = module_09.main9(data[current_instance])
+                communicator.core_says.put('Segmentation complete')
                 communicator.core_says.put(smns.simens_msg(MODULE_9_STR, data[current_instance]))
 
 
