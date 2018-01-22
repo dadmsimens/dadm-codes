@@ -1,3 +1,30 @@
 \section{Module 11. Brain 3D}
 
--code 
+\indent The implementation of 11th module included visualization of cortex structure in three-dimensional model and visualization of elected cross-section of model. \\
+\indent  As input parameter, module get ouput of 9th module. This is the mask of segmentated data, which includes cortex structure as value 3. The data about cortex structure is seperated from 3D array.
+11 th module is displayed in new window of application, so implementation includes not only functionality requirements but also designing of graphical user interface.  \\
+\indent To prepare design of user interface used Qt Designer program. \\
+\indent Module is selecting by user in main window of application. If input data is correct, new window is opened and reconstrucion of three-dimensional model is initialized automatically. \\
+\indent First input data – 3D array – is converted to vtkFloatArray, which makes vtkImageData object. Then basing on vtkImageData there is used vtkMarcingCubes class, which makes reconstruction. As a thresholds there was used value equal to 1, because of fact that all values not equal to zero are included to cortex structure. \\
+\indent After reconstrucion model is displayed in BRAIN 3D window. To enable displaying VTK objects in Qt Application there is set frame in which is inserted the object of VTK library by using QVTKRenderWindowInteractor. It is dedicated vtkWidget to display VTK in QT ibrary.\\
+\indent To visualization data there are used following classes:
+
+\begin{itemize}
+\item vtkRenderer – which enables rendering process: transforming geometry, light and camera view into an image
+\item 
+vtkMapper – which maps data to graphics primitives
+\item vtkActor – adjusting data to 3D scenery
+\item vtkInteractorStyleTrackballCamera – setting possibility of interaction with model
+\end{itemize}
+
+
+\indent BRAIN 3D window enables three options:
+\begin{itemize}
+\item preview 3D model
+\item clip model 
+\item clip model and show plane.
+\end{itemize}
+\indent Automatically after initalization there is loaded firts mode: preview 3D model. 
+Mode: clip model, enables to setting intersection plane and cut model in place of it. Intersection plane is vtkImagePlaneWidget object. It allows to interactive set the plane by computer mouse. Interaction of plane is activated whenever user press „clip model” button. When interaction event is detected the model is automatically clip by vtkCliPolyData class. \\
+\indent Mode:  clip model and show plane call the same function as previous mode, but with input parameter planemode - True ( default – False). It expands functionality of diplaying the cross-section corresponding to the elected plane. It improves readability of intersection plane. It is based on the same objects of VTK library, but using additional methods of it.\\
+\indent User has possibility fluently switch modeLs by pressing appropriate buttons. Application has also help window, with short user guide.
