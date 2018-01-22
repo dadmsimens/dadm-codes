@@ -7,7 +7,6 @@ import numpy as np
 from scipy import *
 from numpy import *
 
-import simens_dadm as smns
 
 
 """ Create histogrm function """
@@ -102,7 +101,7 @@ def segmentation(skullFreeImage):
 
     pitches = lastPitch - firstPitch
 
-    mri_segMask = np.zeros([rows,columns, pitches])
+    segmentImageMask = np.zeros([rows,columns, pitches])
 
     for pitch in range (pitches):
 
@@ -168,10 +167,6 @@ def segmentation(skullFreeImage):
         c = np.zeros(clustersNum)
 
         imageMask = np.zeros([rows, columns])
-       #print (imageMask.shape)
-
-
-        #print("mri_segMask: " + str(mri_segMask))
 
         for i in range(rows):
             for j in range(columns):
@@ -180,31 +175,34 @@ def segmentation(skullFreeImage):
                 a = (c==c.max()).nonzero()
                 imageMask[i,j]=a[0]
 
-        #sio.savemat('test1.mat', {'test1':imageMask})
-        print("imageMask shape: " + str(imageMask.shape))
-        mri_segMask[:,:,pitch] = imageMask[:]
+        segmentImageMask[:,:,pitch] = imageMask[:]
 
-    return mri_segMask
+    return segmentImageMask
 
 
 
 
 """ Main body """
 
+import simens_dadm as smns
+
 def main9(mri_input, other_arguments = None):
-
-    if (isinstance(mri_input, smns.mri_struct)):
+    
+    if isinstance(mri_input, smns.mri_struct):
+        
         [m,n,slices] = mri_input.structural_data.shape
-
+        
         segmentationMask = segmentation(mri_input.structural_data)
         [rows, columns, sliceSeg] = segmentationMask.shape
-
-        mri_output = np.zeros([m,n,sliceSeg])
-        mri_output = segmentationMask
-
+        
+        mri_output.segmentation = np.zeros([m,n,sliceSeg])
+        
+        mri_output.segmentation = segmentationMask
         mri_input.structural_data = mri_output
-
+        
     else:
         return "Unexpected data format in module number 9!"
 
     return mri_input
+
+
