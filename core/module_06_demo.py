@@ -25,11 +25,11 @@ DATASETS = {
 if __name__ == '__main__':
     # API parameters (passed from GUI)
     dataset_name = DATASETS[0]
-    solver = SOLVERS[0]
+    solver = SOLVERS[1]
     fix_method = FIX_METHODS[0]
 
     # True to plot results
-    plotting = False
+    plotting = True
 
     # Dummy function to preprocess (implements other modules functionality)
     dwi = smns.load_object(file_path=DATASETS_ROOT+dataset_name)

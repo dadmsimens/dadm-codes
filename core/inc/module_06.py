@@ -8,6 +8,7 @@ class DTISolver(object):
     MFN_ERROR_EPSILON = 1e-5
     MFN_GRADIENT_EPSILON = 1e-5
     MFN_LAMBDA_MATRIX_FUN = 'identity'
+    MFN_LAMBDA_PARAM_INIT = 1e-4
 
     ACCEPTED_SOLVERS = ['wls', 'nls']
     ACCEPTED_FIX_METHODS = ['abs', 'cholesky']
@@ -67,6 +68,7 @@ class DTISolver(object):
             self._mask = np.ones((self._data.shape[0], self._data.shape[1])) == 1
 
     def _get_design_matrix(self):
+        # TODO: change shape to (1, 1, gradient, 7)?
         design_matrix = np.column_stack((
             np.square(self._bvecs[:, 0]),
             np.square(self._bvecs[:, 1]),
@@ -81,14 +83,16 @@ class DTISolver(object):
         return design_matrix
 
     def _setup_MFN(self):
+        dims = np.shape(self._data)
         # MFN method convergence breakpoints
         self._max_iter = DTISolver.MFN_MAX_ITER
-        self._error_epsilon = DTISolver.MFN_ERROR_EPSILON
-        self._gradient_epsilon = DTISolver.MFN_GRADIENT_EPSILON
+        self._error_epsilon = DTISolver.MFN_ERROR_EPSILON * np.ones((dims[0], dims[1]))
+        self._gradient_epsilon = DTISolver.MFN_GRADIENT_EPSILON * np.ones((dims[0], dims[1]))
+        self._lambda_param_init = DTISolver.MFN_LAMBDA_PARAM_INIT
 
         # Lambda parameter to multiply the hessian
         if DTISolver.MFN_LAMBDA_MATRIX_FUN == 'identity':
-            self._lambda_matrix = np.eye(7)
+            self._lambda_matrix = self._last_dim_to_eye(np.ones((dims[0], dims[1], 7,)))
 
         if self._fix_method == 'cholesky':
             self._get_cholesky_P_matrix()
@@ -143,42 +147,22 @@ class DTISolver(object):
 
         return tensor_image_reshaped
 
-    def _pixel_loop(self, image_depth, function_handle):
-
-        output_image = np.zeros((np.shape(self._data)[0], np.shape(self._data)[1], image_depth))
-
-        # very naive implementation
-        for id_x in range(np.shape(self._data)[0]):
-            for id_y in range(np.shape(self._data)[1]):
-
-                if self._mask[id_x, id_y]:
-                    output_image[id_x, id_y, :] = function_handle(self, id_x, id_y)
-
-            if not np.floor(100*id_x/np.shape(self._data)[0]) % 10 and self._mute_progress is False:
-                print('Progress: {0:0.2f}%'.format(100*id_x/np.shape(self._data)[0]))
-
-        return output_image
-
     def estimate_tensor(self):
 
-        def estimate_tensor_pixel_func(DTISolver, id_x, id_y):
-            pixel = np.squeeze(DTISolver._data[id_x, id_y, :])
-            estimate = self._solver_func(pixel)
-            return estimate[1:]
-
-        #self._tensor_image = self._pixel_loop(image_depth=6, function_handle=estimate_tensor_pixel_func)
-        # TODO: check mask
-        self._tensor_image = self._solver_func()
+        dims = np.shape(self._data)
+        self._tensor_image = np.where(self._mask[:, :, None], self._solver_func(), np.zeros((dims[0], dims[1], 7)))
 
         # First value in each voxel is an estimate of ln(pixel_measurement); thus ignore
         self._tensor_image = self._tensor_image[:, :, 1:]
 
-
     def estimate_eig(self):
 
-        # TODO: check mask
         tensor_image_reshaped = self._reshape_tensor_image()
+
+        dims = np.shape(self._tensor_image)
         eig_values, eig_vectors = np.linalg.eigh(tensor_image_reshaped)
+        eig_values = np.where(self._mask[:, :, None], eig_values, np.zeros((dims[0], dims[0], 3)))
+        eig_vectors = np.where(self._mask[:, :, None, None], eig_vectors, np.zeros((dims[0], dims[0], 3, 3)))
 
         # eigenvalues in ascending order, flip array
         self._eig_image = np.flip(eig_values, axis=2)
@@ -363,12 +347,7 @@ class DTISolver(object):
         pixel < LLS estimate < Rice noise estimate
         """
         # Chosen WLS Model: weights equal to measurement in each pixel
-        dims = np.shape(self._data)
-        eye_matrix = np.eye(dims[2])
-        eye_matrix = np.expand_dims(eye_matrix, axis=0)
-        eye_matrix = np.expand_dims(eye_matrix, axis=0)
-        weights = eye_matrix * self._data[:, :, :, np.newaxis]
-        return weights
+        return self._last_dim_to_eye(self._data)
 
     def _get_wls_error_value(self, pixel, wls_estimate):
         weights = self._get_wls_weights(pixel)
@@ -413,6 +392,7 @@ class DTISolver(object):
     Nonlinear Least Squares
     """
 
+    '''
     def _solve_nls(self, pixel):
         # Parameters
         lambda_param = 0
@@ -463,7 +443,147 @@ class DTISolver(object):
             mfn_estimate = estimate
 
         return mfn_estimate
+    '''
+    def _solve_nls(self):
+        dims = np.shape(self._data)
 
+        # Parameters
+        lambda_param = self._lambda_matrix * self._lambda_param_init
+        hessian_flag = np.ones((dims[0], dims[1])) == 1
+        numerical_zero_epsilon = self._lambda_matrix * 1e-8
+
+        # Initial solution
+        estimate = np.where(self._mask[:, :, None], self._solve_wls(), np.zeros((dims[0], dims[1], 7)))
+        error_best = self._get_error_value(estimate)
+
+        # Boolean array of pixels for calculation (skull mask, convergence check)
+        pixel_mask = self._mask
+
+        # Initial values
+        gradient = np.zeros((dims[0], dims[1], 7))
+        hessian = np.zeros((dims[0], dims[1], 7, 7))
+        delta = np.zeros((np.shape(estimate)))
+        gradient_check = np.zeros((np.shape(self._gradient_epsilon)))
+
+        # Iterate until convergence
+        for k in range(self._max_iter):
+
+            # Recalculate hessian and gradient if necessary
+            gradient = np.where((pixel_mask*hessian_flag)[:, :, None], self._get_gradient(estimate), gradient)
+            hessian = np.where((pixel_mask*hessian_flag)[:, :, None, None], self._get_hessian(estimate), hessian)
+            hessian_flag = np.where(pixel_mask*hessian_flag, False, hessian_flag)
+
+            # Check error for new parameter vector
+            delta = np.where(
+                pixel_mask[:, :, None],
+                (-1) * np.squeeze(
+                        np.matmul(
+                            np.linalg.inv(hessian + lambda_param*self._lambda_matrix + numerical_zero_epsilon),
+                            gradient[:, :, :, None]
+                        )
+                    ),
+                delta
+            )
+            error_new = np.where(pixel_mask, self._get_error_value(estimate+delta), error_best)
+
+            # Check for convergence
+            gradient_check = np.where(
+                pixel_mask,
+                np.squeeze(
+                        np.matmul(
+                            np.transpose(delta[:, :, :, None], axes=(0, 1, 3, 2)),
+                            gradient[:, :, :, None]
+                        )
+                    ),
+                gradient_check
+            )
+            check_convergence = abs(error_new - error_best) < self._error_epsilon
+            check_convergence *= 0 <= gradient_check
+            check_convergence *= gradient_check < self._gradient_epsilon
+
+            # Update final estimate only for voxels that converged this iteration AND are valid (pixel mask)
+            estimate = np.where((check_convergence*pixel_mask)[:, :, None], estimate+delta, estimate)
+
+            # Check if current estimate is better than previous
+            check_lower_error = (error_new < error_best) * pixel_mask
+
+            lambda_param = np.where(check_lower_error[:, :, None, None], lambda_param*0.1, lambda_param*10)
+            estimate = np.where(check_lower_error[:, :, None], estimate+delta, estimate)
+            error_best = np.where(check_lower_error, error_new, error_best)
+            hessian_flag = np.where(check_lower_error, True, hessian_flag)
+
+            # Update pixel mask
+            pixel_mask = np.where(check_convergence, False, pixel_mask)
+            if np.amax(pixel_mask) == False:
+                break
+
+        # Loop ended, get the final estimate
+        if self._fix_method == 'cholesky':
+            mfn_estimate = self._inverse_cholesky(estimate)
+        else:
+            mfn_estimate = estimate
+
+        return mfn_estimate
+
+    def _get_nls_error_value(self, nls_estimate):
+        nls_residual = self._data - np.squeeze(
+            np.exp(np.matmul(self._design_matrix[None, None, :, :], nls_estimate[:, :, :, None]))
+        )
+        nls_error = 1 / 2 * np.sum(np.square(nls_residual), axis=2)
+        return nls_error
+
+    def _get_nls_gradient(self, nls_estimate):
+        pixel_estimated = np.squeeze(
+            np.exp(np.matmul(self._design_matrix[None, None, :, :], nls_estimate[:, :, :, None]))
+        )
+        nls_residual = self._data - pixel_estimated
+        pixel_estimated = self._last_dim_to_eye(pixel_estimated)
+
+        if self._fix_method == 'cholesky':
+            J_matrix = self._get_cholesky_J_matrix(nls_estimate)
+            nls_gradient = (-1) * J_matrix.T @ (pixel_estimated @ self._design_matrix).T @ nls_residual
+        else:
+            nls_gradient = (-1) * np.matmul(
+                np.transpose(
+                    np.matmul(pixel_estimated, self._design_matrix[None, None, :, :]), axes=(0, 1, 3, 2)
+                ),
+                nls_residual[:, :, :, None]
+            )
+
+        return np.squeeze(nls_gradient)
+
+    def _get_nls_hessian(self, nls_estimate):
+        pixel = self._last_dim_to_eye(self._data)
+        pixel_estimated = np.squeeze(
+            np.exp(np.matmul(self._design_matrix[None, None, :, :], nls_estimate[:, :, :, None]))
+        )
+        pixel_estimated = self._last_dim_to_eye(pixel_estimated)
+        nls_residual = pixel - pixel_estimated
+
+        if self._fix_method == 'cholesky':
+            J_matrix = self._get_cholesky_J_matrix(nls_estimate)
+
+            reduced_sum = np.zeros((7, 7))
+            coeff_diagonal = nls_residual @ pixel_estimated
+            for idx in range(np.shape(pixel)[0]):
+                reduced_sum += coeff_diagonal[idx, idx] * self._P_matrix[:, :, idx]
+
+            nls_hessian = J_matrix.T @ self._design_matrix.T @ \
+                          (pixel_estimated.T @ pixel_estimated - nls_residual @ pixel_estimated) \
+                          @ self._design_matrix @ J_matrix + reduced_sum
+
+        else:
+            nls_hessian = np.matmul(
+                np.matmul(
+                    self._design_matrix.T [None, None, :, :],
+                    (np.square(pixel_estimated) - np.matmul(nls_residual, pixel_estimated))
+                ),
+                self._design_matrix[None, None, :, :]
+            )
+
+        return nls_hessian
+
+    '''
     def _get_nls_error_value(self, pixel, nls_estimate):
         nls_residual = pixel - np.exp(self._design_matrix @ nls_estimate)
         nls_error = 1/2 * nls_residual.T @ nls_residual
@@ -506,6 +626,7 @@ class DTISolver(object):
                           @ self._design_matrix
 
         return nls_hessian
+    '''
 
     """
     Cholesky parametrization
@@ -554,6 +675,19 @@ class DTISolver(object):
         cholesky_estimate = [pixel_log, Dxx, Dyy, Dzz, Dxy, Dyz, Dxz]
         return cholesky_estimate
 
+    """
+    Other methods
+    """
+
+    @staticmethod
+    def _last_dim_to_eye(input_array):
+        dims = np.shape(input_array)
+        eye_matrix = np.eye(dims[2])
+        eye_matrix = np.expand_dims(eye_matrix, axis=0)
+        eye_matrix = np.expand_dims(eye_matrix, axis=0)
+        reshaped_input = eye_matrix * input_array[:, :, :, np.newaxis]
+        return reshaped_input
+
 
 def _prepare_data(dwi):
 
@@ -589,7 +723,7 @@ def run_pipeline(dwi, solver, fix_method, plotting=False, mute_progress=True):
         data = np.squeeze(data_mri[:, :, slice_idx, :])
 
         try:
-            mask = np.squeeze(dwi.skull_stripping_mask[:, :, slice_idx, :])
+            mask = np.squeeze(dwi.skull_stripping_mask[:, :, slice_idx])
         except:
             # if mask is not defined for given slice
             mask = []
