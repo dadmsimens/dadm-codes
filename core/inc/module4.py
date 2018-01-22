@@ -1,4 +1,4 @@
-from core.inc import simens_dadm as smns
+from . import simens_dadm as smns
 import numpy as np
 import scipy.signal as sig
 

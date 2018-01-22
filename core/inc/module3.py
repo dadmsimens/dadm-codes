@@ -1,4 +1,4 @@
-from core.inc import simens_dadm as smns
+from . import simens_dadm as smns
 import scipy.io as sio
 from scipy import signal
 from scipy.linalg import logm, expm

@@ -1,8 +1,8 @@
 import threading, time, queue, multiprocessing
 from inc import simens_dadm as smns
 import uiui as gui
-from inc import module_01
-
+from inc import module_01, module2, module3, module4, module_05, module_06, module08, module_10, module11, module12
+from inc.constants import *
 
 def simens_core(communicator):
 
@@ -13,14 +13,49 @@ def simens_core(communicator):
         print("Core working")
         x=None
         if not communicator.gui_says.empty():
+
             x = communicator.gui_says.get()
-            if x.module == "read":
+
+            if x.module == READ_STR:
                 communicator.core_says.put('Opening data...')
                 mri_data = smns.mri_read(x.arguments)
                 communicator.core_says.put('Reconstructing...')
                 mri_data = module_01.run_module(mri_data)
                 communicator.core_says.put('Reconstructing done')
-                smns.simens_msg('data', mri_data)
+                communicator.core_says.put(smns.simens_msg('data', mri_data))
+
+            elif x.module == MODULE_2_STR:
+                pass
+
+            elif x.module == MODULE_3_STR:
+                pass
+
+            elif x.module == MODULE_4_STR:
+                pass
+
+            elif x.module == MODULE_5_STR:
+                pass
+
+            elif x.module == MODULE_6_STR:
+                pass
+
+            elif x.module == MODULE_8_STR:
+                pass
+
+            elif x.module == MODULE_9_STR:
+                pass
+
+            elif x.module == MODULE_10_STR:
+                pass
+
+            elif x.module == MODULE_11_STR:
+                pass
+
+            elif x.module == MODULE_12_STR:
+                pass
+
+            else:
+                communicator.core_says.put('Command not recognized!')
         else:
             time.sleep(0.5)
 
