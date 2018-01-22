@@ -25,8 +25,8 @@ DATASETS = {
 if __name__ == '__main__':
     # API parameters (passed from GUI)
     dataset_name = DATASETS[0]
-    solver = SOLVERS[1]
-    fix_method = FIX_METHODS[0]
+    solver = SOLVERS[0]
+    fix_method = FIX_METHODS[1]
 
     # True to plot results
     plotting = True

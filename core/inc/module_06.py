@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 class DTISolver(object):
 
-    MFN_MAX_ITER = 20
+    MFN_MAX_ITER = 2
     MFN_ERROR_EPSILON = 1e-5
     MFN_GRADIENT_EPSILON = 1e-5
     MFN_LAMBDA_MATRIX_FUN = 'identity'
@@ -308,6 +308,7 @@ class DTISolver(object):
     def _solve_wls(self):
 
         weights = self._get_wls_weights()
+
         estimate = np.matmul(
             np.matmul(
                 self._design_matrix.T[None, None, :, :],
@@ -315,8 +316,12 @@ class DTISolver(object):
             ),
             self._design_matrix[None, None, :, :]
         )
+
+        dims = np.shape(estimate)
+        numerical_zero_epsilon = self._last_dim_to_eye(np.ones((dims[0], dims[1], dims[2]))) * 1e-8
+
         estimate = np.matmul(
-            np.linalg.inv(estimate),
+            np.linalg.inv(estimate + numerical_zero_epsilon),
             np.transpose(
                 np.matmul(
                     weights,
@@ -541,7 +546,16 @@ class DTISolver(object):
 
         if self._fix_method == 'cholesky':
             J_matrix = self._get_cholesky_J_matrix(nls_estimate)
-            nls_gradient = (-1) * J_matrix.T @ (pixel_estimated @ self._design_matrix).T @ nls_residual
+
+            nls_gradient = (-1) * np.matmul(
+                np.transpose(J_matrix, axes=(0, 1, 3, 2)),
+                np.matmul(
+                    np.transpose(
+                        np.matmul(pixel_estimated, self._design_matrix[None, None, :, :]), axes=(0, 1, 3, 2)
+                    ),
+                    nls_residual[:, :, :, None]
+                )
+            )
         else:
             nls_gradient = (-1) * np.matmul(
                 np.transpose(
@@ -561,21 +575,29 @@ class DTISolver(object):
         nls_residual = pixel - pixel_estimated
 
         if self._fix_method == 'cholesky':
+            dims = np.shape(self._data)
             J_matrix = self._get_cholesky_J_matrix(nls_estimate)
 
-            reduced_sum = np.zeros((7, 7))
-            coeff_diagonal = nls_residual @ pixel_estimated
-            for idx in range(np.shape(pixel)[0]):
-                reduced_sum += coeff_diagonal[idx, idx] * self._P_matrix[:, :, idx]
+            reduced_sum = np.zeros((dims[0], dims[1], 7, 7))
+            coeff_diagonal = np.matmul(nls_residual, pixel_estimated)
+            for idx in range(dims[2]):
+                reduced_sum += coeff_diagonal[:, :, idx, idx][:, :, None, None] * self._P_matrix[:, :, :, :, idx]
 
-            nls_hessian = J_matrix.T @ self._design_matrix.T @ \
-                          (pixel_estimated.T @ pixel_estimated - nls_residual @ pixel_estimated) \
-                          @ self._design_matrix @ J_matrix + reduced_sum
+            nls_hessian = np.matmul(
+                np.matmul(
+                    np.matmul(
+                        np.transpose(J_matrix, axes=(0, 1, 3, 2)),
+                        self._design_matrix.T[None, None, :, :]
+                    ),
+                    (np.square(pixel_estimated) - np.matmul(nls_residual, pixel_estimated))
+                ),
+                self._design_matrix[None, None, :, :]
+            ) + reduced_sum
 
         else:
             nls_hessian = np.matmul(
                 np.matmul(
-                    self._design_matrix.T [None, None, :, :],
+                    self._design_matrix.T[None, None, :, :],
                     (np.square(pixel_estimated) - np.matmul(nls_residual, pixel_estimated))
                 ),
                 self._design_matrix[None, None, :, :]
@@ -583,71 +605,43 @@ class DTISolver(object):
 
         return nls_hessian
 
-    '''
-    def _get_nls_error_value(self, pixel, nls_estimate):
-        nls_residual = pixel - np.exp(self._design_matrix @ nls_estimate)
-        nls_error = 1/2 * nls_residual.T @ nls_residual
-        return nls_error
-
-    def _get_nls_gradient(self, pixel, nls_estimate):
-        pixel_estimated = np.exp(self._design_matrix @ nls_estimate)
-        nls_residual = pixel - pixel_estimated
-        pixel_estimated = np.eye(np.shape(pixel_estimated)[0]) * pixel_estimated[:, np.newaxis]
-
-        if self._fix_method == 'cholesky':
-            J_matrix = self._get_cholesky_J_matrix(nls_estimate)
-            nls_gradient = (-1) * J_matrix.T @ (pixel_estimated @ self._design_matrix).T @ nls_residual
-        else:
-            nls_gradient = (-1) * (pixel_estimated @ self._design_matrix).T @ nls_residual
-
-        return nls_gradient
-
-    def _get_nls_hessian(self, pixel, nls_estimate):
-        pixel = np.eye(np.shape(pixel)[0]) * pixel[:, np.newaxis]
-        pixel_estimated = np.exp(self._design_matrix @ nls_estimate)
-        pixel_estimated = np.eye(np.shape(pixel_estimated)[0]) * pixel_estimated[:, np.newaxis]
-        nls_residual = pixel - pixel_estimated
-
-        if self._fix_method == 'cholesky':
-            J_matrix = self._get_cholesky_J_matrix(nls_estimate)
-
-            reduced_sum = np.zeros((7, 7))
-            coeff_diagonal = nls_residual @ pixel_estimated
-            for idx in range(np.shape(pixel)[0]):
-                reduced_sum += coeff_diagonal[idx, idx] * self._P_matrix[:, :, idx]
-
-            nls_hessian = J_matrix.T @ self._design_matrix.T @ \
-                          (pixel_estimated.T @ pixel_estimated - nls_residual @ pixel_estimated) \
-                          @ self._design_matrix @ J_matrix + reduced_sum
-
-        else:
-            nls_hessian = self._design_matrix.T @ \
-                          (pixel_estimated.T @ pixel_estimated - nls_residual @ pixel_estimated) \
-                          @ self._design_matrix
-
-        return nls_hessian
-    '''
-
     """
     Cholesky parametrization
     """
 
     def _get_cholesky_J_matrix(self, estimate):
-        J_matrix = np.zeros((7, 7))
+        dims = np.shape(self._data)
+        J_matrix = np.zeros((dims[0], dims[1], 7, 7))
 
-        J_matrix[:, 0] = [1, 0, 0, 0, 0, 0, 0]
-        J_matrix[:, 1] = [0, 2 * estimate[1], 0, 0, estimate[4], 0, estimate[6]]
-        J_matrix[:, 2] = [0, 0, 2 * estimate[2], 0, 0, estimate[5], 0]
-        J_matrix[:, 3] = [0, 0, 0, 2 * estimate[3], 0, 0, 0]
-        J_matrix[:, 4] = [0, 0, 2 * estimate[4], 0, estimate[1], estimate[6], 0]
-        J_matrix[:, 5] = [0, 0, 0, 2 * estimate[5], 0, estimate[2], 0]
-        J_matrix[:, 6] = [0, 0, 0, 2 * estimate[6], 0, estimate[4], estimate[1]]
+        J_matrix[:, :, 0, 0] = 1
+
+        J_matrix[:, :, 1, 1] = 2 * estimate[:, :, 1]
+        J_matrix[:, :, 4, 1] = estimate[:, :, 4]
+        J_matrix[:, :, 6, 1] = estimate[:, :, 6]
+
+        J_matrix[:, :, 2, 2] = 2 * estimate[:, :, 2]
+        J_matrix[:, :, 5, 2] = estimate[:, :, 5]
+
+        J_matrix[:, :, 3, 3] = 2 * estimate[:, :, 3]
+
+        J_matrix[:, :, 2, 4] = 2 * estimate[:, :, 4]
+        J_matrix[:, :, 4, 4] = estimate[:, :, 1]
+        J_matrix[:, :, 5, 4] = estimate[:, :, 6]
+
+        J_matrix[:, :, 3, 5] = 2 * estimate[:, :, 5]
+        J_matrix[:, :, 5, 5] = estimate[:, :, 2]
+
+        J_matrix[:, :, 3, 6] = 2 * estimate[:, :, 6]
+        J_matrix[:, :, 5, 6] = estimate[:, :, 4]
+        J_matrix[:, :, 6, 6] = estimate[:, :, 1]
 
         return J_matrix
 
     def _get_cholesky_P_matrix(self):
         W = self._design_matrix
         no_samples = np.shape(W)[0]
+
+        dims = np.shape(self._data)
         P_matrix = np.zeros((7, 7, no_samples))
 
         for idx in range(no_samples):
@@ -659,20 +653,29 @@ class DTISolver(object):
             P_matrix[:, 5, idx] = [0, 0, W[idx, 5], 0, 0, 2 * W[idx, 3], 0]
             P_matrix[:, 6, idx] = [0, W[idx, 6], 0, 0, W[idx, 5], 0, 2 * W[idx, 3]]
 
+        P_matrix = np.repeat(P_matrix[None, :, :, :], repeats=dims[1], axis=0)
+        P_matrix = np.repeat(P_matrix[None, :, :, :, :], repeats=dims[0], axis=0)
+
         self._P_matrix = (-1) * P_matrix
 
     def _inverse_cholesky(self, estimate):
-        pixel_log = estimate[0]
-        tensor_estimate = estimate[1:]
 
-        Dxx = np.square(tensor_estimate[0])
-        Dyy = np.square(tensor_estimate[1]) + np.square(tensor_estimate[3])
-        Dzz = np.square(tensor_estimate[2]) + np.square(tensor_estimate[4]) + np.square(tensor_estimate[5])
-        Dxy = tensor_estimate[0] * tensor_estimate[3]
-        Dyz = tensor_estimate[1]*tensor_estimate[4] + tensor_estimate[3]*tensor_estimate[5]
-        Dxz = tensor_estimate[0] * tensor_estimate[5]
+        estimate_squared = np.square(estimate)
+        cholesky_estimate = np.zeros((np.shape(estimate)))
 
-        cholesky_estimate = [pixel_log, Dxx, Dyy, Dzz, Dxy, Dyz, Dxz]
+        # ln(Signal)
+        cholesky_estimate[:, :, 0] = estimate[:, :, 0]
+
+        # Dxx, Dyy, Dzz
+        cholesky_estimate[:, :, 1] = estimate_squared[:, :, 1]
+        cholesky_estimate[:, :, 2] = estimate_squared[:, :, 2] + estimate_squared[:, :, 4]
+        cholesky_estimate[:, :, 3] = estimate_squared[:, :, 3] + estimate_squared[:, :, 5] + estimate_squared[:, :, 6]
+
+        # Dxy, Dyz, Dxz
+        cholesky_estimate[:, :, 4] = estimate[:, :, 1] * estimate[:, :, 4]
+        cholesky_estimate[:, :, 5] = estimate[:, :, 2]*estimate[:, :, 5] + estimate[:, :, 4]*estimate[:, :, 6]
+        cholesky_estimate[:, :, 6] = estimate[:, :, 1] * estimate[:, :, 6]
+
         return cholesky_estimate
 
     """
