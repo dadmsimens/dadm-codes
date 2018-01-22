@@ -36,6 +36,8 @@ def imHist(image):
     return imageHistogram
 
 
+
+
 """ Create Gauss mixture model function """
 
 def gmm(x,mu,v,p):
@@ -59,6 +61,8 @@ def gmm(x,mu,v,p):
         probab[:,i] = app
 
     return(probab)
+
+
 
 
 """ Part of image to segmentation """
@@ -104,6 +108,7 @@ def segmentation(skullFreeImage):
         print("Pitch:   " + str(pitch))
 
         image = imageToSeg[:,:,pitch]
+
         imageCopy = image
         im = image.flatten()
         imLength = im.size
@@ -160,6 +165,7 @@ def segmentation(skullFreeImage):
 
         mu = mu+imMin-1             #recover real range
         c = np.zeros(clustersNum)
+
         imageMask = np.zeros([rows, columns])
 
         for i in range(rows):
@@ -168,10 +174,12 @@ def segmentation(skullFreeImage):
                     c[k] = gmm(image[i,j],mu[k],v[k],p[k])
                 a = (c==c.max()).nonzero()
                 imageMask[i,j]=a[0]
-        
-        mri_segMask=imageMask
-     
-    return mri_segMask
+
+        segmentImageMask[:,:,pitch] = imageMask[:]
+
+    return segmentImageMask
+
+
 
 
 """ Main body """
@@ -196,4 +204,5 @@ def main9(mri_input, other_arguments = None):
         return "Unexpected data format in module number 9!"
 
     return mri_input
+
 
