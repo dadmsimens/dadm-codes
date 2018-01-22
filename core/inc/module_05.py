@@ -1,11 +1,12 @@
 import numpy as np
 import scipy.stats as st
 import cmath
-#from . import simens_dadm as smns
+from . import simens_dadm as smns
 
 
 def gk4(rsim):
 
+    # function that prepares Gaussian window used to penalize pixels based on distance within window
     kerlen = 2 * rsim + 1
     nsig = 2
     interval = (2*nsig+1.)/kerlen
@@ -66,7 +67,12 @@ def unlm(image, n_map):
             d = np.sum(penalty[None, None, :, :] * (window_diff * window_diff), axis=(2, 3))
 
             w = np.exp((-1)*d * h_sq)
+
+            # primitive way of handling case: pixel p == pixel q
+            w[w == 1] = -100
             w_max = np.amax(w)
+            w[w == -100] = w_max
+            
             w_sum = np.sum(w, axis=(0, 1))
             avg = np.sum(w * img_ext[pmin:pmax, qmin:qmax], axis=(0, 1))
 
@@ -85,7 +91,7 @@ def unlm(image, n_map):
 def run_module(mri_input, other_arguments=None):
 
     if isinstance(mri_input, smns.mri_diff):
-        [m, n, grad, slices] = mri_input.diffusion_data.shape
+        [m, n, slices, grad] = mri_input.diffusion_data.shape
         data_out = np.zeros([m, n, slices, grad])
 
         for i in range(slices):
@@ -102,7 +108,6 @@ def run_module(mri_input, other_arguments=None):
             data_out[:, :, i] = unlm(mri_input.structural_data[:, :, i], mri_input.noise_map[:, :, i])
 
         mri_input.structural_data = data_out
-
 
     else:
         return "Unexpected data format in module number 5!"

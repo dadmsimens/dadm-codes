@@ -1,4 +1,4 @@
-from core.inc import simens_dadm as smns
+from . import simens_dadm as smns
 import scipy.io as sio
 from scipy import signal
 from scipy.linalg import logm, expm
@@ -73,17 +73,20 @@ def estimate_map(image):
     sigmak[sigmak<0.01] = 0.01
     sigmak = np.multiply(sigmak, 0.5)
     for i in range(0,9):
-        temp = np.multiply(ak, np.power(image,2))
+        temp = np.multiply(ak, image)
         temp = temp/sigmak
         temp = appro(temp)
-        temp = filter2b(Mask, temp)
+        temp = np.multiply(image, temp)
+        temp = filter2b(Mask, temp)		
         ak = temp
-        ak[ak<0] = 0
+        ak[ak<0] = 0		
         temp2 = abs(image)
         temp2 = np.power(temp2, 2)
         temp2 = filter2b(Mask, temp2)
-        temp2 /= 2
-        temp2 = temp2 - np.multiply(0.5, np.power(ak, 2))
+        temp2 = np.multiply(0.5, temp2)
+        temp3 = np.power(ak, 2)
+        temp3 = np.multiply(0.5, temp3)
+        temp2 = temp2-temp3
         sigmak = temp2
         sigmak[sigmak<0.01] = 0.01
     signal = ak
@@ -107,18 +110,35 @@ def estimate_map(image):
     noise = idct(idct(noise, axis = 0, norm = 'ortho'), axis = 1, norm = 'ortho')
     noise = np.real(noise)
 
-    noise = noise + np.sqrt(2)
-    eg = 0.5772156649015328606/2
-    noise = noise + eg
-
-    coefs = [-0.2895, -0.0389, 0.4099, -0.3552, 0.1493, -0.0358, 0.0050, -3.7476e-04, 1.1802e-05]
+    coefs = [-0.2895, -0.0389, 0.4099, -0.3552, 0.1493, -0.0358, 0.0050, -0.00037476, 0.000011802]
     correct = np.zeros((x,y))
 
-    for i in range(0,7):
+    for i in range(0,8):
         correct = correct + np.multiply(coefs[i], np.power(SNR,i))
+    temp = (SNR<=2.5)
+    correct = np.multiply(correct, temp)
     noise = noise - correct
+    
+    x = np.size(noise, 1)
+    y = np.size(noise, 0)
+    h = gauss2D(shape = (2*x,2*y), sigma = ((3.4*2)+2.2))
+    hmax = h.max()
+    h /= hmax
+    hx = np.size(h, 1)
+    hy = np.size(h, 0)
+    h = h[x:hx, y:hy]
+    noise = dct(dct(noise, axis = 0, norm = 'ortho'), axis = 1, norm = 'ortho')
+    noise = np.multiply(noise, h)
+    noise = idct(idct(noise, axis = 0, norm = 'ortho'), axis = 1, norm = 'ortho')
+    noise = np.real(noise)
 
     noise = np.exp(noise)
+	
+    eg = 0.5772156649015328606/2
+    noise = np.multiply(2, noise)
+    noise /= np.sqrt(2)
+    temp = np.exp(eg)
+    noise = np.multiply(noise, temp)
     return noise
 
 def main3(mri_input):

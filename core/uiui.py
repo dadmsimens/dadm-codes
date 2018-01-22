@@ -1,13 +1,12 @@
 import sys
 import os
+import builtins
 import scipy.io as sio
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, qApp, QApplication, QWidget, QLabel, QAction, QPushButton
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QSizePolicy, QStackedWidget, QStatusBar, QSlider, QScrollArea
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import QTimer,Qt, QSize
 import inc.simens_dadm as smns
-
-#import modules.module11_demo as model11
 
 
 class ImageDialog(QMainWindow):
@@ -78,8 +77,10 @@ class ImageDialog(QMainWindow):
 
         #Create status bar
         self.statusBar = QStatusBar()
+        self.statusMsg = QLabel('Hello')
+        self.statusBar.addWidget(self.statusMsg)
         self.setStatusBar(self.statusBar)
-        self.statusBar.showMessage('Load data to start')
+        self.statusMsg.setText('Load data to start')
 
         #image into
 
@@ -115,81 +116,30 @@ class ImageDialog(QMainWindow):
     def receive_data(self, communicator):
         if not communicator.core_says.empty():
             x = communicator.core_says.get()
-            self.action_complete()
-            self.TIMER_1.stop()
-            self.mb_actions.setEnabled(True)
-            self.statusBar.showMessage(x)
+
+            if(isinstance(x, smns.simens_msg)):
+                self.action_complete()
+                self.TIMER_1.stop()
+                self.mb_actions.setEnabled(True)
+                self.statusMsg.setText('Data is ready')
+                mri_data = x.arguments
+                print(mri_data.structural_data.shape[2])
+                current = basic_window(mri_data.structural_data.shape[2])
+                print('jestem tutaj')
+                self.central.addWidget(current)
+
+                self.central.setCurrentWidget(current)
+            elif (isinstance(x,str)):
+                print(x)
+                self.statusMsg.setText(x)
             # self.central.addWidget(self.basic)
             # self.central.setCurrentWidget(self.basic)
-        else:
-            self.statusBar.showMessage('not yet...')
 
     def action_complete(self):
         self.statusBar.showMessage('Data is ready!')
 
     def change_pixmap(self):
         pass
-
-
-# # class StartWindow(QWidget):
-# #     def __init__(self):
-# #         super().__init__()
-# #         self.setFixedSize(500,400)
-# #         self.setWindowIcon(QIcon('ikona.jpg'))
-# #         self.setWindowTitle('SieMRI')
-# #         self.init_ui()
-# #
-# #     def init_ui(self):
-# #         self.btn_open_file= QPushButton('Open file')
-# #         self.btn_open_file.setMinimumHeight(50)
-# #         self.btn_open_file.setSizePolicy(
-# #             QSizePolicy.Preferred,
-# #             QSizePolicy.Fixed
-# #         )
-# #
-# #         self.lab_welcome = QLabel('<h1 align = "center">Welcome to SieMRI!</h1>')
-# #         self.lab_new_patient = QLabel('<h3 align = "center">'
-# #                                       'Open MRI file for new patient'
-# #                                       '</h3>')
-# #
-# #         vbox_layout = QVBoxLayout()
-# #         vbox_layout.addSpacing(50)
-# #         vbox_layout.addWidget(self.lab_welcome)
-# #        # vbox_layout.addSpacing(100)
-# #         vbox_layout.addWidget(self.lab_new_patient)
-# #         vbox_layout.addWidget(self.btn_open_file)
-# #         vbox_layout.addSpacing(110)
-# #
-# #         hbox_layout = QHBoxLayout()
-# #         hbox_layout.addSpacing(100)
-# #         hbox_layout.addLayout(vbox_layout)
-# #         hbox_layout.addSpacing(100)
-# #
-# #         self.setLayout(hbox_layout)
-# #
-# #         self.main_window = ImageDialog()
-# #
-# #         self.show()
-# #
-# #         self.btn_open_file.clicked.connect(lambda: self.open_first_file(self.main_window))
-#
-#
-#
-#     def open_first_file(self, window):
-#         filename = window.mb_file_new_trigger()
-#
-#         window.TIMER_1.start(5000)
-#         window.mb_actions.setEnabled(False)
-#
-#         self.main_window.show()
-#         self.close()
-#         return filename
-#
-#     def open_file(self):
-#         open_file = QFileDialog()
-#         filename = open_file.getOpenFileName(self, 'Choose image', os.getenv('HOME'),
-#                                              'MRI Files *.jpg')
-#         return filename
 
 
 class basic_window(QWidget):
@@ -263,6 +213,7 @@ class basic_window(QWidget):
             slice_.clicked.connect(lambda: self.slice_clicked(slice_.objectName()))
 
         self.slider.valueChanged.connect(self.slider_change)
+
 
     def slice_clicked(self, name):
         self.enable_all()
