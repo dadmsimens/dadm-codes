@@ -13,7 +13,7 @@ class DTISolver(object):
     ACCEPTED_SOLVERS = ['wls', 'nls']
     ACCEPTED_FIX_METHODS = ['abs', 'cholesky']
 
-    def __init__(self, data, gradients, b_value, mask, solver, fix_method, mute_progress=True):
+    def __init__(self, data, gradients, b_value, mask, solver, fix_method):
 
         self._data = data
         self._bvecs = gradients
@@ -22,7 +22,6 @@ class DTISolver(object):
 
         self._solver = solver
         self._fix_method = fix_method
-        self._mute_progress = mute_progress
 
         self._check_input()
         self._check_mask()
@@ -726,7 +725,7 @@ def _prepare_data(dwi):
     return data_mri, b_value, gradients
 
 
-def run_pipeline(dwi, solver, fix_method, plotting=False, mute_progress=True):
+def run_pipeline(dwi, solver, fix_method, plotting=False, verbose=False):
 
     data_mri, b_value, gradients = _prepare_data(dwi)
 
@@ -734,7 +733,8 @@ def run_pipeline(dwi, solver, fix_method, plotting=False, mute_progress=True):
     biomarkers = []
 
     for slice_idx in range(num_slices):
-        print('Computing DTI on slice {} out of {}...'.format(slice_idx, num_slices))
+        if verbose is True:
+            print('Computing DTI on slice {} out of {}...'.format(slice_idx, num_slices))
         # only one slice
         data = np.squeeze(data_mri[:, :, slice_idx, :])
 
@@ -750,8 +750,7 @@ def run_pipeline(dwi, solver, fix_method, plotting=False, mute_progress=True):
             b_value=b_value,
             mask=mask,
             solver=solver,
-            fix_method=fix_method,
-            mute_progress=mute_progress
+            fix_method=fix_method
         )
         dti_solver.estimate_tensor()
         dti_solver.estimate_eig()
@@ -764,16 +763,17 @@ def run_pipeline(dwi, solver, fix_method, plotting=False, mute_progress=True):
             dti_solver.plot_FA_rgb()
             plt.show()
 
-    print("DTI done.")
+    if verbose is True:
+        print("DTI done.")
     return biomarkers
 
 
-def run_module(mri_diff, solver, fix_method, plotting=False, mute_progress=True):
+def run_module(mri_diff, solver='wls', fix_method='abs', plotting=False, verbose=False):
     # importing here avoids cyclic import problems
     from . import simens_dadm as smns
 
     if isinstance(mri_diff, smns.mri_diff):
-        mri_diff.biomarkers = run_pipeline(mri_diff, solver, fix_method, plotting, mute_progress)
+        mri_diff.biomarkers = run_pipeline(mri_diff, solver, fix_method, plotting, verbose)
         return mri_diff
 
     else:
