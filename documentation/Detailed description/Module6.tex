@@ -4,14 +4,12 @@ The aim of this module is to estimate brain tissue diffusion tensor
 from Diffusion Weighted Images (DWI). DWI are obtained using a different
 pulse sequence than anatomical MRI images and as such differ in their
 information content. Concretely, Diffusion Tensor Imaging (DTI) gives
-an insight into tissue microstructure, probing it using gradient-pulse
-excited water molecules. This enables indirect measurements of structural
-orientation and the degree of anisotropy as water molecules diffuse
-differs between tissues.
+an insight into tissue microstructure based on DWI, which are obtained by probing tissues using gradient-pulse excited water molecules \cite{m6_soares2013}. This enables indirect measurements of structural orientation and the degree of anisotropy as water molecules diffuse differs between tissues.
 
-In DTI-MRI the measured signal is defined as: 
+In DTI-MRI the measured signal is defined as \cite{m6_koay2006b}: 
 \begin{equation}
-S\left(b,\boldsymbol{g}\right)=S_{0}exp\left(-b\boldsymbol{g^{T}Dg}\right)\label{Eq:dti_eq_1}
+S\left(b,\boldsymbol{g}\right) =  S_{0} exp\left(-b\boldsymbol{g^TDg}\right)
+\label{Eq:m6_eq_1}
 \end{equation}
 
 where $S\left(b,\boldsymbol{g}\right)$ is the measured signal, $S_{0}$
@@ -23,16 +21,21 @@ diffusion tensor.
 The diffusion tensor $\boldsymbol{D}$ is symmetric and describes
 molecular mobility along each direction: 
 \begin{equation}
-\boldsymbol{D}=\begin{bmatrix}D_{xx} & D_{xy} & D_{xz}\\
-D_{yx} & D_{yy} & D_{yz}\\
-D_{zx} & D_{zy} & D_{zz}
-\end{bmatrix}\label{Eq:dti_eq_2}
+\boldsymbol{D}=
+\begin{bmatrix}
+D_{xx} & D_{xy} & D_{xz} \\
+D_{yx} & D_{yy} & D_{yz} \\
+D_{zx} & D_{zy} & D_{zz} 
+\end{bmatrix}
+\label{Eq:m6_eq_2}
 \end{equation}
 
-Furthermore, the Eq. (\ref{Eq:dti_eq_1}) can be rewritten as: 
+Furthermore, the Eq. (\ref{Eq:m6_eq_1}) can be rewritten as: 
 \begin{equation}
-ln\left(\dfrac{S\left(b,\boldsymbol{g}\right)}{S_{0}}\right)=-b\boldsymbol{g^{T}Dg}\label{Eq:dti_eq_3}
+ln{S\left(b,\boldsymbol{g}\right)} = ln{S_0}-b\boldsymbol{g^TDg}
+\label{Eq:dti_eq_3}
 \end{equation}
+which established a linear relationship between model parameters and measured quantity.
 
 Estimating $\boldsymbol{D}$ from the above equation can be done using
 Weighted Least Squares (WLS) or Nonlinear Least Squares (NLS) algorithms.
@@ -40,82 +43,212 @@ In order to correctly estimate the diffusion tensor it is necessary
 to acquire at least seven DWI - one for each direction of diffusion
 and one in the absence of diffusion gradient.
 
-There exists a couple of strategies of visualizing this high-dimmensional
-output array containing the estimated tensor in each voxel of the
-analyzed slice. One of the approaches is to $\boldsymbol{D}$ and
-project the main eigenvector direction into color space, where customarily
-$x$ = red, $y$ = green and $b$ = blue. This 2D visualization also
-allows to perform a sanity check by viewing the main direction of
-diffusion of white matter, corresponding to fiber longitudal axis,
-in corpus callosum.
+Let $\boldsymbol{\gamma}$ be the parameters vector of DTI model:
+\begin{equation}
+\boldsymbol{\gamma}={\lbrack ln{S_0}, D_{xx}, D_{yy}, D_{zz}, D_{xy}, D_{yx}, D_{xz}\rbrack}^T
+\label{Eq:m6_eq_4}
+\end{equation}
 
-Diagnoalized estimated diffusion tensor can be used to extract additional
-information about tissue microstructure. This module calculates the
-following biomarker images: 
-\begin{enumerate}
-\item MD (Mean Diffusivity) is the mean of tensor eigenvalues. MD is an
-inverse measure of membrane density and is very similar for both gray
-(GM) and white matter (WM) and is higher for corticospinal fluid (CSF).
-MD is sensitive to cellularity, edema and necrosis. 
+Furthermore let $\boldsymbol{W_i}$ be the design matrix of our model. In this case it represents the diffusion vector in a given direction for $i$-th measurement:
 \begin{equation}
-MD=\dfrac{\lambda_{1}+\lambda_{2}+\lambda_{3}}{3}\label{Eq:dti_eq_4}
-\end{equation}
-\item RA (Relative Anisotropy) exhibits high degree of contrast between
-anisotropic (WM) and isotropic tissues. 
-\begin{equation}
-RA=\sqrt{\dfrac{\left(\lambda_{1}-MD\right)^{2}+\left(\lambda_{2}-MD\right)^{2}+\left(\lambda_{3}-MD\right)^{2}}{3\,MD}}\label{Eq:dti_eq_5}
-\end{equation}
-\item FA (Fractional Anisotropy) is a summary measure of microstructural
-integrity. It is highly sensitive to microstructural changes without
-considering the type of change. 
-\begin{equation}
-FA=\sqrt{\dfrac{3}{2}}\sqrt{\dfrac{\left(\lambda_{1}-MD\right)^{2}+\left(\lambda_{2}-MD\right)^{2}+\left(\lambda_{3}-MD\right)^{2}}{\lambda_{1}^{2}+\lambda_{2}^{2}+\lambda_{3}^{2}}}\label{Eq:dti_eq_6}
-\end{equation}
-\item VR (Volume Ratio) 
-\begin{equation}
-VR=\frac{\lambda_{1}\lambda_{2}\lambda_{3}}{MD\,^{3}}\label{Eq:dti_eq_7}
-\end{equation}
-\end{enumerate}
-\hfill{}\\
-\textbf{DTI pre-processing pipeline}
+\boldsymbol{W_i}=
+\begin{bmatrix}
+1, -b_i{g_{ix}}^2, -b_i{g_{iy}}^2, -b_i{g_{iz}}^2, -2b_ig_{ix}g_{iy}, -2b_ig_{iy}g_{iz}, -2b_ig_{ix}g_{iz}
+\end{bmatrix}
+\label{Eq:m6_eq_5}
+\end{equation} 
 
-In order to improve diffusion tensor estimation it is imperative to
-remove artifacts. In addition to standard MRI pre-processing, one
-needs to correct for artifacts arising from using of diffusion-gradient
-pulse sequences and longer acquisition time. While hardware manufacturers
-try to proactively diminish some of these effects, software processing
-is still mandatory. 
+Then equations \ref{Eq:m6_eq_1} oraz \ref{Eq:dti_eq_3} can be rewritten as:
+\begin{equation}
+S\left(\boldsymbol{\gamma}\right) =  exp\left(\boldsymbol{W_i\gamma}\right)
+\label{Eq:m6_eq_6}
+\end{equation}
+\begin{equation}
+ln\left({S\left(\boldsymbol{\gamma}\right)}\right) =  \boldsymbol{W_i\gamma}
+\label{Eq:m6_eq_7}
+\end{equation}
+
+The aforementioned expressions can be used to estimate the vector $\boldsymbol{\gamma}$ using Least Squares Regression models. It is important to note that tensor built using the elements of $\boldsymbol{\gamma}$ will be symmetric.
+
+\hfill
+\subsection{Weighted Least Squares estimation}
+
+For Weighted Least Squares (WLS) model the cost function is defined as \cite{m6_koay2006a}:
+\begin{equation}
+f_{WLS}\left(\boldsymbol{\gamma}\right)=\frac{1}{2}\sum_{i=1}^{m}{{\omega_i}^2\left(y_i-\sum_{j=1}^{7}{W_{ij}\gamma_{j}}\right)^2}; \quad y_i=ln(S(\gamma)_i)
+\label{Eq:m6_eq_8}
+\end{equation}
+where $m$ is the total number of measurements while $\omega$ is the measurement weight associated with WLS method.
+
+The aim of Least Squares Regression methods is to minimaze the cost function $f_{WLS}$ with respect to $\boldsymbol{\gamma}$, which coincides with the function gradient $\left|\nabla{f_{WLS}}\right|$ equal to zero.
+
+In general, vector-valued function gradient is defined as a vector whose elements can be calculated using the following formula:
+\begin{equation}
+\left|\nabla{f_{WLS}}\right|_k = \frac{\partial{f_{WLS}}}{\partial{\gamma_k}}
+\label{Eq:m6_eq_9}
+\end{equation}
+
+For WLS cost function:
+\begin{equation}
+\begin{aligned}
+\frac{\partial{f_{WLS}}}{\partial{\gamma_k}}&=\sum_{i=1}^{m}\frac{\partial}{\partial{\gamma_k}}\,{\omega_i}^2\left(y_i-\sum_{j=1}^{7}W_{ij}\gamma_j\right)\\
+& = \sum_{i=1}^{m}\,{\omega_i}^2\left(y_i-\sum_{j=1}^{7}W_{ij}\gamma_j\right)\frac{\partial}{\partial{\gamma_k}}\left(y_i-\sum_{j=1}^{7}W_{ij}\gamma_j\right)\\
+& = \sum_{i=1}^{m}\,{\omega_i}^2\left(y_i-\sum_{j=1}^{7}W_{ij}\gamma_j\right)\sum_{j=1}^{7}\left(-W_{ij}\right)\frac{\partial}{\partial{\gamma_k}}\gamma_j\\
+& = \sum_{i=1}^{m}\,{\omega_i}^2\left(y_i-\sum_{j=1}^{7}W_{ij}\gamma_j\right)\left(-W_{ik}\right)
+\end{aligned}
+\label{Eq:m6_eq_10}
+\end{equation}
+
+or in matrix form:
+\begin{equation}
+\nabla{f_{WLS}}=-\boldsymbol{W}^T\boldsymbol{\omega}^T\boldsymbol{\omega}\left(\boldsymbol{y}-\boldsymbol{W\gamma}\right)
+\label{Eq:m6_eq_11}
+\end{equation}
+where $\boldsymbol{\omega}$ is a diagonal matrix with non-zero elements equal to WLS model weights.
+
+The Hessian of vector-valued function is defined as a matrix whose elements computed as:
+\begin{equation}
+\left|\nabla^2{f_{WLS}}\right|_{lk} = \frac{\partial^2{f_{WLS}}}{\partial{\gamma_l}\partial{\gamma_k}}
+\label{Eq:m6_eq_12}
+\end{equation}
+
+For WLS cost function:
+\begin{equation}
+\begin{aligned}
+\frac{\partial^2{f_{WLS}}}{\partial{\gamma_l}\partial{\gamma_k}} &= \frac{\partial}{\partial{\gamma_l}}\frac{\partial{f_{WLS}}}{\partial{\gamma_k}}\\
+&=\frac{\partial}{\partial{\gamma_l}}\sum_{i=1}^{m}\,{\omega_i}^2\left(y_i-\sum_{j=1}^{7}W_{ij}\gamma_j\right)\left(-W_{ik}\right)\\
+&=\sum_{i=1}^{m}\,{\omega_i}^2\frac{\partial}{\partial{\gamma_l}}\left(y_i-\sum_{j=1}^{7}W_{ij}\gamma_j\right)\left(-W_{ik}\right)\\
+&=\sum_{i=1}^{m}\,{\omega_i}^2\left(-W_{il}\right)\left(-W_{ik}\right)\\
+&=\sum_{i=1}^{m}\,{\omega_i}^2 W_{il}W_{ik}\\
+\end{aligned}
+\label{Eq:m6_eq_13}
+\end{equation}
+
+or in matrix form:
+\begin{equation}
+\nabla^2{f_{WLS}}=\boldsymbol{W}^T\boldsymbol{\omega}^T\boldsymbol{\omega}\boldsymbol{W}
+\label{Eq:m6_eq_14}
+\end{equation}
+
+One can notice that Eq. (\ref{Eq:m6_eq_11}) does not depend on model parameters, meaning that it can be solved using it's normal equation:
+\begin{equation}
+\begin{aligned}
+\nabla{f_{WLS}}=0 \iff -\boldsymbol{W}^T\boldsymbol{\omega}^T\boldsymbol{\omega}\left(\boldsymbol{y}-\boldsymbol{W\gamma}\right)=0\\
+\boldsymbol{W}^T\boldsymbol{\omega}^T\boldsymbol{\omega}\boldsymbol{W\gamma}=\boldsymbol{W}^T\boldsymbol{\omega}^T\boldsymbol{\omega}\boldsymbol{y}\\
+\boldsymbol{\gamma}=\left(\boldsymbol{W}^T\boldsymbol{\omega}^T\boldsymbol{\omega}\boldsymbol{W}\right)^{-1}\boldsymbol{W}^T\boldsymbol{\omega}^T\boldsymbol{\omega y}
+\end{aligned}
+\label{Eq:m6_eq_15}
+\end{equation}
+
+Before continuing, it is important to note that there exists no simple choice of $\boldsymbol{\omega}$ weights. The authors of \cite{m6_koay2006a} suggest using the measured signal $\boldsymbol{S}$, in \cite{m6_salvador2005} one can read that weights should be the Linear Least Squares estimate of signal in each voxel, while the authors \cite{m6_basser1994} argue for the use of signal variance estimation using Rice's noise estimate. As one can see, WLS model complexity varies depending on the choice of weights vector computation method.
+
+\hfill
+\subsection{Nonlinear Least Squares estimation}
+
+Nonlinear Least Squares cost function is defined as:
+\begin{equation}
+f_{NLS}\left(\boldsymbol{\gamma}\right)=\frac{1}{2}\sum_{i=1}^{m}\left(S_i-exp\left(\sum_{j=1}^{7}W_{ij}\gamma_j\right)\right)^2=\frac{1}{2}\sum_{i=1}^{m}r_i^2
+\label{Eq:m6_eq_16}
+\end{equation}
+
+Same as before, we will derive NLS cost function gradient and Hessian matrix. 
+\begin{equation}
+\begin{aligned}
+\frac{\partial{f_{NLS}}}{\partial{\gamma_k}}&=2\frac{1}{2}\sum_{i=1}^{m}r_i\frac{\partial}{\partial{\gamma_k}}\left(r_i\left(\gamma\right)\right)\\
+&=\sum_{i=1}^{m}(-r_i)\frac{\partial}{\partial{\gamma_k}}\left(exp\left[\sum_{j=1}^{7}W_{ij}\gamma_j\right]\right)\\
+&=\sum_{i=1}^{m}(-r_i)exp\left(\sum_{j=1}^{7}W_{ij}\gamma_j\right)\frac{\partial}{\partial{\gamma_k}}\left(\sum_{j=1}^{7}W_{ij}\gamma_j\right)\\
+&=\sum_{i=1}^{m}(-r_i)exp\left(\sum_{j=1}^{7}W_{ij}\gamma_j\right)\left(\sum_{j=1}^{7}W_{ij}\frac{\partial}{\partial{\gamma_k}}\gamma_j\right)\\
+&=\sum_{i=1}^{m}(-r_i)exp\left(\sum_{j=1}^{7}W_{ij}\gamma_j\right)W_{ik}\\
+&=\sum_{i=1}^{m}(-r_i)\hat{S_i}W_{ik}
+\end{aligned}
+\label{Eq:m6_eq_17}
+\end{equation}
+
+where $\hat{S_i}$ is the voxel signal estimate of NLS model. Let $\boldsymbol{\hat{S}}$ be a diagonal matrix with non-zero elements set to $\hat{S_i}$. Then $f_{NLS}$ computation can be rewritten in matrix form:
+\begin{equation}
+\nabla{f_{NLS}}=-\boldsymbol{W}^T\boldsymbol{\hat{S}}\boldsymbol{r}
+\label{Eq:m6_eq_18}
+\end{equation}
+as one can see from the Eq. (\ref{Eq:m6_eq_18}), the value of gradient depends on NLS signal estimate, meaning that contrary to WLS method, it is not possible to compute NLS estimate without resorting to iterative methods.
+
+NLS Hessian matrix elements can be computed as:
+\begin{equation}
+\begin{aligned}
+\frac{\partial^2{f_{NLS}}}{\partial{\gamma_l}\partial{\gamma_k}} &= \frac{\partial}{\partial{\gamma_l}}\frac{\partial{f_{NLS}}}{\partial{\gamma_k}}\\
+&=\frac{\partial}{\partial{\gamma_l}}\sum_{i=1}^{m}(-r_i)\hat{S_i}W_{ik}\\
+&=-\sum_{i=1}^{m}\left(\hat{S_i}W_{ik}\frac{\partial}{\partial{\gamma_l}}r_i+r_iW_{ik}\frac{\partial}{\partial{\gamma_l}}\hat{S_i}\right)\\
+&=-\sum_{i=1}^{m}\left(\hat{S_i}W_{ik}\frac{\partial}{\partial{\gamma_l}}\left[S_i-\hat{S_i}\right]+r_iW_{ik}\frac{\partial}{\partial{\gamma_l}}\hat{S_i}\right)\\
+&=-\sum_{i=1}^{m}\left(\hat{S_i}W_{ik}\frac{\partial}{\partial{\gamma_l}}\left[-\hat{S_i}\right]+r_iW_{ik}\frac{\partial}{\partial{\gamma_l}}\hat{S_i}\right)\\
+&=-\sum_{i=1}^{m}\left(\hat{S_i}W_{ik}\left[-\hat{S_i}W_{il}\right]+r_iW_{ik}\hat{S_i}W_{il}\right)\\
+&=\sum_{i=1}^{m}\left(\hat{S_i}W_{ik}\hat{S_i}W_{il}-r_iW_{ik}\hat{S_i}W_{il}\right)\\
+&=\sum_{i=1}^{m}W_{ki}\left(\hat{S_i}^2-r_i\hat{S_i}\right)W_{il}\\
+\end{aligned}
+\label{Eq:m6_eq_19}
+\end{equation}
+
+or in matrix form:
+\begin{equation}
+\nabla^2{f_{NLS}}=\boldsymbol{W}^T\left(\boldsymbol{\hat{S}^T\hat{S}-\boldsymbol{R\hat{S}}}\right)\boldsymbol{W}
+\label{Eq:m6_eq_20}
+\end{equation}
+where $\boldsymbol{R}$ is the diagonal matrix whose non-zero elements are equal to NLS model residuals ($r_i$).\linebreak
+
+Usually, iterative approaches to function minimization compute the Taylor series of a given function and try to find a vector $\boldsymbol{\delta}$ such that $f_{NLS}\left(\boldsymbol{\gamma}+\boldsymbol{\delta}\right)<f_{NLS}\left(\boldsymbol{\gamma}\right)$. If additionally:
+\begin{equation}
+\boldsymbol{\delta}=-\left(\nabla^2{f_{NLS}}\right)^{-1}\nabla{f_{NLS}}
+\label{Eq:m6_eq_21}
+\end{equation}
+then this approach is called Newton's method in optimization.
+
+\hfill
+\subsection{Diffusion Biomarkers}
+
+Regardless of the chosen estimation method, the estimated vector $\boldsymbol{\hat{\gamma}}$ is reshaped to be a \vbox{symmetric 3x3 matrix $\boldsymbol{D}$}. 
+
+There exists a couple of strategies for visualizing this high-dimmensional
+array containing estimated tensor in each voxel of each slice. One of these approaches is to compute the eigenvalue decomposition of $\boldsymbol{D}$ and
+compute a series of images called Diffusion Biomarkers which can be used to extract additional information about tissue microstructure. 
+
+Let us define four biomarker images: 
 \begin{enumerate}
-\item Eddy currents and subject motion removal.\\
-This step attempts to realign (register) all images obtained during
-diffusion-gradient sequences to one $T_{2}$-weighted reference image
-by finding an affine transform for all diffusion-weighted images. 
-\item Magnetic susceptibility (local $B_{0}$ inhomogeneity) correction.\\
-This step attempts to map the real $B_{0}$ field map using pairs
-of gradient-weighted images obtained from gradient sequences along
-the same direction but opposite polarity. The estimated field map
-can be used to reconstruct images without distortions. 
-\item Skull stripping (Module 8). 
+	\item MD (Mean Diffusivity) is the mean of tensor eigenvalues. MD is an
+	inverse measure of membrane density and is very similar for both gray
+	(GM) and white matter (WM) and is higher for corticospinal fluid (CSF).
+	MD is sensitive to cellularity, edema and necrosis \cite{m6_basser2002}. 
+	\begin{equation}
+	MD = \dfrac{\lambda_{1}+\lambda_{2}+\lambda_{3}}{3}
+	\label{Eq:m6_eq_23}
+	\end{equation}
+	
+	\item RA (Relative Anisotropy) exhibits high degree of contrast between
+	anisotropic (WM) and isotropic tissues. 
+	\begin{equation}
+	RA = \sqrt{\dfrac{\left(\lambda_{1}-MD\right)^2+\left(\lambda_{2}-MD\right)^2+\left(\lambda_{3}-MD\right)^2}{3\,MD}}
+	\label{Eq:m6_eq_24}
+	\end{equation}
+	
+	\item FA (Fractional Anisotropy) is a summary measure of microstructural
+	integrity. It is highly sensitive to microstructural changes without
+	considering the type of change \cite{m6_soares2013}. 
+	\begin{equation}
+	FA = \sqrt{\dfrac{3}{2}}\sqrt{\dfrac{\left(\lambda_{1}-MD\right)^2+\left(\lambda_{2}-MD\right)^2+\left(\lambda_{3}-MD\right)^2}{\lambda_{1}^2+\lambda_{2}^2+\lambda_{3}^2}}
+	\label{Eq:m6_eq_25}
+	\end{equation}
+	
+	\item VR (Volume Ratio) 
+	\begin{equation}
+	VR = \frac{\lambda_{1}\lambda_{2}\lambda_{3}}{MD\,^3}
+	\label{Eq:m6_eq_26}
+	\end{equation}
 \end{enumerate}
-\hfill{}\\
-\textbf{Module I/O} 
+
+where $\lambda_{1}$, $\lambda_{2}$, $\lambda_{3}$ are the tensor eigenvalues. One can notice that for each biomarker image to be real-valued, eigenvalues must be non-negative. There are a couple of strategies aimed at solving this problem \cite{m6_koay2006b}:
 \begin{itemize}
-\item \textbf{Input} - DiffusionData object instance containing 3D \textbf{\emph{slice}}
-(image pixel intensity varying in time with gradient sequence or lack
-thereof), \textbf{\emph{bvalue}} vector corresponding to used diffusion-gradient
-sequence intensity for each image, \textbf{\emph{bvector}} array containing
-diffusion-gradient sequence unit vector corresponding to \textbf{\emph{bvalue}}
-and \textbf{\emph{other}} with general information obtained from data
-format (most importantly: voxel physical dimensions and time between
-subsequent echo pulses). 
-\item \textbf{Output} - same as input DiffusionData object instance with
-a new field \textbf{\emph{tensor}} containing estimated diffusion
-tensor data. Biomarker images (MD, RA, FA, VR) can be calculated from
-\textbf{\emph{tensor}} using implemented methods and then displayed
-on a 2x2 grid. 
+	\item Substituting negative eigenvalues with zero.
+	\item Substituting eigenvalues with their absolute value.
+	\item Computing Cholesky-parametrization of input vectors to WLS and NLS estimation methods.
 \end{itemize}
-\hfill{}\\
-\textbf{List of References}\\
-\cite{6_dti_1}, \cite{6_dti_2}, \cite{6_dti_3}, \cite{6_dti_4},
-\cite{6_dti_5}, \cite{6_dti_6}, \cite{6_dti_7}, \cite{6_dti_8},
-\cite{6_dti_9}, \cite{6_dti_10}
+
+One can also compute a 3D map using the eigenvectors corresponding to tensor eigenvalue of highest magnitude. The resulting map is a measure of the direction of principal diffusion, which along with it's magnitude (eigenvalue), is the input signal to Tractography.
+
+Additionally, the aforementioned 3D map can be displayed as a RGB image, because eigenvectors obtained from eigenvalue decomposition of a symmetric real matrix are orthogonal. The intensity of resulting color image is then weighted using one of computed biomarker images, usually Fractional Anisotropy.
