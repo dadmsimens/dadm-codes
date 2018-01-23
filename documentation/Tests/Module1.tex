@@ -1,3 +1,11 @@
 \section{Module 1. MRI reconstruction}
 
--tests for module 1
+The code reliability was checked by running following unit tests:  
+\begin{itemize}
+	\item \textbf{test\_none\_input\_data} - if the module receives empty data field, the function should rise an error,
+	\item \textbf{test\_none\_sensitivity\_maps} - this test examines scenario when input data structure lacks sensitivity maps profiles, which cannot be estimated with this code implementation - in this case, the function should rise an error,
+	\item \textbf{test\_invalid\_input\_subsampling\_factor} - as information about subsampling factor is needed to properly perform reconstruction, this unit test checks what happens if this field is empty in the structure; as this information can be obtained from input data dimensions (first two dimensions) the module tackles the problem or throws an error if calculated subsampling rate is different than value 2 or 4,
+	\item \textbf{test\_invalid\_input\_num\_coils} - as information about number of coils is needed to properly perform reconstruction, this unit test checks what happens if this field is empty in the structure; as this information can be obtained from input data dimensions (last dimension) the module handles the problem.
+\end{itemize}
+
+The results of above mentioned tests performed for provided datasets were as it was expected. 
