@@ -200,40 +200,48 @@ class SkullStripping:
 def main8(mri_input, verbose=False):
     if isinstance(mri_input, smns.mri_diff):  # instructions for diffusion mri
         [m, n, slices, grad] = mri_input.diffusion_data.shape
-        mri_output = mri_input
-        mri_output.skull_stripping_mask = np.zeros([m, n, slices, grad])
+        data_output_diff = np.zeros([m, n, slices, grad])
         for i in range(slices):
             for j in range(grad):
-                mri_output.skull_stripping_mask[:, :, i, j] = SkullStripping(mri_input.diffusion_data[:, :, i, j]).run(verbose)
+                data_output_diff[:, :, i, j] = SkullStripping(mri_input.diffusion_data[:, :, i, j]).run(verbose)
+        mri_input.diff_skull_stripping_mask = data_output_diff
+
         [m, n, slices] = mri_input.structural_data.shape
+        data_output_struct = np.zeros([m, n, slices])
         for i in range(slices):
-            mri_output.skull_stripping_mask[:, :, i] = SkullStripping(mri_input.structural_data[:, :, i]).run(verbose)
+            data_output_struct[:, :, i] = SkullStripping(mri_input.structural_data[:, :, i]).run(verbose)
+        mri_input.struct_skull_stripping_mask = data_output_struct
     elif isinstance(mri_input, smns.mri_struct):
         [m, n, slices] = mri_input.structural_data.shape
-        mri_output = np.zeros([m, n, slices])
+        data_output_struct = np.zeros([m, n, slices])
         for i in range(slices):
-            mri_output.skull_stripping_mask[:, :, i] = SkullStripping(mri_input.structural_data[:, :, i]).run(verbose)
+            data_output_struct[:, :, i] = SkullStripping(mri_input.structural_data[:, :, i]).run(verbose)
+        mri_input.struct_skull_stripping_mask = data_output_struct
     else:
         return "Unexpected data format in module number 8!"
-    return mri_output
+    return mri_input
 
 
 def skull_stripped_image(mri_input):
     if isinstance(mri_input, smns.mri_diff):
         [m, n, slices, grad] = mri_input.diffusion_data.shape
-        mri_output = mri_input
+        data_output_diff = np.zeros([m, n, slices, grad])
         for i in range(slices):
             for j in range(grad):
-                mri_output.diffusion_data[:, :, i, j] = mri_output.skull_stripping_mask[:, :, i, j] * mri_output.diffusion_data[:, :, i, j]
+                data_output_diff[:, :, i, j] = mri_input.diff_skull_stripping_mask[:, :, i, j] * mri_input.diffusion_data[:, :, i, j]
+        mri_input.diffusion_data = data_output_diff
+
         [m, n, slices] = mri_input.structural_data.shape
-        mri_output.skull_stripping_mask = np.zeros([m, n, slices])
+        data_output_struct = np.zeros([m, n, slices])
         for i in range(slices):
-            mri_output.skull_stripping_mask[:, :, i] = mri_output.skull_stripping_mask[:, :, i] * mri_output.structural_data[:, :, i]
+            data_output_struct = mri_input.struct_skull_stripping_mask[:, :, i] * mri_input.structural_data[:, :, i]
+        mri_input.structural_data = data_output_struct
     elif isinstance(mri_input, smns.mri_struct):
         [m, n, slices] = mri_input.structural_data.shape
-        mri_output = mri_input
+        data_output_struct = np.zeros([m, n, slices])
         for i in range(slices):
-            mri_output.structural_data[:, :, i] = mri_output.skull_stripping_mask[:, :, i] * mri_output.structural_data[:, :, i]
+            data_output_struct = mri_input.struct_skull_stripping_mask[:, :, i] * mri_input.structural_data[:, :, i]
+        mri_input.structural_data = data_output_struct
     else:
         return "Unexpected data format in module number 8!"
-    return mri_output
+    return mri_input
