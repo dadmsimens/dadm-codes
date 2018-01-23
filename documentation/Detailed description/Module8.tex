@@ -1,49 +1,53 @@
 \section{Module 8. Skull stripping}
 
-The aim of this module is to remove pieces of skull from MRI Image
-using at pleasure chosen algorithm from the literature. Skull stripping
-is performed with use of hybrid approach that combines watershed algorithms
-and deformable surface models.
-
-Preliminary processing to isolate the brain form extra-cranial or
-non-brain tissues such as e.g. the eye sockets, skin from MRI head
-scans is commonly referred as skull stripping. Skull stripping methods
-which are available in the literature are broadly classified into
-five categories: mathematical morphology-based metods, intensity-based
-methods, deformable surface-based methods, atlas-based methods, and
-hybrid methods. Each skull stripping method has their own merits and
-limitations.
-
-In this module is proposed a hybrid approach to robustly and automatically
-segment brain from non-brain tissues in T1-weighted MR image. The
-skull stripping consists of series of sequential steps:
-\begin{enumerate}
-\item {Some relevant parameters are estimated from the input image (the
-coordinates of the brain COG, the average brain radius BR, an upper
-bound for the intensity of the cerebrospinal fluid CFS – white matter
-parameters).} 
-\item {Watershed algorithm is performed on the intensity image, with global
-minimum initialized within the cerebral white matter.} 
-\item {Deformable surface procedure to recover parts of cortex that may
-have been erroneously removed in watershed algorithm, using smoothness
-constraints on the shape of the skull and atlas information.} 
-\end{enumerate}
-Watershed algorithms are based on image intensities. Typically, they
-attempt to locate the local maxima/minima of the norm of the image
-intensity gradient to segment the image into different connected components.
-The algorithm proceeds in two steps:
+Preliminary processing to isolate the brain form extra-cranial or non-brain tissues such as e.g. the eye sockets, skin from MRI head scans is commonly referred as skull stripping. Skull stripping methods which are available in the literature are broadly classified into five categories: mathematical morphology-based metods, intensity-based methods, deformable surface-based methods, atlas-based methods, and hybrid methods. Each skull stripping method has their own merits and limitations.
+The aim of this module is to remove pieces of skull from MRI Image using at pleasure chosen algorithm from the literature. Skull stripping is performed with use of two methods:
 \begin{itemize}
-\item {Watershed transform - the sorting all of voxels (of the gray level
-inverted image) according to their intensity.} 
-\item {Post-watershed correction - assessment the validity of the watershed
-segmentation and retrospectively correct it, because the result image
-is often inaccurate and nonsmooth, with extracerebral tissues and
-CSF frequently remaining.} 
+    \item {Brain Surface Extractor BSE proposed by Stattuck et al. [1]}
+    \item {Marker-controlled watershed algorithm by Abdallah and Hassan and by Segonne et al. [2], [3]}
 \end{itemize}
-Deformable surface algorithm used the watershed segmentation outputs
-a segmented volume with most of non-brain tissues removed. A deformable
-balloon-like template employes this brain volume. An initial template
-deformation is first completed using global parameters regarding the
-brain/non-brain border to roughly match the boundary of the brain.
-Next, the correctness of resulting surface is verified by an atlas-based
-analysis, and if important structures have been removed, it is modified.
+Before this methods, there is applying preprocessing function to estimate global parameters: CSF - an upper bound for the intensity of the cerebrospinal fluid, COG - the coordinates of the centroid of the brain, BR - the average brain radius and ratio to brain diameter in axis x to brain radius in axis y. These estimated parameters are useful in this to methods to optimization and working.
+BSE procedure consist of three steps:
+\begin{enumerate}
+\item {The MRI is processed with anisotropic diffusion filter to smooth nonessential gradients.}
+\item {The filtered image has applied a Marr-Hildreth edge detector to identify important anatomical boundaries.}
+\item {Using a sequence of morphological and connect component operation to define object by previous boundaries.}
+\end{enumerate}
+
+Anisotropic Diffusion filtering is applied to smooth noisy regions, which can obscure boundaries or their edges can be indistinguishable from the other in the image. To implement this filter is used an image processing method by Perona and Malik. They demonstrated that using the gradient of image intensity as an estimate of edge strength produces good results. The filtered image is modeled as the solution to the anisotropic diffusion equation
+\begin{equation}
+    \frac{\partial I}{\partial t} = \nabla \cdot (c(\boldsymbol{p},t)\nabla I) = c(\boldsymbol{p},t)\nabla^{2}I + \nabla c \cdot \nabla I  \label{Eq:wzor1}
+\end{equation}
+where \boldsymbol{p} is a point in $R^{2}$, $\nabla$ and $\nabla ^{2}$ represent the gradient and Laplacian operators and $\nabla\cdot$ indicates the divergence operator. The function is defined as:
+\begin{equation}
+    c(\boldsymbol{p},t) = g(\parallel\nabla I(\boldsymbol{p},t)\parallel) = e^{-\parallel\nabla I(\boldsymbol{p},t)\parallel^{2} \kappa^{2}_{d}} \label{Eq:wzor2}
+\end{equation}
+where $\kappa_{d}$ is the diffusion constant. \eqref{Eq:wzor2} gives preferences to high-contrast edges. Number of iteration and the diffusion parameter $\kappa_{d}$ is selected empirically.
+
+To locate the anatomical boundaries in MRI brain volumes, it is used the Marr-Hildreth edge detectors. It is based on a low-pass filtering step with a symetric Gaussian kernel, followed by the localization of zero-crossing in the Laplacian of the filtered image. The Marr-Hildreth operator is defined as:
+\begin{equation}
+    C(k) = \nabla^{2}(I(k)*g_{\sigma}(\boldsymbol{p})) \label{Eq:wzor3}
+\end{equation}
+where C is the output contour image, I is an input image, * is the convolution operator, $g_{\sigma}$ is a Gaussian kernel with variance $\sigma^{2}$
+\begin{equation}
+    g_{\sigma} = \frac{1}{\sqrt{2\pi}\sigma}e^{- \parallel\boldsymbol{p}\parallel^{2}/2\sigma^{2}} \label{Eq:wzor4}
+\end{equation}
+where \boldsymbol{p} is a point in the image, and $\nabla^{2}$ is the Laplacian operator.
+To find pixels in the contour image, C where zerocrossing occur, a binary image E is produced that separates the image into edge-differentiated segments. Small values for sigma produce narrow filters, resulting in more edges in the image, on the other hand increasing this value makes the blurring kernel wider and only strong edges remain. This detector output is an image, which edge pixels are black and nonedge ones are white.
+
+Morphological processing’s task is to select the pixels corresponding to the brain tissue from the original image. The output of edge detector often does not distinguish meninges or blood vessels from the brain tissue due to noise, low contrast between brain and meninges or true anatomical continuity. The first step is morphological erosion, which delete narrow connections without globally damaging image. After that the largest connected region centered in the volume consist entirely of brain tissue. Second step is selection of this region. Third step, is binary dilatation to restore the brain due to previous erosion, which decrease brain surface. Because of imperfections in the edge boundaries detection, image after dilatation may consist of pits in its surface or small holes within the surface. The last step of morphological processing is closing, which fill small pits and close of some holes that occur.
+
+Marker-controlled watershed segmentation follows this procedure:
+\begin{enumerate}
+    \item {Computation a segmentation function.}
+    \item {Computation the foreground markers.}
+    \item {Computation the background markers.}
+    \item {Computation of the watershed transform using of the foreground markers and the background markers.}
+\end{enumerate}
+First step is applied to find the edges in the image, it is processed with Sobel edge filter. The gradient is high at the borders of the object and low inside. Morphological techniques are used to compute the foreground markers, opening by reconstruction and closing by reconstruction to clean up the image. These operation will create flat regional maxima inside each object that can be used to find regional maxima and next modified them by a closing followed by an erosion to obtain good foreground markers. The background pixels after binarization are black, but their markers should be to close to the edges of the object. this can by done by computing the watershed transform of the distance transform of the binary image and the looking for the watershed ridges lines of the result. With the foreground markers and the background markers there is applied watershed based segmentation.
+
+Brain Surface Extraction and Marker-controlled Watershed Segmentation is working separately. The base method is BSE. Marker-controlled watershed segmentation is compute, when BSE brain mask is larger than a mask based on preprocessing estimated BR.
+
+\hfill{}\\
+\textbf{List of References}\\
+\cite{8_dti_1}, \cite{8_dti_2}, \cite{8_dti_3}, \cite{8_dti_4},
