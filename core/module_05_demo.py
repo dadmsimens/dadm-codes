@@ -11,7 +11,8 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 DATASETS_ROOT = PROJECT_ROOT + '/Data/Module_05_test/'
 DATASETS = {
     0: 'diffusion_synthetic_normal_L8_r2_slices_41_50_gr15_b1200',
-    1: ''
+    1: 'filtered',
+    2: 'noise'
 }
 
 
@@ -19,11 +20,12 @@ if __name__ == "__main__":
     dataset_name = DATASETS[0]
     data = smns.load_object(file_path=DATASETS_ROOT + dataset_name)
 
-    # set to 1 for first run
+    # set to 1 for first run (actually calculates map and filters images + saves results to pickles)
     if 0:
         data1 = module3.main3(data)
+        smns.save_object(file_path=DATASETS_ROOT+'noise', data_object=data1)
         data2 = module_05.run_module(data1)
-        smns.save_object(file_path=DATASETS_ROOT, data_object=data2)
+        smns.save_object(file_path=DATASETS_ROOT+'filtered', data_object=data2)
 
     real_example = 1
     if real_example:
@@ -49,7 +51,7 @@ if __name__ == "__main__":
         plt.title('UNLM result')
         plt.show()
 
-    good_example = 1
+    good_example = 0
 
     if good_example:
         scan = sio.loadmat(DATASETS_ROOT + 'imnoi.mat')['In']
