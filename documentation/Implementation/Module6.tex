@@ -33,7 +33,7 @@ is still mandatory.
 \textbf{Module Output}:
 \begin{itemize}
 	\item
-	list of size Z, corresponding to each slice; each list element is a dictionary of biomarker images: MD, RA, FA, VR of shape X x Y, and biomarker FA\_rgb of shape X x Y x 3
+	list of size Z, corresponding to each slice; every list element is a dictionary of biomarker images: MD, RA, FA, VR of shape X x Y, and biomarker FA\_rgb of shape X x Y x 3
 \end{itemize}
 
 \subsection{Initialization}
@@ -46,27 +46,59 @@ After passing all required arguments to the \texttt{run\_module} function, they 
 
 \subsection{WLS-ABS estimation}
 
+WLS with the ABS fix method is the fastest yet simple method of module pipeline computation based on diffusion tensor estimation. As such these parameters were set as default for DTI.
 
-
-
-
-
-
-
-\subsection{NLS tba}
-
-Autorzy wyżej wymienionej publikacji proponują modyfikację tej zależności tak, aby:
+Diffusion tensor estimate was computed by implementing the equation:
 \begin{equation}
-\boldsymbol{\delta}=-\left(\nabla^2{f_{NLS}}+\lambda \boldsymbol{I}\right)^{-1}\nabla{f_{NLS}}
-\label{Eq:m6_eq_22}
+\begin{aligned}
+\boldsymbol{\gamma}=\left(\boldsymbol{W}^T\boldsymbol{\omega}^T\boldsymbol{\omega}\boldsymbol{W}\right)^{-1}\boldsymbol{W}^T\boldsymbol{\omega}^T\boldsymbol{\omega y}
+\end{aligned}
+\label{Eq:m6_impl_eq_1}
 \end{equation}
-gdzie $\lambda$ jest niezerowym parametrem algorytmu Levenberg-Marquardt, zaś $\boldsymbol{I}$ to macierz jednostkowa.
 
-Schemat blokowy omawianej metody (Modified Newton's Method) przedstawiony został na rysunku \ref{fig:m6_pic_1}.
+using NumPy matrix broadcasting operations, effectively abstracting away array reshaping. Weights vector $\boldsymbol{\omega}$ is calculated using a separate function in order to avoid changing every piece of code refering to WLS weights in case they change. The following implementation assumes the simplest of models presented in the Detail Description chapter, that is weights being equal to the measured signal.
 
-\begin{figure}[!h]
-	\includegraphics[width=8cm]{figures/Module_06/mfn}
+\subsection{NLS-ABS estimation}
+
+In case of NLS estimation, in addition to implementing gradient and Hessian matrix computation methods:
+
+\begin{equation}
+\begin{aligned}
+\nabla{f_{NLS}}&=-\boldsymbol{W}^T\boldsymbol{\hat{S}}\boldsymbol{r} \\
+\nabla^2{f_{NLS}}&=\boldsymbol{W}^T\left(\boldsymbol{\hat{S}^T\hat{S}-\boldsymbol{R\hat{S}}}\right)\boldsymbol{W}
+\end{aligned}
+\label{Eq:m6_impl_2}
+\end{equation}
+
+It is important to devise an iterative scheme because gradient result depends on NLS diffusion tensor estimate. For that reason an algorithm based on \cite{m6_koay2006a} has been implemented. The method itself is called a Modified Newton's Algorithm and can be summarised as in Fig.\ref{fig:m6_pic_1}.
+
+\begin{figure}[H]
+	\includegraphics[width=8cm]{figures/Module_06/mfn_simple}
 	\centering
-	\caption{Zmodyfikowany algorytm Newtona do wyznaczania minimum funkcji NLS (na bazie \cite{m6_koay2006a})}.
+	\caption{Modified Newton's method for iterative computation of NLS estimate \vbox{(based on \cite{m6_koay2006a})}}.
 	\label{fig:m6_pic_1}
 \end{figure}
+
+The following parameters (collectively known in code as MFN parameters) were set:
+\begin{itemize}
+	\item 
+	MFN\_MAX\_ITER = 3 - iteration limit
+	
+	\item
+	MFN\_ERROR\_EPSILON = 1e-5 - first convergence criterion (error change is small)
+	
+	\item
+	MFN\_GRADIENT\_EPSILON = 1e-5 - second convergence criterion (vanishing gradient)
+	
+	\item
+	MFN\_LAMBDA\_MATRIX\_FUN = 'identity'- regularization matrix added to Hessian matrix
+	
+	\item 
+	MFN\_LAMBDA\_PARAM\_INIT = 1e-4 - initial regularization matrix multiplier
+\end{itemize}
+
+Delta estimate is calculated from the following formula:
+\begin{equation}
+\boldsymbol{\delta}=-\left(\nabla^2{f_{NLS}+\lambda I}\right)^{-1}\nabla{f_{NLS}}
+\label{Eq:m6_impl_3}
+\end{equation}
