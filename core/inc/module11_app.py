@@ -38,7 +38,7 @@ class Brain3D_App(QtWidgets.QMainWindow):
             "Are you sure to quit?", QMessageBox.Yes | 
             QMessageBox.No, QMessageBox.Yes)
         if reply == QMessageBox.Yes:
-            QtCore.QCoreApplication.instance().quit()
+            self.close()
 
 
     def preview_model(self):
