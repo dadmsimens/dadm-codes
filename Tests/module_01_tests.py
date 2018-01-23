@@ -19,8 +19,7 @@ class Module01Tests(unittest.TestCase):
         """
         super(Module01Tests, cls).setUpClass()
         cls.datasets = {
-            0: DATASETS_ROOT + 'diffusion_synthetic_normal_L8_r2_slices_gr15_b1200',
-            1: DATASETS_ROOT + 'T1_synthetic_normal_1mm_L8_r2',
+            0: DATASETS_ROOT + 'T1_synthetic_normal_1mm_L8_r2',
         }
         cls.struct = smns.mri_read(file_path=cls.datasets[0])
 
