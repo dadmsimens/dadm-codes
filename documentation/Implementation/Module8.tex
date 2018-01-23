@@ -1,5 +1,4 @@
 \section{Module 8. Skull stripping}
-\section{Module 8. Skull stripping}
 Module 8 has implemented own class \textbf{SkullStripping} with consist of methods required to skull strip the image.
 Implemented methods:
 \begin{itemize}
@@ -17,8 +16,9 @@ Implemented methods:
     \item {\textbf{def foreground marker(self, preproc image, csf)} - which marks the foreground objects \textbf{input:} preproc image - image especially after preprocessing, csf - CSF parameter \textbf{output:} fgm4 - markers of foreground}
     \item {\textbf{def watershed(self, preproc image, csf, cog)} - which is used to marker-controlled watershed segmentation \textbf{input:}preproc image - image especially after preprocessing, csf - CSF parameter, cog - COG parameter \textbf{output:} brain - skull stripping mask}
     \item {\textbf{def bse(self, cog} - which is used to brain surface extraction \textbf{input:} self - class SkullStripping object consisting of MRI image, cog - COG parameter \textbf{output:} brain - skull stripping mask}
-    \item {\textbf{def run(self, verbose=False)} - which is used to run module08 \textbf{input:}self - class SkullStripping object consisting of MRI image, verbose - True or False plotting result of method  \textbf{output:} skull stripping mask - output of the module}
+    \item {\textbf{def run(self, verbose=False)} - which is used to run module08 \textbf{input:}self - class SkullStripping object consisting of MRI image, verbose - True or False plotting result of method \textbf{output:} skull stripping mask - output of the module}}
 \end{itemize}
+
 To connect with project it is implemented function:
 \begin{itemize}
     \item {\textbf{def main8(mri input,verbose=Flase)}}
