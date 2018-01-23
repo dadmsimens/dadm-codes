@@ -21,8 +21,8 @@ def imHist(image):
     imageHistogram = np.zeros((1,maxValue))
     imageHistogram = imageHistogram.flatten()
 
-    for i in range(lengthImage):
-        f = int(floor(image[i]))
+    for i in range(lengthImage):			# create histogram of non-zero image values
+        f = int(floor(image[i]))			# round floor
         if f>0:
             if f<maxValue:
                 odds=image[i]-f             # difference between image and round floor image value
@@ -33,7 +33,7 @@ def imHist(image):
     imageHistogram=np.convolve(imageHistogram,[1,2,3,2,1])
     imageHistogram=imageHistogram[2:(imageHistogram.size-2)]
     imageHistogram=imageHistogram/(imageHistogram.sum())
-    return imageHistogram
+    return imageHistogram					# return histogram for whole image (1 slice)
 
 
 
@@ -70,7 +70,7 @@ def gmm(x,mu,v,p):
 def imPart(skullFreeImage, firstPitch, lastPitch, rows, columns, pitches):
 
     rangePitch = lastPitch - firstPitch
-    imageToSeg = np.zeros([rows, columns, rangePitch])
+    imageToSeg = np.zeros([rows, columns, rangePitch])			
 
     rPit = 0
 
@@ -85,7 +85,7 @@ def imPart(skullFreeImage, firstPitch, lastPitch, rows, columns, pitches):
             else:
                 break
 
-    return imageToSeg
+    return imageToSeg							# return a part of image to segmentation
 
 
 
@@ -95,8 +95,8 @@ def imPart(skullFreeImage, firstPitch, lastPitch, rows, columns, pitches):
 def segmentation(skullFreeImage):
 
     [rows, columns, pitches]=skullFreeImage.shape
-    firstPitch = 70
-    lastPitch = 140
+    firstPitch = 70								# the first slice to segmentation
+    lastPitch = 140								# last slice to segmentation
     imageToSeg = imPart(skullFreeImage, firstPitch, lastPitch, rows, columns, pitches)
 
     pitches = lastPitch - firstPitch
@@ -105,9 +105,7 @@ def segmentation(skullFreeImage):
 
     for pitch in range (pitches):
 
-        print("Pitch:   " + str(pitch))
-
-        image = imageToSeg[:,:,pitch]
+        image = imageToSeg[:,:,pitch]			# get 1 slice from whole image data
 
         imageCopy = image
         im = image.flatten()
@@ -116,23 +114,24 @@ def segmentation(skullFreeImage):
         imMax = im.max()
 
         image = image-imMin + 1
-        imageHistogram = imHist(image)
+        imageHistogram = imHist(image)			# use histogram function
         x = np.nonzero(imageHistogram)
         hx = imageHistogram[x]
 
-        clustersNum = 4
-        mu = arange(1,clustersNum+1)*imMax/(clustersNum+1)
-        v = np.ones(clustersNum)*imMax
-        p = np.ones(clustersNum)/clustersNum
+        # alghoritm inicialization parameters
+        clustersNum = 4										# number of clusters
+        mu = arange(1,clustersNum+1)*imMax/(clustersNum+1)	# expected value of each clusters
+        v = np.ones(clustersNum)*imMax						# variation of each clusters
+        p = np.ones(clustersNum)/clustersNum				# probability of each clusters
 
         condition = 1
-        while condition == 1:
+        while condition == 1:								# iteration alghoritm 
 
             #Expectation Step
 
-            probab = gmm(x,mu,v,p)
-            distrDens = probab.sum(axis=1)
-            llh = (hx*np.log(distrDens)).sum()
+            probab = gmm(x,mu,v,p)							# use gmm function - get probability
+            distrDens = probab.sum(axis=1)					# relative density 
+            llh = (hx*np.log(distrDens)).sum()				# the log-likelihood base on histogram data
 
 
             #Maximization Step
@@ -141,13 +140,13 @@ def segmentation(skullFreeImage):
                 hxsh = hx.shape
                 probabxh = probab.shape
                 distsh=distrDens.shape
-                resp = hx*probab[:,j]/distrDens
+                resp = hx*probab[:,j]/distrDens				# compute the responsibilities
                 p[j]=resp.sum()
-                mu[j]=(x*resp/p[j]).sum()
+                mu[j]=(x*resp/p[j]).sum()					# compute the weighted of expected values
                 differ=x-mu[j]
-                v[j]=(differ*differ*resp/p[j]).sum()
+                v[j]=(differ*differ*resp/p[j]).sum()		# compute the weighted varainces
 
-            p = p+0.001
+            p = p+0.001										# maxing probability
             p = p/p.sum()
 
 
@@ -163,7 +162,7 @@ def segmentation(skullFreeImage):
 
         #Image mask
 
-        mu = mu+imMin-1             #recover real range
+        mu = mu+imMin-1             			#recover real range
         c = np.zeros(clustersNum)
 
         imageMask = np.zeros([rows, columns])
@@ -175,7 +174,7 @@ def segmentation(skullFreeImage):
                 a = (c==c.max()).nonzero()
                 imageMask[i,j]=a[0]
 
-        segmentImageMask[:,:,pitch] = imageMask[:]
+        segmentImageMask[:,:,pitch] = imageMask[:]	# output - segmentation mask of whole data image
 
     return segmentImageMask
 
@@ -184,7 +183,7 @@ def segmentation(skullFreeImage):
 
 """ Main body """
 
-from . import simens_dadm as smns
+import simens_dadm as smns
 
 def main9(mri_input, other_arguments = None):
     
@@ -203,6 +202,6 @@ def main9(mri_input, other_arguments = None):
     else:
         return "Unexpected data format in module number 9!"
 
-    return mri_input
+    return mri_inputdule
 
 
