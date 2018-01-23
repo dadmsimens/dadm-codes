@@ -18,20 +18,20 @@ class Module05Tests(unittest.TestCase):
         Class initialization - data loading.
         """
         super(Module05Tests, cls).setUpClass()
-        datasets = {
+        cls.datasets = {
             0: DATASETS_ROOT + 'diffusion_synthetic_normal_L8_r2_slices_41_50_gr15_b1200',
-            1: DATASETS_ROOT + ''
+            1: DATASETS_ROOT + 'filtered',
+            2: DATASETS_ROOT + 'noise'
         }
+        cls.data = smns.load_object(file_path=cls.datasets[2])
 
-        cls.data = smns.load_object(file_path=datasets[0])
-        cls.data_const = smns.load_object(file_path=datasets[0])
 
-    def tearDown(self):
+    def setUp(self):
         """
-        Clearing the modifications made to data.
+        Refreshing the data.
         """
-        self.data.diffusion_data = self.data_const.diffusion_data
-        self.data.noise_map = self.data_const.diffusion_data
+        self.data = smns.load_object(file_path=self.datasets[2])
+
 
 
     def test_empty_input_data(self):
@@ -47,7 +47,7 @@ class Module05Tests(unittest.TestCase):
         What happens when algorithm encounters invalid data.
         """
         self.data.diffusion_data = self.data.diffusion_data[0]
-        self.assertRaises(IndexError, module_05.run_module,
+        self.assertRaises(ValueError, module_05.run_module,
                           self.data)
 
     def test_size_check(self):
@@ -55,7 +55,7 @@ class Module05Tests(unittest.TestCase):
         Checking the output size.
         """
         [x1, y1, s1, g1] = self.data.diffusion_data.shape
-        [x2, y2, s2, g2] = module_05.run_module(self.data).shape
+        [x2, y2, s2, g2] = module_05.run_module(self.data).diffusion_data.shape
         self.assertEqual(x1, x2)
         self.assertEqual(y1, y2)
         self.assertEqual(s1, s2)
@@ -67,14 +67,14 @@ class Module05Tests(unittest.TestCase):
         """
         before = self.data.diffusion_data[:, :, 0, 0]
         after = module_05.run_module(self.data).diffusion_data[:, :, 0, 0]
-        self.assertNotEqual(before, after)
+        self.assertFalse(np.all(before == after))
 
     def test_map_absence(self):
         """
         What happens when algorithm encounters data with no noise maps.
         """
         self.data.noise_map = []
-        self.assertRaises(ValueError, module_05.run_module,
+        self.assertRaises(TypeError, module_05.run_module,
                           self.data)
 
 if __name__ == '__main__':
