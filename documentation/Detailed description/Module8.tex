@@ -18,7 +18,7 @@ Anisotropic Diffusion filtering is applied to smooth noisy regions, which can ob
 \begin{equation}
     \frac{\partial I}{\partial t} = \nabla \cdot (c(\textbf{p},t)\nabla I) = c(\textbf{p},t)\nabla^{2}I + \nabla c \cdot \nabla I  \label{Eq:wzor_1}
 \end{equation}
-where \textbf{p} is a point in R^2, $\nabla$ and $\nabla^{2}$  represent the gradient and Laplacian operators and $\nabla$ $\cdot$ indicates the divergence operator. The function is defined as:
+where \textbf{p} is a point in $R^{2}$, $\nabla$ and $\nabla^{2}$  represent the gradient and Laplacian operators and $\nabla$ $\cdot$ indicates the divergence operator. The function is defined as:
 \begin{equation}
     c(\textbf{p},t) = g(\parallel\nabla I(\boldsymbol{p},t)\parallel) = e^{-\parallel\nabla I(\textbf{p},t)\parallel^{2} \kappa^{2}_{d}} \label{Eq:wzor_2}
 \end{equation}
