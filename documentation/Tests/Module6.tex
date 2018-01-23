@@ -1,1 +1,124 @@
 \section{Module 6. Diffusion tensor imaging}
+
+In order to verify whether any changes to the module source code result in module no longer working properly, a series of unit tests have been designed and implemented. This automates the procedure of testing module functionality after every change. This addition resulted not only in validating functionality, but also allowed to detect unexpected behaviour and edge cases, which lead to changes in source code.
+
+\subsection{High-level tests}
+
+Methods of the \texttt{Module06Tests} class are designed to verify high-level functionality of DTI module. Specifically, it allows to check whether the resulting biomarkers are calculated as expected. All of the following methods are tested for each solver-fix method combination (that is: WLS-ABS, WLS-CHOLESKY, NLS-ABS, NLS-CHOLESKY).
+
+\hfill\\
+\textbf{Interface Tests}
+\hfill
+
+This group of methods test module behaviour when receiving incorrect data from GUI:
+
+\begin{itemize}
+	\item 
+	\texttt{test\_invalid\_input\_data} - checks whether module raises error when input data structure strutural data field is empty
+	
+	\item 
+	\texttt{test\_invalid\_solver\_type} - checks whether module raises error when input solver is neither 'WLS' nor 'NLS'
+	
+	\item 
+	\texttt{test\_invalid\_fix\_method} - checks whether module raises error when input fix method is neither 'ABS' nor 'CHOLESKY'
+\end{itemize}
+
+\hfill\\
+\textbf{Data Object Tests}
+\hfill
+
+This group of methods test whether input data instance is modified during module execution:
+
+\begin{itemize}
+	\item 
+	\texttt{test\_object\_modified\_in\_place} - tests whether module output is a view of input data memory instead of a new object (it is in order to be less memory-intensive)
+	
+	\item
+	\texttt{test\_input\_biomarker\_field\_changed} - verifies if input object biomarkers field is modified during module execution
+	
+	\item 
+	\texttt{test\_input\_other\_fields\_not\_changed} - compliments the aforementioned methods by checking whether all fields but biomarkers where changed during module execution or not	 
+\end{itemize}
+
+\hfill\\
+\textbf{Output Tests}
+\hfill
+
+This group of methods check the properties of resulting biomarkers field:
+
+\begin{itemize}
+	\item 
+	\texttt{test\_biomarker\_fields\_check} - verifies whether all expected biomarkers (MD, RA, FA, VR, FA\_rgb) have been calculated during module execution and written to input data class instance
+	
+	\item 
+	\texttt{test\_biomarkers\_for\_each\_slice} - tests whether biomarkers dictionary is calculated for each slice present in input data and returned as Python list of dictionaries
+	
+	\item 
+	\texttt{test\_biomarker\_shape} - validates the shape of biomarker images (whether XY dimensions are the same as input data as well as whether they are gray or in color)
+\end{itemize}
+
+\subsection{Low-level tests}
+
+Methods of the \texttt{DTISolverTests} class are designed to verify low-level functionality of DTI computation by testing the behaviour of class constructor of DTISolver and verifying methods called during pipeline module execution abstracted from the end user.
+
+\hfill\\
+\textbf{Constructor Tests}
+\hfill
+
+This group verifies class constructor for valid and invalid input information:
+
+\begin{itemize}
+	\item 
+	\texttt{test\_solver\_object\_created} - verifies the output of class constructor for valid input data
+	
+	\item 
+	\texttt{test\_input\_invalid\_bvalue} - checks whether an error is raised when constructor is presented with invalid (empty) b\_value
+	
+	\item 
+	\texttt{test\_input\_invalid\_gradients} - checks whether an error is raised when constructor is presented with invalid (empty) gradient matrix
+	
+	\item 
+	\texttt{test\_input\_invalid\_data} - checks whether an error is raised when constructor is presented with invalid (empty) data array
+	
+	\item 
+	\texttt{test\_input\_negatiove\_data} - checks whether an error is raised when constructor is presented with invalid (negative values) data array
+\end{itemize}
+
+\hfill\\
+\textbf{Skull Stripping Mask Tests}
+\hfill
+
+This group of methods verifies solver class object behaviour when presented with invalid skull stripping masks. Since this input information is optional, instead of raising an error in response to invalid mask, a default mask (all pixels in image are valid for computation) is used during execution:
+
+\begin{itemize}
+	\item 
+	\texttt{test\_input\_skull\_mask\_empty} - verifies that the default mask is used if input mask is empty
+	
+	\item 
+	\texttt{test\_input\_invalid\_mask} - verifies that the default mask is used if input mask is not binary
+\end{itemize}
+
+\hfill\\
+\textbf{Eigenvalue Computation Tests}
+\hfill
+
+This group of methods the sign of eigenvalues with and without 'ABS' or 'CHOLESKY' fix. For proper biomarker camputation it is important to have non-negative diffusion tensor eigenvalues.
+
+\begin{itemize}
+	\item 
+	\texttt{test\_eigenvalues\_abs\_fix} - compares eigenvalue computation with 'ABS' fix method (expected output: non-negative eigenvalues when using the fix method, no guarantee otherwise)
+	
+	\item
+	\texttt{test\_eigenvalues\_cholesky\_fix} - compares eigenvalue computation with 'CHOLESKY' fix method (expected output: non-negative eigenvalues when using the fix method, no guarantee otherwise)
+\end{itemize}
+
+\hfill\\
+\textbf{Biomarker Computation Tests}
+\hfill
+
+This last group contains only one test method, designed to check module behaviour when computing biomarkers:
+
+\begin{itemize}
+	\item 
+	\texttt{test\_negative\_eigenvalue\_biomarker\_warning} - checks whether a warning is issued during biomarker computation if input eigenvalues are negative (no error is raised)
+\end{itemize}
