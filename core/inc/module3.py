@@ -145,7 +145,7 @@ def main3(mri_input):
 
     if (isinstance(mri_input, smns.mri_diff)):
         [m, n, slices, gradients] = mri_input.diffusion_data.shape
-        data_out = np.zeros([m, n, slices, gradients])
+        data_out_diff = np.zeros([m, n, slices, gradients])
 
         for i in range(slices):
             for j in range(gradients):
@@ -154,7 +154,7 @@ def main3(mri_input):
         mri_input.diff_noise_map = data_out_diff
         
         [m, n, slices] = mri_input.structural_data.shape
-        data_out = np.zeros([m, n, slices])
+        data_out_struct = np.zeros([m, n, slices])
 
         for i in range(slices):
             data_out_struct[:, :, i] = estimate_map(mri_input.structural_data[:, :, i])
@@ -163,7 +163,7 @@ def main3(mri_input):
 
     elif (isinstance(mri_input, smns.mri_struct)):
         [m, n, slices] = mri_input.structural_data.shape
-        data_out = np.zeros([m, n, slices])
+        data_out_struct = np.zeros([m, n, slices])
 
         for i in range(slices):
             data_out_struct[:, :, i] = estimate_map(mri_input.structural_data[:, :, i])
