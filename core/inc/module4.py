@@ -46,7 +46,7 @@ def main4(mri_input):
         data_out = np.zeros([m, n, slices])
 
         for i in range(slices):
-            data_out[:, :, i] = lmmse_filter(mri_input.structural_data[:,:,i],mri_input.noise_map, window)
+            data_out[:, :, i] = lmmse_filter(mri_input.structural_data[:, :, i], mri_input.noise_map[:, :, i], window)
 
         mri_output.structural_data=data_out
 

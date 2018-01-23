@@ -183,7 +183,7 @@ def segmentation(skullFreeImage):
 
 """ Main body """
 
-import simens_dadm as smns
+from . import simens_dadm as smns
 
 def main9(mri_input, other_arguments = None):
     

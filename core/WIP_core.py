@@ -1,4 +1,5 @@
 import threading, time, queue, multiprocessing
+from copy import deepcopy
 from inc import simens_dadm as smns
 import uiui as gui
 from inc import module_01, module2, module3, module4, module_05, module_06, module08, module_09, module_10, module11, module12
@@ -28,7 +29,7 @@ def simens_core(communicator):
                     communicator.core_says.put('Reconstructing...')
                     data[current_instance] = module_01.run_module(data[current_instance])
                     communicator.core_says.put('Reconstructing done')
-                    communicator.core_says.put(smns.simens_msg('data', data[current_instance]))
+                    communicator.core_says.put(smns.simens_msg('data', deepcopy(data[current_instance])))
                 else:
                     communicator.core_says.put(READ_ERROR)
 
@@ -36,8 +37,10 @@ def simens_core(communicator):
             elif x.module == MODULE_2_STR: # Intensity inhomogenity correction
                 communicator.core_says.put('Applying intensity inhomogenity correction...')
                 data[current_instance] = module2.main2(data[current_instance])
+                data[current_instance].filtering_allowed = False
+                data[current_instance].inhomogenity_correction_allowed = False
                 communicator.core_says.put('Intensity inhomogenity correction applied')
-                communicator.core_says.put(smns.simens_msg(MODULE_2_STR, data[current_instance]))
+                communicator.core_says.put(smns.simens_msg(MODULE_2_STR, deepcopy(data[current_instance])))
 
 
             elif x.module == MODULE_3_STR: # Noise mapping
@@ -49,8 +52,9 @@ def simens_core(communicator):
                 data[current_instance] = module3.main3(data[current_instance])
                 communicator.core_says.put('Filtering...')
                 data[current_instance] = module4.main4(data[current_instance])
+                data[current_instance].filtering_allowed = False
                 communicator.core_says.put('Filtering done')
-                communicator.core_says.put(smns.simens_msg(MODULE_4_STR, data[current_instance]))
+                communicator.core_says.put(smns.simens_msg(MODULE_4_STR, deepcopy(data[current_instance])))
 
 
             elif x.module == MODULE_5_STR: # Filtering #2
@@ -58,14 +62,16 @@ def simens_core(communicator):
                 data[current_instance] = module3.main3(data[current_instance])
                 communicator.core_says.put('Filtering...')
                 data[current_instance] = module_05.run_module(data[current_instance])
+                data[current_instance].filtering_allowed = False
                 communicator.core_says.put('Filtering done')
-                communicator.core_says.put(smns.simens_msg(MODULE_5_STR, data[current_instance]))
+                communicator.core_says.put(smns.simens_msg(MODULE_5_STR, deepcopy(data[current_instance])))
 
 
             elif x.module == MODULE_6_STR: # DTI
                 #  DODATKOWE ARGUMENTY, GUI NIECHAJ JE OBSŁUŻY
                 solver = x.arguments[0]
                 fix_method = x.arguments[1]
+
                 communicator.core_says.put('Obtaining DTI biomarkers...')
                 try:
                     data[current_instance] = module_06.run_module(mri_diff = data[current_instance], solver = solver, fix_method = fix_method)
@@ -73,30 +79,33 @@ def simens_core(communicator):
                     communicator.core_says.put('DTI: Expected MRI_DIFF object instance, received unknown type.')
                 else:
                     communicator.core_says.put('DTI complete')
-                    communicator.core_says.put(smns.simens_msg(MODULE_6_STR, data[current_instance]))
+                    communicator.core_says.put(smns.simens_msg(MODULE_6_STR, deepcopy(data[current_instance])))
 
 
             elif x.module == MODULE_8_STR: # Skull Stripping
                 communicator.core_says.put('Obtaining skull stripping mask...')
                 data[current_instance] = module08.main8(data[current_instance])
                 communicator.core_says.put('Skull stripping complete')
-                communicator.core_says.put(smns.simens_msg(MODULE_8_STR, data[current_instance]))
+                communicator.core_says.put(smns.simens_msg(MODULE_8_STR, deepcopy(data[current_instance])))
 
 
             elif x.module == MODULE_9_STR: # Segmentation
                 communicator.core_says.put('Segmentation running...')
                 data[current_instance] = module_09.main9(data[current_instance])
                 communicator.core_says.put('Segmentation complete')
-                communicator.core_says.put(smns.simens_msg(MODULE_9_STR, data[current_instance]))
+                communicator.core_says.put(smns.simens_msg(MODULE_9_STR, deepcopy(data[current_instance])))
 
 
             elif x.module == MODULE_10_STR: # Upsampling
-                N = x.arguments
+                N = x.arguments #!!!!!!!!!!!!!!!!!!!!!!!!!
+
                 communicator.core_says.put('Upsampling...')
-                data.insert(module_10.main10(data[current_instance], N), 1)
+                data.insert(1, module_10.main10(deepcopy(data[current_instance]), N))
                 communicator.core_says.put('Upsampling complete')
                 current_instance = 1
-                communicator.core_says.put(smns.simens_msg(MODULE_10_STR, data[current_instance]))
+                data[current_instance].filtering_allowed = False
+                data[current_instance].inhomogenity_correction_allowed = False
+                communicator.core_says.put(smns.simens_msg(MODULE_10_STR, deepcopy(data[current_instance])))
 
 
             elif x.module == MODULE_11_STR: # Brain 3D
@@ -108,8 +117,8 @@ def simens_core(communicator):
 
 
             elif x.module == REQUEST_DATA: # Send data to GUI. Useful with skull stripping
-                communicator.core_says.put('Sending data with skull...')
-                communicator.core_says.put(smns.simens_msg(REQUEST_DATA, data[current_instance]))
+                communicator.core_says.put('Refreshing data (sending data with skull)...')
+                communicator.core_says.put(smns.simens_msg(REQUEST_DATA, deepcopy(data[current_instance])))
                 communicator.core_says.put('Done')
 
 
@@ -118,7 +127,7 @@ def simens_core(communicator):
                 current_instance = 0
                 if len(data)>1:
                     data.pop()
-                communicator.core_says.put(smns.simens_msg(REVERT_UPSAMPLING, data[current_instance]))
+                communicator.core_says.put(smns.simens_msg(REVERT_UPSAMPLING, deepcopy(data[current_instance])))
                 communicator.core_says.put('Done')
 
 
