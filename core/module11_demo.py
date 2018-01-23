@@ -9,8 +9,8 @@ import os
 # Data location in ROOT
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 DATASETS_ROOT = PROJECT_ROOT + '/Data/Module_11_test/'
-segmentation = sio.loadmat(DATASETS_ROOT + 'segmentationMask.mat')
-segmentation = segmentation['imageMaskFull']
+segmentation = sio.loadmat(DATASETS_ROOT + 'testSegmentation.mat')
+segmentation = segmentation['mri_segMask']
 
 struct = smns.mri_struct()
 struct.segmentation = segmentation
