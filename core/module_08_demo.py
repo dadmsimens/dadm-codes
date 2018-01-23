@@ -20,8 +20,6 @@ if __name__ == "__main__":
     dataset_name = DATASETS[0]
     dwi = smns.load_object(file_path=DATASETS_ROOT + dataset_name)
     time.perf_counter()
-    import pdb
-    pdb.set_trace()
     dwi = main8(dwi, verbose=True)
     print("Module 8 time: {} seconds.\n".format(time.perf_counter()))
 
