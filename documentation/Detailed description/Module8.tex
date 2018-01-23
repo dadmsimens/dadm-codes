@@ -16,23 +16,23 @@ BSE procedure consist of three steps:
 
 Anisotropic Diffusion filtering is applied to smooth noisy regions, which can obscure boundaries or their edges can be indistinguishable from the other in the image. To implement this filter is used an image processing method by Perona and Malik. They demonstrated that using the gradient of image intensity as an estimate of edge strength produces good results. The filtered image is modeled as the solution to the anisotropic diffusion equation
 \begin{equation}
-    \frac{\partial I}{\partial t} = \nabla \cdot (c(\boldsymbol{p},t)\nabla I) = c(\boldsymbol{p},t)\nabla^{2}I + \nabla c \cdot \nabla I  \label{Eq:wzor1}
+    \frac{\partial I}{\partial t} = \nabla \cdot (c(\textbf{p},t)\nabla I) = c(\textbf{p},t)\nabla^{2}I + \nabla c \cdot \nabla I  \label{Eq:wzor_1}
 \end{equation}
-where \boldsymbol{p} is a point in R^2, $\nabla$ and $\nabla^{2}$  represent the gradient and Laplacian operators and $\nabla$ $\cdot$ indicates the divergence operator. The function is defined as:
+where \textbf{p} is a point in R^2, $\nabla$ and $\nabla^{2}$  represent the gradient and Laplacian operators and $\nabla$ $\cdot$ indicates the divergence operator. The function is defined as:
 \begin{equation}
-    c(\boldsymbol{p},t) = g(\parallel\nabla I(\boldsymbol{p},t)\parallel) = e^{-\parallel\nabla I(\boldsymbol{p},t)\parallel^{2} \kappa^{2}_{d}} \label{Eq:wzor2}
+    c(\textbf{p},t) = g(\parallel\nabla I(\boldsymbol{p},t)\parallel) = e^{-\parallel\nabla I(\textbf{p},t)\parallel^{2} \kappa^{2}_{d}} \label{Eq:wzor_2}
 \end{equation}
-where $\kappa_{d}$ is the diffusion constant. \eqref{Eq:wzor2} gives preferences to high-contrast edges. Number of iteration and the diffusion parameter $\kappa_{d}$ is selected empirically.
+where $\kappa_{d}$ is the diffusion constant. \eqref{Eq:wzor_2} gives preferences to high-contrast edges. Number of iteration and the diffusion parameter $\kappa_{d}$ is selected empirically.
 
 To locate the anatomical boundaries in MRI brain volumes, it is used the Marr-Hildreth edge detectors. It is based on a low-pass filtering step with a symetric Gaussian kernel, followed by the localization of zero-crossing in the Laplacian of the filtered image. The Marr-Hildreth operator is defined as:
 \begin{equation}
-    C(k) = \nabla^{2}(I(k)*g_{\sigma}(\boldsymbol{p})) \label{Eq:wzor3}
+    C(k) = \nabla^{2}(I(k)*g_{\sigma}(\textbf{p})) \label{Eq:wzor_3}
 \end{equation}
 where C is the output contour image, I is an input image, * is the convolution operator, $g_{\sigma}$ is a Gaussian kernel with variance $\sigma^{2}$
 \begin{equation}
-    g_{\sigma} = \frac{1}{\sqrt{2\pi}\sigma}e^{- \parallel\boldsymbol{p}\parallel^{2}/2\sigma^{2}} \label{Eq:wzor4}
+    g_{\sigma} = \frac{1}{\sqrt{2\pi}\sigma}e^{- \parallel\textbf{p}\parallel^{2}/2\sigma^{2}} \label{Eq:wzor_4}
 \end{equation}
-where \boldsymbol{p} is a point in the image, and $\nabla^{2}$ is the Laplacian operator.
+where \textbf{p} is a point in the image, and $\nabla^{2}$ is the Laplacian operator.
 To find pixels in the contour image, C where zerocrossing occur, a binary image E is produced that separates the image into edge-differentiated segments. Small values for sigma produce narrow filters, resulting in more edges in the image, on the other hand increasing this value makes the blurring kernel wider and only strong edges remain. This detector output is an image, which edge pixels are black and nonedge ones are white.
 
 Morphological processing’s task is to select the pixels corresponding to the brain tissue from the original image. The output of edge detector often does not distinguish meninges or blood vessels from the brain tissue due to noise, low contrast between brain and meninges or true anatomical continuity. The first step is morphological erosion, which delete narrow connections without globally damaging image. After that the largest connected region centered in the volume consist entirely of brain tissue. Second step is selection of this region. Third step, is binary dilatation to restore the brain due to previous erosion, which decrease brain surface. Because of imperfections in the edge boundaries detection, image after dilatation may consist of pits in its surface or small holes within the surface. The last step of morphological processing is closing, which fill small pits and close of some holes that occur.
