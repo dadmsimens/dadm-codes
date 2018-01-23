@@ -95,33 +95,21 @@ The first faced incorrectness was the fact of not fully using the numpy library 
 Furthermore, an attempt to use threads in order to speed up calculations on multi-dimensional data took place. For that test, a synthetic 3D data was generated. Processing each slice in a for loop takes 3.5 x \textit{number of slices} seconds. Involving threads should reduce the time, but unfortunately it was doubled. So a tough decision of processing slices in classic loop has been made. Other possibilities of parallel computing were not taken into consideration due to the compatibility issues with GUI.
 
 \subsection*{Unbiased Non-Local Means algorithm}
-Having reduced the computation time and having chosen suitable penalty function (Gaussian kernel) algorithm presents as in code snippet below.
+Having reduced the computation time and having chosen suitable penalty function (Gaussian kernel) algorithm was considered finished. Some of the most important code features are presented in snippets below.
 
-\begin{lstlisting}[language=Python, caption = UNLM algorithm code.]
-def unlm(image, n_map):
-
-# setting window sizes to reduce number of parameters and chance failure caused by user
-rsearch = 5
-rsim = 2
-
-# get size for indexes
-[m, n] = image.shape
-
-# extend image at boundaries to make calculations on edges of image possible
-img_ext = np.pad(image, rsim, 'symmetric')
-
-# create penalty function
-penalty = np.asarray(gk4(rsim))
-
-# set space for filtered image
-output = np.zeros([m, n])
-
+\begin{lstlisting}[language=Python, caption = Overcoming computation of same matrices in every iteration.]
 # precompute possible window2
 window2_precomp = np.zeros((m, n, rsearch, rsearch))
 for i in range(2, m):
 for j in range(2, n):
 window2_precomp[i, j, :, :] = img_ext[i - rsim:i + rsim + 1, j - rsim:j + rsim + 1]
+\end{lstlisting}
 
+During thorough analysis it was discovered that q pixel windows can be calculated only once. Fact of precomputing windows allowed to save resources, which are really important in computationally complex problems.
+
+Moving widows, which are visualized later in this section are changing positions in each iteration. Code snippet below shows how p pixel window and search space window are determined.
+
+\begin{lstlisting}[language=Python, caption = Calculation of p pixel window and search space area.]
 # p pixel loop
 for i in range(0, m):
 for j in range(0, n):
@@ -134,39 +122,12 @@ pmin = max(ii - rsearch-1, rsim)
 pmax = min(ii + rsearch - 1, m)
 qmin = max(jj - rsearch-1, rsim)
 qmax = min(jj + rsearch - 1, n)
+\end{lstlisting}
 
-# define placeholders for values
-w_max = 0
-avg = 0
-w_sum = 0
+Using precomputed set of all possible q pixel widows and using only those that fit the search space was a smart trick presented below.
 
-# set exponential decay
-h_sq = 1 / np.square(1.22 * n_map[i, j])
-
+\begin{lstlisting}[language=Python, caption = Calculation of q pixel windows within search space area.]
 window2_slice = window2_precomp[pmin:pmax, qmin:qmax, :]
-window_diff = window1[None, None, :, :] - window2_slice
-d = np.sum(penalty[None, None, :, :] * (window_diff * window_diff), axis=(2, 3))
-
-w = np.exp((-1)*d * h_sq)
-
-# primitive way of handling case: pixel p == pixel q
-w[w == 1] = -100
-w_max = np.amax(w)
-w[w == -100] = w_max
-
-w_sum = np.sum(w, axis=(0, 1))
-avg = np.sum(w * img_ext[pmin:pmax, qmin:qmax], axis=(0, 1))
-
-avg = avg + w_max * img_ext[ii, jj]
-w_sum = w_sum + w_max
-
-if w_sum > 0:
-value = avg / w_sum
-output[i, j] = abs(cmath.sqrt(value * value - 2 * (np.square(n_map[i, j]))))
-else:
-output[i, j] = image[i, j]
-
-return output
 \end{lstlisting}
 
 To explain the code and present it in more picturesque way, one can look at the image filtering as moving set of

@@ -1,1 +1,15 @@
 \section{Module 5. Non-stationary noise filtering 2}
+
+Checking the code reliability was done by designing and implementing unit tests with special library suited to handle them. That way of testing allows to reuse once written tests in situations where the code being tested has changed.
+
+To cover that basics, 5 different test were implemented to check how code behaves on extreme conditions. Tests included:
+\begin{itemize}
+	\item \textbf{test\_empty\_input\_data} - this test checks whether the function will rise an error or it would work, when an object with empty data field is passed as an argument,
+	\item \textbf{test\_invalid\_input\_data} - this test examines scenario when data of invalid size is passed to the function,
+	\item \textbf{test\_size\_check} - due to the fact that inside function's code size of an image is temporarily changed aim of this test is to check if size of the function's output is equal to size of the input,
+	\item \textbf{test\_value\_change} - as it was decided in class architecture, filtering algorithm overwrites the data in the class field, instead of working on separate field, this test checks if the output has actually different values that input,
+	\item \textbf{test\_map\_absence} - one of two things needed to run the algorithm (except scan data itself) are noise maps, in the scope of this test lies checking what happens if object with no maps is passed to the body of the function.
+\end{itemize}
+
+As during tests, data in the object is overwritten special method \textit{setUp} to 'refresh' object to its original state was added. Results of all test were positive and the code behaves as it was expected. 
+
