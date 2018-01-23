@@ -1,26 +1,39 @@
+import simens_dadm as smns
+import scipy.io as sio
 import numpy as np
 from numpy.linalg import inv
 from scipy import ndimage
 
-
 def run_module(mri_input, other_arguments = None):
-    # importing here avoids cyclic import problems
-    from . import simens_dadm as smns
 
     if (isinstance(mri_input, smns.mri_diff)): 
-        r_factor = np.squeeze(mri_input.compression_rate)
+        r_factor =  np.squeeze(mri_input.compression_rate)
         L_factor = np.squeeze(mri_input.coils_n)
         mri_diff_data = mri_input.diffusion_data
         mri_struct_data = mri_input.structural_data
         sens_maps = mri_input.sensitivity_maps
         struct_data = np.expand_dims(mri_struct_data, axis=-2)
         data = np.concatenate((struct_data, mri_diff_data), axis=-2)
-
         dim = np.shape(data)
         
+        if (r_factor == None):
+            r_factor = dim[1]/dim[0]
+            if (r_factor != 2 or r_factor != 4):  
+                raise ValueError('Input data structure has inproper input dimensions or is subsampled by others factors than 2 or 4!')
+        
+        if (L_factor == None):
+            L_factor = dim[-1]
+            if (L_factor > 32):  
+                raise ValueError('Input data structure has inproper dimensions or too many images assumed as coils iamges!')
+        
+        if (mri_diff_data == np.array([]) or 
+            mri_struct_data == np.array([]) or 
+            sens_maps == np.array([])):
+            raise ValueError('Input data structure lacks possibly one of following fields: sensitivity maps, diffusion data or structural data!')
+                    
         if len(dim) == 5:
             img_data = np.zeros((dim[0], dim[1], dim[2], dim[3], dim[4]), dtype=np.complex)
-        elif len(dim) == 4:
+        elif len(dim)== 4:
             img_data = np.zeros((dim[0], dim[1], dim[2], dim[3]), dtype=np.complex)
 
         if len(dim) == 5:
@@ -63,7 +76,7 @@ def run_module(mri_input, other_arguments = None):
             
             for ss in range(0,dim[2]):
                 for gg in range(0,dim[3]):
-                    med_filt_LSE[:,:,ss,gg] = ndimage.median_filter(recon_img_LSE[:,:,ss,gg], 3)
+                    med_filt_LSE[:,:,ss,gg] =  ndimage.median_filter(recon_img_LSE[:,:,ss,gg], 3)
                 
             for n in range(0,dim[0]):
                 for m in range(0,dim[1]):
@@ -89,7 +102,7 @@ def run_module(mri_input, other_arguments = None):
                         recon_img_LSE[ind,m,gg] = Sr
             
             for gg in range(0,dim[2]):
-                med_filt_LSE[:,:,gg] = ndimage.median_filter(recon_img_LSE[:,:,gg], 3)
+                med_filt_LSE[:,:,gg] =  ndimage.median_filter(recon_img_LSE[:,:,gg], 3)
 
             for n in range(0,dim[0]):
                 for m in range(0,dim[1]):
@@ -119,6 +132,22 @@ def run_module(mri_input, other_arguments = None):
         sens_maps = mri_input.sensitivity_maps
         
         dim = np.shape(mri_struct_data)
+        
+        if (r_factor == None):
+            r_factor = dim[1]/dim[0]
+            if (r_factor != 2 or r_factor != 4):  
+                raise ValueError('Input data structure has inproper input dimensions or is subsampled by others factors than 2 or 4!')
+        
+        if (L_factor == None):
+            L_factor = dim[-1]
+            if (L_factor > 32):  
+                raise ValueError('Input data structure has inproper dimensions or too many images assumed as coils iamges!')
+        
+        if (mri_struct_data == np.array([]) or 
+            sens_maps == np.array([])):
+            raise ValueError('Input data structure lacks possibly one of following fields: sensitivity maps, diffusion data or structural data!')
+                
+        
         if len(dim) == 4:
             img_data = np.zeros((dim[0], dim[1], dim[2], dim[3]), dtype=np.complex)                        
         elif len(dim) == 3:
