@@ -190,8 +190,8 @@ class DTISolverTests(unittest.TestCase):
             cls.mask = []
 
     """
-    CLASS SETUP Tests
-    - validates the creation of DTISolver object.
+    CONSTRUCTOR Tests
+    - validates the creation of DTISolver object for valid and invalid inputs.
     """
 
     def test_solver_object_created(self):
@@ -204,11 +204,6 @@ class DTISolverTests(unittest.TestCase):
             fix_method='abs'
         )
         self.assertIsInstance(dti_solver, module_06.DTISolver)
-
-    """
-    INPUT Tests
-    - validates handling of invalid input data (image, b_value, gradients).
-    """
 
     def test_input_invalid_bvalue(self):
         invalid_bvalue = None
@@ -271,19 +266,6 @@ class DTISolverTests(unittest.TestCase):
         )
         self.assertEqual(np.amin(dti_solver._mask), True)
 
-    def test_input_skull_mask_shape(self):
-        dti_solver = module_06.DTISolver(
-            data=self.data,
-            gradients=self.gradients,
-            b_value=self.b_value,
-            mask=self.mask,
-            solver='wls',
-            fix_method='abs'
-        )
-        data_dims = np.shape(self.data)
-        mask_dims = np.shape(dti_solver._mask)
-        self.assertTrue(data_dims[0] == mask_dims[0] and data_dims[1] == mask_dims[1])
-
     def test_input_invalid_mask(self):
         invalid_mask = self.data
         dti_solver = module_06.DTISolver(
@@ -315,7 +297,7 @@ class DTISolverTests(unittest.TestCase):
         eig_with_fix = np.amin(dti_solver._eig_image) >= 0
 
         dti_solver._fix_method = 'abs_invalid'
-        dti_solver._tensor_image = (-1) * dti_solver._tensor_image
+        dti_solver.estimate_tensor()
         dti_solver.estimate_eig()
         eig_without_fix = np.amin(dti_solver._eig_image) >= 0
 
