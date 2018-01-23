@@ -189,19 +189,19 @@ def main9(mri_input, other_arguments = None):
     
     if isinstance(mri_input, smns.mri_struct):
         
-        [m,n,slices] = mri_input.structural_data.shape
+        [m,n,slices] = mri_input.skull_stripping_mask.shape
         
-        segmentationMask = segmentation(mri_input.structural_data)
+        segmentationMask = segmentation(mri_input.skull_stripping_mask)
         [rows, columns, sliceSeg] = segmentationMask.shape
         
         mri_output.segmentation = np.zeros([m,n,sliceSeg])
         
         mri_output.segmentation = segmentationMask
-        mri_input.structural_data = mri_output
+        mri_input.segmentation = mri_output
         
     else:
         return "Unexpected data format in module number 9!"
 
-    return mri_inputdule
+    return mri_input
 
 
