@@ -206,7 +206,6 @@ def main8(mri_input, verbose=False):
             for j in range(grad):
                 mri_output.skull_stripping_mask[:, :, i, j] = SkullStripping(mri_input.diffusion_data[:, :, i, j]).run(verbose)
         [m, n, slices] = mri_input.structural_data.shape
-        mri_output.skull_stripping_mask = np.zeros([m,n,slices])
         for i in range(slices):
             mri_output.skull_stripping_mask[:, :, i] = SkullStripping(mri_input.structural_data[:, :, i]).run(verbose)
     elif isinstance(mri_input, smns.mri_struct):
