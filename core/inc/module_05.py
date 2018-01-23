@@ -96,7 +96,7 @@ def run_module(mri_input, other_arguments=None):
 
         for i in range(slices):
             for j in range(grad):
-                data_out_diff[:, :, i, j] = unlm(mri_input.diffusion_data[:, :, i, j], mri_input.noise_map[:, :, i, j])
+                data_out_diff[:, :, i, j] = unlm(mri_input.diffusion_data[:, :, i, j], mri_input.diff_noise_map[:, :, i, j])
 
         mri_input.diffusion_data = data_out_diff
 
@@ -104,7 +104,7 @@ def run_module(mri_input, other_arguments=None):
         data_out_struct = np.zeros([m, n, slices])
 
         for i in range(slices):
-            data_out_struct[:, :, i] = unlm(mri_input.structural_data[:, :, i], mri_input.noise_map[:, :, i])
+            data_out_struct[:, :, i] = unlm(mri_input.structural_data[:, :, i], mri_input.struct_noise_map[:, :, i])
 
         mri_input.structural_data = data_out_struct
 
@@ -113,7 +113,7 @@ def run_module(mri_input, other_arguments=None):
         data_out = np.zeros([m, n, slices])
 
         for i in range(slices):
-            data_out[:, :, i] = unlm(mri_input.structural_data[:, :, i], mri_input.noise_map[:, :, i])
+            data_out[:, :, i] = unlm(mri_input.structural_data[:, :, i], mri_input.struct_noise_map[:, :, i])
 
         mri_input.structural_data = data_out
 
