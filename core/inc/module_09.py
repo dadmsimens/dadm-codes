@@ -14,18 +14,18 @@ from numpy import *
 def imHist(image):
     image = image.flatten()
 
-    lengthImage = image.size                # vector length
-    maxValue = int(ceil(image.max())+1)     # rounds each element of image to the nearest
-                                            # integer greater than or equal to that element.
+    lengthImage = image.size                				# vector length
+    maxValue = int(ceil(image.max())+1)     				# rounds each element of image to the nearest
+															# integer greater than or equal to that element.
 
     imageHistogram = np.zeros((1,maxValue))
     imageHistogram = imageHistogram.flatten()
 
-    for i in range(lengthImage):			# create histogram of non-zero image values
-        f = int(floor(image[i]))			# round floor
+    for i in range(lengthImage):							# create histogram of non-zero image values
+        f = int(floor(image[i]))							# round floor
         if f>0:
             if f<maxValue:
-                odds=image[i]-f             # difference between image and round floor image value
+                odds=image[i]-f             				# difference between image and round floor image value
                 a1=1-odds
                 imageHistogram[f-1]=imageHistogram[f-1]+a1
                 imageHistogram[f]=imageHistogram[f]+odds
@@ -33,7 +33,7 @@ def imHist(image):
     imageHistogram=np.convolve(imageHistogram,[1,2,3,2,1])
     imageHistogram=imageHistogram[2:(imageHistogram.size-2)]
     imageHistogram=imageHistogram/(imageHistogram.sum())
-    return imageHistogram					# return histogram for whole image (1 slice)
+    return imageHistogram									# return histogram for whole image (1 slice)
 
 
 
@@ -58,7 +58,7 @@ def gmm(x,mu,v,p):
         differ=x-mu[i]
         amplitude = p[i]/(math.sqrt(2*math.pi*v[i]))
         app = amplitude*(np.exp((-0.5*(differ*differ))/v[i]))
-        probab[:,i] = app
+        probab[:,i] = app									# calculate probability
 
     return(probab)
 
@@ -85,7 +85,7 @@ def imPart(skullFreeImage, firstPitch, lastPitch, rows, columns, pitches):
             else:
                 break
 
-    return imageToSeg							# return a part of image to segmentation
+    return imageToSeg										# return a part of image to segmentation
 
 
 
@@ -95,8 +95,8 @@ def imPart(skullFreeImage, firstPitch, lastPitch, rows, columns, pitches):
 def segmentation(skullFreeImage):
 
     [rows, columns, pitches]=skullFreeImage.shape
-    firstPitch = 70								# the first slice to segmentation
-    lastPitch = 140								# last slice to segmentation
+    firstPitch = 70											# the first slice to segmentation
+    lastPitch = 140											# last slice to segmentation
     imageToSeg = imPart(skullFreeImage, firstPitch, lastPitch, rows, columns, pitches)
 
     pitches = lastPitch - firstPitch
@@ -105,7 +105,7 @@ def segmentation(skullFreeImage):
 
     for pitch in range (pitches):
 
-        image = imageToSeg[:,:,pitch]			# get 1 slice from whole image data
+        image = imageToSeg[:,:,pitch]						# get 1 slice from whole image data
 
         imageCopy = image
         im = image.flatten()
@@ -114,7 +114,7 @@ def segmentation(skullFreeImage):
         imMax = im.max()
 
         image = image-imMin + 1
-        imageHistogram = imHist(image)			# use histogram function
+        imageHistogram = imHist(image)						# use histogram function
         x = np.nonzero(imageHistogram)
         hx = imageHistogram[x]
 
@@ -162,7 +162,7 @@ def segmentation(skullFreeImage):
 
         #Image mask
 
-        mu = mu+imMin-1             			#recover real range
+        mu = mu+imMin-1             						#recover real range
         c = np.zeros(clustersNum)
 
         imageMask = np.zeros([rows, columns])
@@ -174,7 +174,7 @@ def segmentation(skullFreeImage):
                 a = (c==c.max()).nonzero()
                 imageMask[i,j]=a[0]
 
-        segmentImageMask[:,:,pitch] = imageMask[:]	# output - segmentation mask of whole data image
+        segmentImageMask[:,:,pitch] = imageMask[:]			# output - segmentation mask of whole data image
 
     return segmentImageMask
 
