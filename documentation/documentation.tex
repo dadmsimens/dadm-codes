@@ -67,7 +67,7 @@ maxbibnames=3,
 backend=bibtex8,
 ]{biblatex}
 \usepackage{csquotes}
-\DeclareQuoteAlias{croatian}{polish} 
+\DeclareQuoteAlias{croatian}{polish}
 
 
 \addbibresource{bibliografia.bib}
@@ -111,78 +111,79 @@ Faculty of Electrical Engineering, Automatics,\protect\\[-2mm] Computer Science 
 \chapter{List of changes}
 
 \begin{tabular}{|c|c|c|}
-\hline 
+\hline
 Name  & Date  & Details\tabularnewline
-\hline 
-\hline 
+\hline
+\hline
 Sylwia Mól  & 19-Nov-2017  & Document created\tabularnewline
-\hline 
+\hline
 Sylwia Mól  & 20-Nov-2017  & Structure changed\tabularnewline
-\hline 
+\hline
 Sylwia Mól  & 21-Nov-2017  & Chapter \textquotedbl{}Authors\textquotedbl{} added, in-out table
 added\tabularnewline
-\hline 
+\hline
 Malwina Molendowska  & 26-Nov-2017  & Description of 1st module added\tabularnewline
-\hline 
+\hline
 Eliza Kowalczyk  & 27-Nov-2017  & Description of 9th module added\tabularnewline
-\hline 
+\hline
 Karolina Gajewska  & 27-Nov-2017  & Description of 11th module added\tabularnewline
-\hline 
+\hline
 Eliza Kowalczyk  & 28-Nov-2017  & Description of 10th module changed\tabularnewline
-\hline 
+\hline
 Alicja Martinek  & 28-Nov-2017  & Description of 5th module changed\tabularnewline
-\hline 
+\hline
 Mateusz Pabian  & 29-Nov-2017  & Description of 6th module changed\tabularnewline
-\hline 
+\hline
 Jacek Fidos  & 29-Nov-2017  & Tools description added\tabularnewline
-\hline 
+\hline
 Anna Grzywa  & 29-Nov-2017  & Description of 8th module added\tabularnewline
-\hline 
+\hline
 Magdalena Rychlik  & 29-Nov-2017  & Description of 4th module \tabularnewline
-\hline 
+\hline
 Michał Kotarba  & 29-Nov-2017  & Description of 12th module added\tabularnewline
-\hline 
+\hline
 Magdalena Kucharska  & 29-Nov-2017  & Description of 9th module added\tabularnewline
-\hline 
+\hline
 Klaudia Gugulska  & 30-Nov-2017  & Description of 2nd module added\tabularnewline
-\hline 
+\hline
 Sylwia Mól & 2-Dec-2017  & Titles added, numeration changed\tabularnewline
 \hline
 Jacek Fidos  & 3-Dec-2017  & Files separation\tabularnewline
-\hline 
+\hline
 Eliza Kowalczyk  & 9-Dec-2017  & Enhancement of description of 10th module\tabularnewline
-\hline 
+\hline
 Michał Kotarba &9-Dec-2017 & Changed in-out for my module\tabularnewline
-\hline 
+\hline
 Kacper Turek &9-Dec-2017 & Description of 3rd module changed and in-out for my module added\tabularnewline
-\hline 
+\hline
 Anna Grzywa &9-Dec-2017 & In-out for 8th module added\tabularnewline
-\hline 
+\hline
 Sylwia Mól &10-Dec-2017 & "Structure" \& "Assumptions" chapters changed\tabularnewline
-\hline 
+\hline
 Klaudia Gugulska &10-Dec-2017 &  Update of description of 2nd module\tabularnewline
 \hline
 Jacek Fidos &4-Jan-2018 &  Short SciPy description\tabularnewline
-\hline 
+\hline
 Eliza Kowalczyk &14-Jan-2018 &  Upsampling documentation update\tabularnewline
-\hline 
+\hline
 Sylwia Mól &17-Jan-2018 &  Structure and assumptions changed\tabularnewline
-\hline 
+\hline
 Eliza Kowalczyk &17-Jan-2018 &  Upsampling documentation update\tabularnewline
-\hline 
+\hline
 Sylwia Mól &19-Jan-2018 &  Logo added\tabularnewline
-\hline 
+\hline
 Malwina Molendowska &22-Jan-2018 &  Reconstruction documentation update\tabularnewline
-\hline 
+\hline
 Alicja Martinek &22-Jan-2018 &  mod5 documentation + lib\tabularnewline
-\hline 
+\hline
 Karolina Gajewska &22-Jan-2018 &  Brain3D implementation description added \tabularnewline
-\hline 
+\hline
 Karolina Gajewska &22-Jan-2018 &  Brain3D test description added. \tabularnewline
-\hline 
+\hline
 Mateusz Pabian &23-Jan-2018 &  DTI description added\tabularnewline
 \hline
-
+Anna Grzywa &23-Jan-2018 &  DTI description added\tabularnewline
+\hline
 \end{tabular}
 
 \chapter{Assumptions}
@@ -207,16 +208,16 @@ As mentioned in chapter {\it Assumptions} the project is divided into 11 modules
 \item Module 11.: Brain 3D visualization using marching cubes method
 \item Module 12.: Oblique imaging
 \end{itemize}
-Module 7. is excluded due to limited human resources and time. 
- 
+Module 7. is excluded due to limited human resources and time.
+
 The input and output signals for each module are listed in the table. \\
 \begin{tabular}{|c|c|c|c|}
 \hline  Module  & Input  & Output  & Before that module\tabularnewline \hline  \hline  1 & \textbf{k}-space signals  &  \textbf{x}-space fully reconstructed data  & ——–\tabularnewline \hline  2 & reconstruccted image & image with intensity correction & image reconstruction \tabularnewline \hline  3  & reconstructed image  & estimated noise map  & reconstruction \tabularnewline \hline  4 & reconstructed, normalized image & Rician noise-free image & intensity correction \tabularnewline \hline  5 & image, noise map & Rician noise-free image & \makecell{reconstruction, \\ noise estimation} \tabularnewline \hline  6 & \makecell{reconstructed, normalized image;\\ gradient-sequence vectors} & \makecell{estimated diffusion tensor 3D \\ 6-channel image}& modules 1-5, 8* \tabularnewline \hline  8 & reconstructed, normalized, filtered image & image without non-brain tissues & modules 1- 4 or 5 \tabularnewline \hline  9 & image without non-brain tissues & segmentated image & \tabularnewline \hline  10 & 320x240 image  & 640x480 image  & denoised data \tabularnewline \hline  11  &segmentated image & new window of application & segmentation \tabularnewline \hline  12& many images from one examination & one image from non-standard perspective & denoised data\tabularnewline \hline  \end{tabular}\\
 
-Dependencies between modules are shown on the picture. 11th module is divided into two parts, because every part of module requires other pre-procesing activities. 
+Dependencies between modules are shown on the picture. 11th module is divided into two parts, because every part of module requires other pre-procesing activities.
 \begin{figure}[H]
 \centering{}\includegraphics[scale=0.7]{figures/drzewo2}\caption{Dependencies between modules}
-\label{fig:figures/drzewo } 
+\label{fig:figures/drzewo }
 \end{figure}
 
 
@@ -316,40 +317,40 @@ UST, Krakow, Poland. \\
 
 \begin{center}
 \begin{tabular}{|c|c|}
-\hline 
+\hline
 Name  & Role \tabularnewline
-\hline 
-\hline 
+\hline
+\hline
 Sylwia Mól  & Project Manager\tabularnewline
-\hline 
+\hline
 Jacek Fidos  & Software architect\tabularnewline
-\hline 
+\hline
 Maciej Gryczan  & GUI engineer\tabularnewline
-\hline 
+\hline
 Adrian Stopiak  & Vizualization engineer \tabularnewline
-\hline 
+\hline
 Malwina Molendowska  & 1st module developer \tabularnewline
-\hline 
+\hline
 Klaudia Gugulska  & 2nd module developer \tabularnewline
-\hline 
+\hline
 Kacper Turek  & 3rd module developer \tabularnewline
-\hline 
+\hline
 Magdalena Rychlik  & 4th module developer \tabularnewline
-\hline 
+\hline
 Alicja Martinek  & 5th module developer \tabularnewline
-\hline 
+\hline
 Mateusz Pabian  & 6th module developer \tabularnewline
-\hline 
+\hline
 Anna Grzywa  & 8th module developer \tabularnewline
-\hline 
+\hline
 Magdalena Kucharska  & 9th module developer \tabularnewline
-\hline 
+\hline
 Eliza Kowalczyk  & 10th module developer \tabularnewline
-\hline 
+\hline
 Karolina Gajewska  & 11th module developer \tabularnewline
-\hline 
+\hline
 Michał Kotarba  & 12th module developer \tabularnewline
-\hline 
+\hline
 \end{tabular}
 \par\end{center}
 
