@@ -194,10 +194,10 @@ def main9(mri_input, other_arguments = None):
         segmentationMask = segmentation(mri_input.skull_stripping_mask)
         [rows, columns, sliceSeg] = segmentationMask.shape
         
+        mri_output = mri_input
         mri_output.segmentation = np.zeros([m,n,sliceSeg])
-        
         mri_output.segmentation = segmentationMask
-        mri_input.segmentation = mri_output
+        mri_input.segmentation = mri_output.segmentation
         
     else:
         return "Unexpected data format in module number 9!"
