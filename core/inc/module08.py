@@ -11,14 +11,14 @@ class SkullStripping:
         self.image = image
 
     def recon(self, marker, mask):
-        recon1 = marker
-        recon1_old = np.zeros([256, 256], 'uint8')
-        while sum(sum(recon1 - recon1_old)) != 0:
-            recon1_old = recon1
-            recon1 = ndimage.grey_dilation(recon1, 5)
-            bw = recon1 > mask
-            recon1[bw] = mask[bw]
-        return recon1
+        recon = marker
+        recon1_old = np.zeros_like(self.image)
+        while sum(sum(recon - recon1_old)) != 0:
+            recon1_old = recon
+            recon = ndimage.grey_dilation(recon, 5)
+            bw = recon > mask
+            recon[bw] = mask[bw]
+        return recon
 
     def strel(self, type, size):
         a, b = size, size
@@ -34,29 +34,40 @@ class SkullStripping:
             array[mask] = 0
         return array
 
-    def preprocessing(self):
-        # preprocessing to get cfs and crop image
-        se = self.strel('disk', 1)
-        pixel_counts, gray_levels = np.histogram(self.image, bins=256)
+    def csf_counting(self):
+        pixel_counts, gray_levels = np.histogram(self.image)
         upcut = 0.98 * maximum(gray_levels)
         downcut = 0.02 * maximum(gray_levels)
         for i in range(0, len(gray_levels)-1):
             if (gray_levels.item(i) < downcut) or (gray_levels.item(i) > upcut):
                 pixel_counts[i] = 0
         csf = 0.1 * (maximum(gray_levels) - minimum(gray_levels[gray_levels > 0])) + minimum(gray_levels[gray_levels> 0])
-        threshold, upper, lower = csf, 1, 0
-        bin = np.where(self.image > threshold, upper, lower)
-        bin = morphology.binary_erosion(bin, se)
-        cog = center_of_mass(bin, self.image)
-        bboxes = find_objects(bin.astype(np.uint16))[0]
+        return csf
+
+    def binarization(self, image, threshold, upper=1, lower=0):
+        bin_image = np.where(image >= threshold, upper, lower)
+        return bin_image
+
+    def radius_counting(self, bin_image):
+        bboxes = find_objects(bin_image.astype(np.uint8))[0]
         y = bboxes[0]
         x = bboxes[1]
         diamx = x.stop - x.start
         diamy = y.stop - y.start
-        st = diamx/diamy
+        st = diamx / diamy
         diameters = np.mean([diamx, diamy])
         r = diameters / 2
-        [xx, yy] = np.mgrid[(1-cog[0]):(257-cog[0]), (1-cog[1]):(257-cog[1])]
+        return r, st
+
+    def preprocessing(self):
+        # preprocessing to get cfs and crop image
+        csf = self.csf_counting()
+        bin_image = self.binarization(self.image, csf)
+        se = self.strel('disk', 1)
+        bin = morphology.binary_erosion(bin_image, se)
+        cog = center_of_mass(bin, self.image)
+        r, st = self.radius_counting(bin)
+        [xx, yy] = np.mgrid[(1-cog[0]):(len(self.image)+1-cog[0]), (1-cog[1]):(len(self.image)+1-cog[1])]
         mask = (xx ** 2 + yy ** 2) < r ** 2
         cropped_image = self.image * mask
         return cropped_image, csf, cog, r, st
@@ -68,16 +79,16 @@ class SkullStripping:
         gradmag = np.hypot(sx, sy)
         return gradmag
 
-    def anisodiff(self, image, niter=1, kappa=50, gamma=0.1, step=(1., 1.), option=1, ploton=False):
+    def anisodiff(self, image, niter=1, kappa=50, gamma=0.1, step=(1., 1.), option=1):
         image = image.astype('float32')
         image_out = image.copy()
         deltaS = np.zeros_like(image_out)
         deltaE = deltaS.copy()
         NS = deltaS.copy()
         EW = deltaS.copy()
-        gS = np.ones_like(image_out)
-        gE = gS.copy()
-        for ii in range(niter):
+        gS = deltaS.copy()
+        gE = deltaS.copy()
+        for i in range(niter):
             deltaS[:-1, :] = np.diff(image_out, axis=0)
             deltaE[:, :-1] = np.diff(image_out, axis=1)
             if option == 1:
@@ -95,25 +106,24 @@ class SkullStripping:
             image_out += gamma * (NS + EW)
         return image_out
 
-    def edgesMarrHildreth(self, img, sigma):
+    def edges_marr_hildreth(self, image, sigma):
         size = int(2 * (np.ceil(3 * sigma)) + 1)
         x, y = np.meshgrid(np.arange(-size / 2 + 1, size / 2 + 1), np.arange(-size / 2 + 1, size / 2 + 1))
         normal = 1 / (2.0 * np.pi * sigma ** 2)
         kernel = ((x ** 2 + y ** 2 - (2.0 * sigma ** 2)) / sigma ** 4) * np.exp(
             -(x ** 2 + y ** 2) / (2.0 * sigma ** 2)) / normal
         kern_size = kernel.shape[0]
-        log = np.zeros_like(img, dtype=float)
-        for i in range(img.shape[0] - (kern_size - 1)):
-            for j in range(img.shape[1] - (kern_size - 1)):
-                window = img[i:i + kern_size, j:j + kern_size] * kernel
+        log = np.zeros_like(image, dtype=float)
+        for i in range(image.shape[0] - (kern_size - 1)):
+            for j in range(image.shape[1] - (kern_size - 1)):
+                window = image[i:i + kern_size, j:j + kern_size] * kernel
                 log[i, j] = np.sum(window)
         log = log.astype(np.int64, copy=False)
         zero_crossing = np.zeros_like(log)
         for i in range(log.shape[0] - (kern_size - 1)):
             for j in range(log.shape[1] - (kern_size - 1)):
                 if log[i][j] == 0:
-                    if (log[i][j - 1] < 0 and log[i][j + 1] > 0) or (log[i][j - 1] < 0 and log[i][j + 1] < 0) or (
-                            log[i - 1][j] < 0 and log[i + 1][j] > 0) or (log[i - 1][j] > 0 and log[i + 1][j] < 0):
+                    if (log[i][j - 1] < 0 and log[i][j + 1] != 0) or (log[i - 1][j] < 0 and log[i + 1][j] > 0) or (log[i - 1][j] > 0 and log[i + 1][j] < 0):
                         zero_crossing[i][j] = 255
                 if log[i][j] < 0:
                     if (log[i][j - 1] > 0) or (log[i][j + 1] > 0) or (log[i - 1][j] > 0) or (log[i + 1][j] > 0):
@@ -122,8 +132,7 @@ class SkullStripping:
 
     def background_markers(self, preproc_image, csf):
         # mark the background markers
-        threshold, upper, lower = csf+20, 0, 1
-        bw = np.where(preproc_image >= threshold, upper, lower)
+        bw = self.binarization(preproc_image, csf, 0, 1)
         d = morphology.distance_transform_edt(bw)
         dl = watershed_ift(bw.astype(np.uint8), d.astype(np.int16))
         bgm = dl == 1
@@ -147,18 +156,18 @@ class SkullStripping:
 
     def watershed(self, preproc_image, csf, cog):
         gradmag = self.grad_mag_sobel(preproc_image)
-        log = self.foreground_markers(preproc_image, csf)
+        fgm = self.foreground_markers(preproc_image, csf)
         bgm = self.background_markers(preproc_image, csf)
         markers = np.zeros_like(preproc_image).astype(np.int16)
         markers[bgm == False] = 1
-        markers[log == True] = 2
+        markers[fgm == True] = 2
         l = watershed_ift(gradmag.astype(np.uint8), markers)
         brain = l == l[cog[0].astype(np.int), cog[1].astype(np.int)]
         return brain
 
     def bse(self, cog):
         filtered_image = self.anisodiff(self.image, 3)
-        marr_h = self.edgesMarrHildreth(filtered_image, 0.6)
+        marr_h = self.edges_marr_hildreth(filtered_image, 0.6)
         marr_hi = marr_h == 0
         # romb = np.array(
         #     [[0, 0, 0, 1, 0, 0, 0], [0, 0, 1, 1, 1, 0, 0], [0, 1, 1, 1, 1, 1, 0], [1, 1, 1, 1, 1, 1, 1],
@@ -171,10 +180,8 @@ class SkullStripping:
         brain = morphology.binary_closing(b_d, structure=self.strel('disk', 15))
         return brain
 
-    def run(self, verbose):
+    def run(self, verbose=False):
         preproc_image, csf, cog, r, st = self.preprocessing()
-        print(r)
-        print(csf)
         if r <= 56 or st > 1.3: # 97 <= r don't working with diff data
             skull_stripping_mask = np.zeros_like(self.image)
         else:
@@ -193,16 +200,48 @@ class SkullStripping:
 def main8(mri_input, verbose=False):
     if isinstance(mri_input, smns.mri_diff):  # instructions for diffusion mri
         [m, n, slices, grad] = mri_input.diffusion_data.shape
-        mri_output = mri_input
-        mri_output.skull_stripping_mask = np.zeros([m, n, slices, grad])
+        data_output_diff = np.zeros([m, n, slices, grad])
         for i in range(slices):
             for j in range(grad):
-                mri_output.skull_stripping_mask[:, :, i, j] = SkullStripping(mri_input.diffusion_data[:, :, i, j]).run(verbose)
+                data_output_diff[:, :, i, j] = SkullStripping(mri_input.diffusion_data[:, :, i, j]).run(verbose)
+        mri_input.diff_skull_stripping_mask = data_output_diff
+
+        [m, n, slices] = mri_input.structural_data.shape
+        data_output_struct = np.zeros([m, n, slices])
+        for i in range(slices):
+            data_output_struct[:, :, i] = SkullStripping(mri_input.structural_data[:, :, i]).run(verbose)
+        mri_input.struct_skull_stripping_mask = data_output_struct
     elif isinstance(mri_input, smns.mri_struct):
         [m, n, slices] = mri_input.structural_data.shape
-        mri_output = np.zeros([m, n, slices])
+        data_output_struct = np.zeros([m, n, slices])
         for i in range(slices):
-            mri_output.skull_stripping_mask[:, :, i] = SkullStripping(mri_input.structural_data[:, :, i]).run(verbose)
+            data_output_struct[:, :, i] = SkullStripping(mri_input.structural_data[:, :, i]).run(verbose)
+        mri_input.struct_skull_stripping_mask = data_output_struct
     else:
         return "Unexpected data format in module number 8!"
-    return mri_output
+    return mri_input
+
+
+def skull_stripped_image(mri_input):
+    if isinstance(mri_input, smns.mri_diff):
+        [m, n, slices, grad] = mri_input.diffusion_data.shape
+        data_output_diff = np.zeros([m, n, slices, grad])
+        for i in range(slices):
+            for j in range(grad):
+                data_output_diff[:, :, i, j] = mri_input.diff_skull_stripping_mask[:, :, i, j] * mri_input.diffusion_data[:, :, i, j]
+        mri_input.diffusion_data = data_output_diff
+
+        [m, n, slices] = mri_input.structural_data.shape
+        data_output_struct = np.zeros([m, n, slices])
+        for i in range(slices):
+            data_output_struct = mri_input.struct_skull_stripping_mask[:, :, i] * mri_input.structural_data[:, :, i]
+        mri_input.structural_data = data_output_struct
+    elif isinstance(mri_input, smns.mri_struct):
+        [m, n, slices] = mri_input.structural_data.shape
+        data_output_struct = np.zeros([m, n, slices])
+        for i in range(slices):
+            data_output_struct = mri_input.struct_skull_stripping_mask[:, :, i] * mri_input.structural_data[:, :, i]
+        mri_input.structural_data = data_output_struct
+    else:
+        return "Unexpected data format in module number 8!"
+    return mri_input

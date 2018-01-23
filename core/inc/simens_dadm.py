@@ -12,8 +12,8 @@ class mri_struct:
     coils_n is a number of coils used for data acquisition
     sensitivity_maps are sensitivity profiles of the coils
 
-    noise_map is the estimated noise map
-    skull_stripping_mask is a binary mask - the result of skull stripping module
+    struct_noise_map is the estimated noise map for structural data
+    struct_skull_stripping_mask is a binary mask - the result of skull stripping module
     segmentation is a matrix with segmentation module result
 
     fitlering_allowed is to be set to false after the data has been filtered
@@ -28,8 +28,8 @@ class mri_struct:
         self.coils_n = coils_n
         self.sensitivity_maps = sensitivity_maps
 
-        self.noise_map = []
-        self.skull_stripping_mask = []
+        self.struct_noise_map = []
+        self.struct_skull_stripping_mask = []
         self.segmentation = []
 
         self.filtering_allowed = True
@@ -47,8 +47,10 @@ class mri_diff(mri_struct):
     gradients are directions of Diffusion MRI gradients
     b_value is the intensivity factor
 
-    noise_map is the estimated noise map
-    skull_stripping_mask is a binary mask - the result of skull stripping module
+    struct_noise_map is the estimated noise map for structural data
+    diff_noise_map is the estimated noise map for diffusion data
+    struct_skull_stripping_mask is a binary mask - the result of skull stripping module on structural data
+    diff_skull_stripping_mask is a binary mask - the result of skull stripping module on diffusion data
     segmentation is a matrix with segmentation module result
     biomarkers is the result of diffusion tensor imaging module
 
@@ -67,8 +69,10 @@ class mri_diff(mri_struct):
         self.b_value = b_value
 
         self.biomarkers = list(dict())
-        self.noise_map = []
-        self.skull_stripping_mask = []
+        self.struct_noise_map = []
+        self.diff_noise_map = []
+        self.struct_skull_stripping_mask = []
+        self.diff_skull_stripping_mask = []
 
 
 def mri_read(filename):

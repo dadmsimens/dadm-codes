@@ -145,22 +145,30 @@ def main3(mri_input):
 
     if (isinstance(mri_input, smns.mri_diff)):
         [m, n, slices, gradients] = mri_input.diffusion_data.shape
-        data_out = np.zeros([m, n, slices, gradients])
+        data_out_diff = np.zeros([m, n, slices, gradients])
 
         for i in range(slices):
             for j in range(gradients):
-                data_out[:, :, i, j] = estimate_map(mri_input.diffusion_data[:, :, i, j])
+                data_out_diff[:, :, i, j] = estimate_map(mri_input.diffusion_data[:, :, i, j])
 
-        mri_input.noise_map = data_out
+        mri_input.diff_noise_map = data_out_diff
+        
+        [m, n, slices] = mri_input.structural_data.shape
+        data_out_struct = np.zeros([m, n, slices])
+
+        for i in range(slices):
+            data_out_struct[:, :, i] = estimate_map(mri_input.structural_data[:, :, i])
+
+        mri_input.struct_noise_map = data_out_struct
 
     elif (isinstance(mri_input, smns.mri_struct)):
         [m, n, slices] = mri_input.structural_data.shape
-        data_out = np.zeros([m, n, slices])
+        data_out_struct = np.zeros([m, n, slices])
 
         for i in range(slices):
-            data_out[:, :, i] = estimate_map(mri_input.structural_data[:, :, i])
+            data_out_struct[:, :, i] = estimate_map(mri_input.structural_data[:, :, i])
 
-        mri_input.noise_map = data_out
+        mri_input.struct_noise_map = data_out_struct
     else:
         return "Unexpected data format in module number 0!"
 
