@@ -36,6 +36,22 @@ is still mandatory.
 	list of size Z, corresponding to each slice; each list element is a dictionary of biomarker images: MD, RA, FA, VR of shape X x Y, and biomarker FA\_rgb of shape X x Y x 3
 \end{itemize}
 
+\subsection{Initialization}
+
+In order to abstract DTI implementation from end-user, all classes and methods other than the main function \texttt{run\_module} are private to module source code script. It is important to note that prior to running the module one has to provide the module with input data object, as well as SOLVER and FIX\_METHOD parameters. SOLVER passed as an argument decides whether to use WLS or NLS estimation, whole FIX\_METHOD decides how to "fix" negative eigenvalues. 
+
+As mentioned in the detailed description chapter, 'ABS' takes absolute value of each eigenvalue, while 'CHOLESKY' ensures that the estimated tensor is positive definite. Eigenvalues of positive definite matrices are always non-negative. 'ABS' is a post-estimation fix, meaning that it does not modify the default estimation algorithm (i.e. it is applied after WLS or NLS computation), while 'CHOLESKY' directly modifies the expressions for WLS and NLS cost function gradients and Hessian matrices.
+
+After passing all required arguments to the \texttt{run\_module} function, they are reshaped internally in order to be compatible with module. Concretely, \texttt{DTISolver} class instance, computing the DTI proper, assumes that input data argument is a concatenated 3D array of both structural and diffusion images, which are stored separately in the original data structure. Moreover, b\_value and gradient fields are reshaped to be lists correpsonding to each slice of the new data array (that is: b\_value is repeated in length while both have zeros appended that correspond to structural images). Finally, all of the above is done separately for each slice and DTI module performs it's computation slice-by-slice due to memory constraints.
+
+\subsection{WLS-ABS estimation}
+
+
+
+
+
+
+
 
 \subsection{NLS tba}
 
