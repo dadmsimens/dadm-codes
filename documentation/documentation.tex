@@ -10,12 +10,28 @@
 \usepackage{float}
 \usepackage{mathtools}
 \usepackage{amsmath}
+\usepackage{listings}
 \usepackage{graphicx}
 \usepackage[unicode=true,pdfusetitle,
  bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=3,
  breaklinks=false,pdfborder={0 0 1},backref=false,colorlinks=false]
  {hyperref}
 \usepackage{breakurl}
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\lstset{ %
+	backgroundcolor=\color{white},   % choose the background color
+	basicstyle=\footnotesize,        % size of fonts used for the code
+	breaklines=true,                 % automatic line breaking only at whitespace
+	captionpos=b,                    % sets the caption-position to bottom
+	commentstyle=\color{mygreen},    % comment style
+	escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+	keywordstyle=\color{blue},       % keyword style
+	stringstyle=\color{mymauve},     % string literal style
+}
 
 \makeatletter
 
@@ -156,11 +172,18 @@ Eliza Kowalczyk &17-Jan-2018 &  Upsampling documentation update\tabularnewline
 \hline 
 Sylwia Mól &19-Jan-2018 &  Logo added\tabularnewline
 \hline 
+Malwina Molendowska &22-Jan-2018 &  Reconstruction documentation update\tabularnewline
+\hline 
+Alicja Martinek &22-Jan-2018 &  mod5 documentation + lib\tabularnewline
+\hline 
+Karolina Gajewska &22-Jan-2018 &  Brain3D implementation description added. \tabularnewline
+\hline 
 \end{tabular}
 
 \chapter{Assumptions}
 
 The aim of this project is to create the system for MRI data pre-processing and post-processing using Python, SciPy, Cython and Qt5 (detailed description of tools available in chapter {\it Implementation}, section {\it Tools}). The project is divided into 11 modules (more: chapter {\it Structure}). \\
+
 The application is called SieMRI (the abbreviation for Siemens MRI). It allows to recontruct MRI images, correct intensity inhomogenities, estimate non-stationary noise and remove it using one of two methonds, show diffusion tensors, strip the skull, show specific parts of human brain, upsample the image or visualize brain in 3D or using specific plane. MRI image reconstruction starts automatically when user choose the file with data. Other functionalities are non-obligatory - the user decide if specific functionality should be used.
 
 \chapter{Structure}
@@ -170,9 +193,9 @@ As mentioned in chapter {\it Assumptions} the project is divided into 11 modules
 \item Module 1.: MRI images reconstruction using Cartesian SENSE algorithm.
 \item Module 2.: Intensity inhomogenity correction on MRI reconstructed images.
 \item Module 3.: Non-stationary noise estimation (a homomorphic approach)
-\item Module 4.:Non-stationary noise filtering \#1 with LMMSE filter.
+\item Module 4.: Non-stationary noise filtering \#1 with LMMSE filter.
 \item Module 5.: Non-stationary noise filtering \#2 using unbiased non-local means filter.
-\item Module 6.:Diffusion tensor imaging (WLS, NLS algorithms)
+\item Module 6.: Diffusion tensor imaging (WLS, NLS algorithms)
 \item Module 8.: Skull stripping
 \item Module 9.: MRI segmentation of the human brain
 \item Module 10.: Upsampling based on non-local means approach
@@ -183,7 +206,7 @@ Module 7. is excluded due to limited human resources and time.
  
 The input and output signals for each module are listed in the table. \\
 \begin{tabular}{|c|c|c|c|}
-\hline  Module  & Input  & Output  & Before that module\tabularnewline \hline  \hline  1 & \textbf{k}-space signals  &  \textbf{x}-space fully reconstructed data  & ——–\tabularnewline \hline  2 & reconstruccted image & image with intensity correction & image reconstruction \tabularnewline \hline  3  & reconstructed image  & estimated noise map  & reconstruction \tabularnewline \hline  4 & reconstructed, normalized image & Rician noise-free image & intensity correction \tabularnewline \hline  5 & reconstructed, normalized image & Rician noise-free image & reconstruction \tabularnewline \hline  6 & \makecell{reconstructed, normalized image;\\ gradient-sequence vectors} & \makecell{estimated diffusion tensor 3D \\ 6-channel image}& modules 1-5, 8* \tabularnewline \hline  8 & reconstructed, normalized, filtered image & image without non-brain tissues & modules 1- 4 or 5 \tabularnewline \hline  9 & image without non-brain tissues & segmentated image & \tabularnewline \hline  10 & 320x240 image  & 640x480 image  & denoised data \tabularnewline \hline  11  &\makecell{ 1)segmentated image \\2)defined plane, image } & \makecell{ 1)3D model (e.g. vtkPolyData) \\ 2)cross-section image } & \makecell{1)segmentation \\2) denoised data}\tabularnewline \hline  12& many images from one examination & one image from non-standard perspective & denoised data\tabularnewline \hline  \end{tabular}\\
+\hline  Module  & Input  & Output  & Before that module\tabularnewline \hline  \hline  1 & \textbf{k}-space signals  &  \textbf{x}-space fully reconstructed data  & ——–\tabularnewline \hline  2 & reconstruccted image & image with intensity correction & image reconstruction \tabularnewline \hline  3  & reconstructed image  & estimated noise map  & reconstruction \tabularnewline \hline  4 & reconstructed, normalized image & Rician noise-free image & intensity correction \tabularnewline \hline  5 & image, noise map & Rician noise-free image & \makecell{reconstruction, \\ noise estimation} \tabularnewline \hline  6 & \makecell{reconstructed, normalized image;\\ gradient-sequence vectors} & \makecell{estimated diffusion tensor 3D \\ 6-channel image}& modules 1-5, 8* \tabularnewline \hline  8 & reconstructed, normalized, filtered image & image without non-brain tissues & modules 1- 4 or 5 \tabularnewline \hline  9 & image without non-brain tissues & segmentated image & \tabularnewline \hline  10 & 320x240 image  & 640x480 image  & denoised data \tabularnewline \hline  11  &segmentated image & new window of application & segmentation \tabularnewline \hline  12& many images from one examination & one image from non-standard perspective & denoised data\tabularnewline \hline  \end{tabular}\\
 
 Dependencies between modules are shown on the picture. 11th module is divided into two parts, because every part of module requires other pre-procesing activities. 
 \begin{figure}[H]
