@@ -15,6 +15,9 @@ class mri_struct:
     noise_map is the estimated noise map
     skull_stripping_mask is a binary mask - the result of skull stripping module
     segmentation is a matrix with segmentation module result
+
+    fitlering_allowed is to be set to false after the data has been filtered
+    inhomogenity_correction_allowed is to be set to false after the intensity inhomogenity correction has been performed on data
     """
 
     def __init__(self, structural_data=np.array([]), compression_rate=1, coils_n=0, sensitivity_maps=None):
@@ -28,6 +31,9 @@ class mri_struct:
         self.noise_map = []
         self.skull_stripping_mask = []
         self.segmentation = []
+
+        self.filtering_allowed = True
+        self.inhomogenity_correction_allowed = True
 
 
 class mri_diff(mri_struct):
@@ -45,6 +51,9 @@ class mri_diff(mri_struct):
     skull_stripping_mask is a binary mask - the result of skull stripping module
     segmentation is a matrix with segmentation module result
     biomarkers is the result of diffusion tensor imaging module
+
+    fitlering_allowed is to be set to false after the data has been filtered
+    inhomogenity_correction_allowed is to be set to false after the intensity inhomogenity correction has been performed on data
     """
 
     def __init__(self, raw_data=np.array([]), compression_rate=1, coils_n=0, sensitivity_maps=None, gradients=None, b_value=None):
