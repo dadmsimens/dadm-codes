@@ -220,8 +220,8 @@ class ImageDialog(QMainWindow):
                         print('Dyfuzyjne')
                         intens = basic_window(self.mri_data.structural_data.shape[2], 'intens', self.mri_data.structural_data)
                     else:
-                        intens = QLabel()
-                        # intens = basic_window(self.mri_data.structural_data.shape[2], 'intens', self.mri_data.structural_data)
+                        #intens = QLabel()
+                        intens = basic_window(self.mri_data.structural_data.shape[2], 'intens', self.mri_data.structural_data)
                         self.actionOoqImag.setEnabled(True)
                         self.action3d.setEnabled(True)
                     self.central.addWidget(intens)
