@@ -183,8 +183,7 @@ class DTISolverTests(unittest.TestCase):
         cls.data = cls.data[:, :, slice_idx, :]
 
         try:
-            # TODO: Change this when dwi.skull_stripping_mask data format is known
-            cls.mask = np.squeeze(dwi.skull_stripping_mask[:, :, slice_idx, :])
+            cls.mask = np.squeeze(dwi.skull_stripping_mask[:, :, slice_idx])
         except:
             # if mask is not defined for given slice
             cls.mask = []
