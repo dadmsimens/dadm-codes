@@ -9,6 +9,7 @@ import inc.simens_dadm as smns
 import inc.module11 as mod11
 import inc.module12_ui as mod12
 from inc.constants import *
+from inc.visualization import visualize
 
 
 class ImageDialog(QMainWindow):
@@ -33,7 +34,7 @@ class ImageDialog(QMainWindow):
         self.central = QStackedWidget()
         self.setCentralWidget(self.central)
 
-        self.fool = basic_window(0,'fool')
+        self.fool = basic_window(0,'fool', None)
         self.central.addWidget(self.fool)
 
         #Create Menu Bar
@@ -163,14 +164,14 @@ class ImageDialog(QMainWindow):
        # ups.btn_acc.clicked.connect(lambda: self.mb_action_Upsample_send(communicator,2))
 
 
-
     def mb_action_Upsample_send(self,communicator, times):
         communicator.gui_says(smns.simens_msg(MODULE_10_STR,times))
         self.disable_menu()
         self.TIMER_1.start()
 
     def mb_actions_brain3D_triggered(self):
-        #do usunięcia - potrzba danych!
+        #do usunięcia - potrzba danych -
+        print('line 174: ustaw sobie swoją scieżkę')
         segmentation = sio.loadmat('C:/Users/Maciej/Desktop/MRI/segmentationMask.mat')
         segmentation = segmentation['imageMaskFull']
 
@@ -181,6 +182,7 @@ class ImageDialog(QMainWindow):
         self.moelo11.show()
 
     def mb_action_OoqImag_triggered(self):
+        print('line 185: ustaw sobie swoją scieżkę')
         data = sio.loadmat('C:/Users/Maciej/Desktop/MRI/Imavol.mat')
 
         Imavol = data['Imavol']
@@ -200,14 +202,14 @@ class ImageDialog(QMainWindow):
                 if x.module == 'data':
                     if isinstance(self.mri_data,smns.mri_diff):
                         print('Dyfuzyjne')
-                        read = basic_window(self.mri_data.structural_data.shape[2], 'read')
+                        read = basic_window(self.mri_data.structural_data.shape[2], 'read', self.mri_data.structural_data)
                     else:
-                        read = basic_window(self.mri_data.structural_data.shape[2], 'read')
+                        read = basic_window(self.mri_data.structural_data.shape[2], 'read', self.mri_data.structural_data)
                         self.actionNonStatLMMSE.setEnabled(True)
                         self.actionNonStatUNLM.setEnabled(True)
                         self.actionUpsamp.setEnabled(True)
                         self.actionOoqImag.setEnabled(True)
-                        self.actionIntensity(True)
+                        self.actionIntensity.setEnabled(True)
                         self.action3d.setEnabled(True)
                         #
                     self.central.addWidget(read)
@@ -216,16 +218,17 @@ class ImageDialog(QMainWindow):
                 elif x.module == MODULE_2_STR:
                     if isinstance(self.mri_data, smns.mri_diff):
                         print('Dyfuzyjne')
-                        intens = basic_window(self.mri_data.structural_data.shape[2], 'intens')
+                        intens = basic_window(self.mri_data.structural_data.shape[2], 'intens', self.mri_data.structural_data)
                     else:
-                        intens = basic_window(self.mri_data.structural_data.shape[2], 'intens')
+                        intens = QLabel()
+                        # intens = basic_window(self.mri_data.structural_data.shape[2], 'intens', self.mri_data.structural_data)
                         self.actionOoqImag.setEnabled(True)
                         self.action3d.setEnabled(True)
                     self.central.addWidget(intens)
                     self.central.setCurrentWidget(intens)
 
                 elif x.module == MODULE_4_STR:
-                    LMMSE = basic_window(self.mri_data.structural_data.shape[2],'LMMSE')
+                    LMMSE = basic_window(self.mri_data.structural_data.shape[2],'LMMSE', self.mri_data.structural_data)
                     self.actionUpsamp.setEnabled(True)
                     self.actionIntensity.setEnabled(True)
                     self.actionOoqImag.setEnabled(True)
@@ -233,7 +236,7 @@ class ImageDialog(QMainWindow):
                     self.central.setCurrentWidget(LMMSE)
 
                 elif x.module == MODULE_5_STR:
-                    UNLM = basic_window(self.mri_data.structural_data.shape[2], 'ULM')
+                    UNLM = basic_window(self.mri_data.structural_data.shape[2], 'ULM', self.mri_data.structural_data)
                     self.actionUpsamp.setEnabled(True)
                     self.actionIntensity.setEnabled(True)
                     self.actionOoqImag.setEnabled(True)
@@ -251,7 +254,7 @@ class ImageDialog(QMainWindow):
 
             elif (isinstance(x,str)):
                 if x == READ_ERROR:
-                    print(x)
+                    self.statusMsg.setText(x)
                     self.TIMER_1.stop()
                 else:
                     print(x)
@@ -277,22 +280,24 @@ class ImageDialog(QMainWindow):
 
 
 class basic_window(QWidget):
-    def __init__(self, slices, btnname):
+    def __init__(self, slices, btnname, data):
         super().__init__()
-        self.init_ui(slices, btnname)
+        self.init_ui(slices, btnname, data)
 
-    def init_ui(self, slices, btnname):
+    def init_ui(self, slices, btnname, data):
         main_layout = QHBoxLayout()
 
         left_Vlay = QVBoxLayout()
 
         self.number = slices
-        self.main_slice = QLabel()
-        self.main_slice.setScaledContents(True)
-        self.main_slice.setMinimumSize(500,650)
-        if self.number > 0:
-            self.main_slice.setPixmap(QPixmap("tmp_images\slice_1"))
+        if data is not None:
+            print(data.shape)
+            data = data[:,:,0]
+            self.main_slice = visualize(data)
 
+        else:
+            self.main_slice = QLabel()
+        self.main_slice.setMinimumSize(500,650)
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setMinimum(1)
         self.slider.setMaximum(slices)
@@ -303,7 +308,6 @@ class basic_window(QWidget):
         left_Vlay.setAlignment(Qt.AlignCenter)
 
         right_Vlay = QVBoxLayout()
-
         btn_skull_strip = QPushButton('Skull Striping')
         btn_skull_strip.setFixedSize(200,50)
 
@@ -329,12 +333,11 @@ class basic_window(QWidget):
             #path_tmp.append('tmp_images\slice_')
             #path_tmp.append(str(i+1))
             #path = ''.join(path_tmp)
-            current_slice = QPixmap(obj_name)
-            temp.setIcon(QIcon(current_slice))
+            # current_slice = QPixmap(obj_name)
+            # temp.setIcon(QIcon(current_slice))
             temp.setIconSize(QSize(150,150))
             scrollLayout.addWidget(temp)
         slices_viewer.setWidget(scrollContent)
-
         right_Vlay.addWidget(slices_viewer)
         right_Vlay.addWidget(btn_skull_strip)
 
@@ -343,9 +346,7 @@ class basic_window(QWidget):
         main_layout.addSpacing(20)
         main_layout.addLayout(right_Vlay)
         self.setLayout(main_layout)
-
-
-        self.slider.valueChanged.connect(lambda: self.slider_change(btnname))
+        # self.slider.valueChanged.connect(lambda: self.slider_change(btnname))
 
 
     def slice_clicked(self, name):
@@ -373,78 +374,78 @@ class basic_window(QWidget):
             slice_ = self.findChild(QPushButton, obj_name)
             slice_.setEnabled(True)
 
-class basic_window_diffusive(basic_window):
-    def __init__(self,slices):
-        super().__init__()
-        self.init_ui(slices)
-
-    def init_ui(self, slices):
-        main_layout = QHBoxLayout()
-
-        left_Vlay = QVBoxLayout()
-
-        self.main_slice = QLabel()
-        self.main_slice.setScaledContents(True)
-        self.main_slice.setMinimumSize(500,650)
-        if slices > 0:
-            self.main_slice.setPixmap(QPixmap("tmp_images\slice_1"))
-
-        self.slider = QSlider(Qt.Horizontal)
-        self.slider.setMinimum(1)
-        self.slider.setMaximum(slices)
-        self.slider.setSingleStep(1)
-
-        left_Vlay.addWidget(self.main_slice)
-        left_Vlay.addWidget(self.slider)
-        left_Vlay.setAlignment(Qt.AlignCenter)
-
-        right_Vlay = QVBoxLayout()
-
-        btn_skull_strip = QPushButton('Skull Striping')
-        btn_skull_strip.setFixedSize(200,50)
-
-        slices_viewer = QScrollArea()
-        slices_viewer.setMinimumHeight(550)
-        slices_viewer.setFixedWidth(200)
-        slices_viewer.setWidgetResizable(True)
-        scrollContent = QWidget(slices_viewer)
-        scrollLayout = QVBoxLayout(scrollContent)
-        scrollContent.setLayout(scrollLayout)
-        for i in range (0,slices):
-            temp = QPushButton()
-            temp.setFixedSize(150,150)
-            name_tmp = []
-            name_tmp.append('tmp_images\slice_')
-            name_tmp.append(str(i+1))
-            obj_name = ''.join(name_tmp)
-            temp.setObjectName(obj_name)
-            if i == 0:
-                temp.setEnabled(False)
-            #path_tmp = []
-            #path_tmp.append('tmp_images\slice_')
-            #path_tmp.append(str(i+1))
-            #path = ''.join(path_tmp)
-            print(obj_name)
-            current_slice = QPixmap(obj_name)
-            temp.setIcon(QIcon(current_slice))
-            temp.setIconSize(QSize(150,150))
-            scrollLayout.addWidget(temp)
-        slices_viewer.setWidget(scrollContent)
-
-        right_Vlay.addWidget(slices_viewer)
-        right_Vlay.addWidget(btn_skull_strip)
-
-        main_layout.addSpacing(20)
-        main_layout.addLayout(left_Vlay)
-        main_layout.addSpacing(20)
-        main_layout.addLayout(right_Vlay)
-        self.setLayout(main_layout)
-
-        for i in range (0,slices):
-            slice_ = self.findChild(QPushButton,"tmp_images\slice_{}".format(i+1))
-            slice_.clicked.connect(lambda: self.slice_clicked(slice_.objectName()))
-
-        self.slider.valueChanged.connect(self.slider_change)
+# class basic_window_diffusive(basic_window):
+#     def __init__(self,slices):
+#         super().__init__()
+#         self.init_ui(slices)
+#
+#     def init_ui(self, slices):
+#         main_layout = QHBoxLayout()
+#
+#         left_Vlay = QVBoxLayout()
+#
+#         self.main_slice = QLabel()
+#         self.main_slice.setScaledContents(True)
+#         self.main_slice.setMinimumSize(500,650)
+#         if slices > 0:
+#             self.main_slice.setPixmap(QPixmap("tmp_images\slice_1"))
+#
+#         self.slider = QSlider(Qt.Horizontal)
+#         self.slider.setMinimum(1)
+#         self.slider.setMaximum(slices)
+#         self.slider.setSingleStep(1)
+#
+#         left_Vlay.addWidget(self.main_slice)
+#         left_Vlay.addWidget(self.slider)
+#         left_Vlay.setAlignment(Qt.AlignCenter)
+#
+#         right_Vlay = QVBoxLayout()
+#
+#         btn_skull_strip = QPushButton('Skull Striping')
+#         btn_skull_strip.setFixedSize(200,50)
+#
+#         slices_viewer = QScrollArea()
+#         slices_viewer.setMinimumHeight(550)
+#         slices_viewer.setFixedWidth(200)
+#         slices_viewer.setWidgetResizable(True)
+#         scrollContent = QWidget(slices_viewer)
+#         scrollLayout = QVBoxLayout(scrollContent)
+#         scrollContent.setLayout(scrollLayout)
+#         for i in range (0,slices):
+#             temp = QPushButton()
+#             temp.setFixedSize(150,150)
+#             name_tmp = []
+#             name_tmp.append('tmp_images\slice_')
+#             name_tmp.append(str(i+1))
+#             obj_name = ''.join(name_tmp)
+#             temp.setObjectName(obj_name)
+#             if i == 0:
+#                 temp.setEnabled(False)
+#             #path_tmp = []
+#             #path_tmp.append('tmp_images\slice_')
+#             #path_tmp.append(str(i+1))
+#             #path = ''.join(path_tmp)
+#             print(obj_name)
+#             current_slice = QPixmap(obj_name)
+#             temp.setIcon(QIcon(current_slice))
+#             temp.setIconSize(QSize(150,150))
+#             scrollLayout.addWidget(temp)
+#         slices_viewer.setWidget(scrollContent)
+#
+#         right_Vlay.addWidget(slices_viewer)
+#         right_Vlay.addWidget(btn_skull_strip)
+#
+#         main_layout.addSpacing(20)
+#         main_layout.addLayout(left_Vlay)
+#         main_layout.addSpacing(20)
+#         main_layout.addLayout(right_Vlay)
+#         self.setLayout(main_layout)
+#
+#         for i in range (0,slices):
+#             slice_ = self.findChild(QPushButton,"tmp_images\slice_{}".format(i+1))
+#             slice_.clicked.connect(lambda: self.slice_clicked(slice_.objectName()))
+#
+#         self.slider.valueChanged.connect(self.slider_change)
 
 
 class segmented_window(basic_window):
