@@ -1,10 +1,11 @@
-import simens_dadm as smns
 import scipy.io as sio
 import numpy as np
 from numpy.linalg import inv
 from scipy import ndimage
 
 def run_module(mri_input, other_arguments = None):
+    # importing here avoids cyclic import problems
+    from . import simens_dadm as smns
 
     if (isinstance(mri_input, smns.mri_diff)): 
         r_factor =  np.squeeze(mri_input.compression_rate)
