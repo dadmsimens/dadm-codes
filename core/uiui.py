@@ -3,7 +3,8 @@ import os
 import scipy.io as sio
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, qApp, QApplication, QWidget, QLabel, QAction, QPushButton
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QStackedWidget, QStatusBar, QSlider, QScrollArea, QDialog
-from PyQt5.QtGui import QPixmap, QIcon, QCloseEvent
+from PyQt5.QtWidgets import QSpinBox
+from PyQt5.QtGui import QPixmap, QIcon, QCloseEvent, QIntValidator
 from PyQt5.QtCore import QTimer, Qt, QSize, QCoreApplication
 import inc.simens_dadm as smns
 import inc.module11 as mod11
@@ -15,7 +16,7 @@ from inc.visualization import visualize
 class ImageDialog(QMainWindow):
     def __init__(self, communicator):
         super().__init__()
-        self.setMinimumSize(1024,768)
+        self.setMinimumSize(800,600)
         self.setMaximumSize(1920,1080)
         self.setWindowTitle("SieMRI")
         self.setWindowIcon(QIcon('ikona.jpg'))
@@ -23,7 +24,7 @@ class ImageDialog(QMainWindow):
         self.mri_data = []
         self.moelo11 = []
         self.moelo12 = []
-        self.upsd = []
+        self.upsd = QDialog()
         self.init_ui(communicator)
 
     def closeEvent(self, a0: QCloseEvent):
@@ -109,7 +110,6 @@ class ImageDialog(QMainWindow):
 
         #DO USUNIĘCIA
         self.actionOoqImag.setEnabled(True)
-        self.actionUpsamp.setEnabled(True)
         ##First showing of the window
         self.show()
 
@@ -160,24 +160,30 @@ class ImageDialog(QMainWindow):
         self.TIMER_1.start()
 
     def mb_action_Upsample_triggered(self, communicator):
-
-        self.upsd = QDialog()
-
-        self.upsd.setWindowTitle('Dupa')
-        self.upsd.main_widget = QWidget()
+        self.upsd.setWindowTitle('Upsampling')
         self.upsd.btn_acc = QPushButton('Accept')
+        self.upsd.label = QLabel('Upsample times:')
+        self.upsd.times = QSpinBox()
+        self.upsd.times.setMinimum(2)
+        self.upsd.times.setMaximum(5)
+
+        hlayout = QHBoxLayout()
+        hlayout.addWidget(self.upsd.label)
+        hlayout.addWidget(self.upsd.times)
 
         vlayout = QVBoxLayout()
-        vlayout.addWidget(self.upsd.main_widget)
+        vlayout.addLayout(hlayout)
         vlayout.addWidget(self.upsd.btn_acc)
         self.upsd.setLayout(vlayout)
         self.upsd.show()
-        self.upsd.btn_acc.clicked.connect(lambda: self.mb_action_Upsample_send(communicator,2))
+
+        self.upsd.btn_acc.clicked.connect(lambda: self.mb_action_Upsample_send(communicator,self.upsd.times.value()))
+        self.upsd.setFixedSize(200,100)
 
 
     def mb_action_Upsample_send(self,communicator, times):
-
-        communicator.gui_says(smns.simens_msg(MODULE_10_STR, None))
+        self.upsd.close()
+        communicator.gui_says.put(smns.simens_msg(MODULE_10_STR, times))
         self.disable_menu()
         self.TIMER_1.start()
 
@@ -235,8 +241,8 @@ class ImageDialog(QMainWindow):
                         self.actionTensor.setEnabled(True)
                     else:
                         intens = basic_window(self.mri_data.structural_data.shape[2], 'intens', self.mri_data.structural_data)
-                        self.actionOoqImag.setEnabled(True)
 
+                    self.actionUpsamp.setEnabled(True)
                     self.actionOoqImag.setEnabled(True)
                     self.central.addWidget(intens)
                     self.central.setCurrentWidget(intens)
@@ -281,7 +287,9 @@ class ImageDialog(QMainWindow):
 
                 elif x.module == MODULE_8_STR:
                     if isinstance(self.mri_data,smns.mri_diff):
-                        pass
+                        skull = basic_window(self.mri_data.structural_data.shape[2], 'skull',
+                                             self.mri_data.structural_data)
+
                     else:
                         skull = basic_window(self.mri_data.structural_data.shape[2], 'skull',
                                             self.mri_data.structural_data)
@@ -291,6 +299,7 @@ class ImageDialog(QMainWindow):
                         self.actionNonStatUNLM.setEnabled(True)
                     if self.mri_data.inhomogenity_correction_allowed:
                         self.actionIntensity.setEnabled(True)
+                    skull.btn_skull_strip.setEnabled(False)
                     self.actionSegment.setEnabled(True)
                     self.central.addWidget(skull)
                     self.central.setCurrentWidget(skull)
@@ -335,13 +344,11 @@ class ImageDialog(QMainWindow):
         self.action3d.setEnabled(False)
         self.actionOoqImag.setEnabled(False)
 
-    def change_pixmap(self):
-        pass
-
 
 class basic_window(QWidget):
     def __init__(self, slices, btnname, data):
         super().__init__()
+        self.data = data
         self.init_ui(slices, btnname, data)
 
     def init_ui(self, slices, btnname, data):
@@ -350,14 +357,12 @@ class basic_window(QWidget):
         left_Vlay = QVBoxLayout()
 
         self.number = slices
-        if data is not None:
-            print(data.shape)
-            data = data[:,:,0]
-            self.main_slice = visualize(data)
 
+        if data is not None:
+            self.main_slice = visualize(data[:,:,0])
         else:
             self.main_slice = QLabel()
-        self.main_slice.setMinimumSize(500,650)
+        self.main_slice.setMinimumSize(400,400)
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setMinimum(1)
         self.slider.setMaximum(slices)
@@ -372,14 +377,14 @@ class basic_window(QWidget):
         self.btn_skull_strip.setFixedSize(200,50)
 
         slices_viewer = QScrollArea()
-        slices_viewer.setMinimumHeight(550)
+        slices_viewer.setMinimumHeight(200)
         slices_viewer.setFixedWidth(200)
         slices_viewer.setWidgetResizable(True)
         scrollContent = QWidget(slices_viewer)
         scrollLayout = QVBoxLayout(scrollContent)
         scrollContent.setLayout(scrollLayout)
         for i in range (0,slices):
-            temp = QPushButton()
+            temp = visualize(data[:, :, i])
             temp.setFixedSize(150,150)
             name_tmp = []
             name_tmp.append(btnname)
@@ -388,14 +393,7 @@ class basic_window(QWidget):
             print(obj_name)
             temp.setObjectName(obj_name)
             if i == 0:
-                temp.setEnabled(False)
-            #path_tmp = []
-            #path_tmp.append('tmp_images\slice_')
-            #path_tmp.append(str(i+1))
-            #path = ''.join(path_tmp)
-            # current_slice = QPixmap(obj_name)
-            # temp.setIcon(QIcon(current_slice))
-            temp.setIconSize(QSize(150,150))
+                temp.set_active()
             scrollLayout.addWidget(temp)
         slices_viewer.setWidget(scrollContent)
         right_Vlay.addWidget(slices_viewer)
@@ -421,9 +419,9 @@ class basic_window(QWidget):
         name_tmp.append(btnname)
         name_tmp.append("{}".format(self.slider.value()))
         obj_name = ''.join(name_tmp)
-        slice_ = self.findChild(QPushButton, obj_name)
+        slice_ = self.findChild(visualize, obj_name)
         slice_.setEnabled(False)
-        # self.main_slice.setPixmap(QPixmap(obj_name))
+        self.main_slice = visualize(self.data[:,:,(self.slider.value()-1)])
 
     def enable_all(self, btnname):
         for i in range (0, self.number):
@@ -431,7 +429,7 @@ class basic_window(QWidget):
             name_tmp.append(btnname)
             name_tmp.append("{}".format(i+1))
             obj_name = ''.join(name_tmp)
-            slice_ = self.findChild(QPushButton, obj_name)
+            slice_ = self.findChild(visualize, obj_name)
             slice_.setEnabled(True)
 
 # class basic_window_diffusive(basic_window):
@@ -516,19 +514,6 @@ class segmented_window(basic_window):
 
     def init_ui(self, slices, btnname):
         pass
-
-
-class Upsample_dialog(QDialog):
-    def __int__(self):
-        super.__init__()
-        self.setWindowTitle('Dupa')
-        self.main_widget = QWidget()
-        self.btn_acc = QPushButton('Accept')
-        print('dupa')
-        vlayout = QVBoxLayout()
-        self.main_widget.addWidget(self.btn_acc)
-        vlayout.addWidget(self.main_widget)
-        self.setLayout(vlayout)
 
 def launch_gui(communicator):
     app = QApplication(sys.argv)
