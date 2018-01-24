@@ -5,10 +5,10 @@ from PyQt5.QtWidgets import QMainWindow, QFileDialog, qApp, QApplication, QWidge
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QStackedWidget, QStatusBar, QSlider, QScrollArea, QDialog
 from PyQt5.QtGui import QPixmap, QIcon, QCloseEvent
 from PyQt5.QtCore import QTimer, Qt, QSize, QCoreApplication
-import MAIN.inc.simens_dadm as smns
-import MAIN.inc.module11 as mod11
-import MAIN.inc.module12_ui as mod12
-from MAIN.inc.constants import *
+import inc.simens_dadm as smns
+import inc.module11 as mod11
+import inc.module12_ui as mod12
+from inc.constants import *
 
 
 class ImageDialog(QMainWindow):
