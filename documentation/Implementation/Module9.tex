@@ -65,16 +65,16 @@ The function argument is the \textbf{NxM single image}
 \end{figure} 
 
 \begin{lstlisting}[language=Python, caption = Create image histogram]
-    for i in range(lengthImage):										# create histogram of non-zero image values
-        f = int(floor(image[i]))										# round floor
-        if f>0:
-            if f<maxValue:
-                odds=image[i]-f             							# difference between image and round floor image value
-                a1=1-odds
-                imageHistogram[f-1]=imageHistogram[f-1]+a1
-                imageHistogram[f]=imageHistogram[f]+odds
-                ...
-                imageHistogram=np.convolve(imageHistogram,[1,2,3,2,1])# smoothing the histogram
+for i in range(lengthImage):									# create histogram of non-zero image values
+    f = int(floor(image[i]))									# round floor
+    if f>0:
+        if f<maxValue:
+            odds=image[i]-f             						# difference between image and round floor image value
+            a1=1-odds
+            imageHistogram[f-1]=imageHistogram[f-1]+a1
+            imageHistogram[f]=imageHistogram[f]+odds
+            ...
+            imageHistogram=np.convolve(imageHistogram,[1,2,3,2,1])# smoothing the histogram
 \end{lstlisting}
 
 At the end, histogram is smoothing by convolution with window [1,2,3,2,1] and noramlize by the sum of histogram values (\ref{fig:figures/m09_12}).
@@ -90,16 +90,16 @@ At the end, histogram is smoothing by convolution with window [1,2,3,2,1] and no
 It is a small function to get only image slices, which dosn't contain nonbrain tissues. In ths case, funtion gets 70 slices, from 70 to 140. Geting greater amonut can make issues. 
 The function argument are: \textbf{image after skull stripping, number of first geting slice, number of last geting slice, image rows, image columns, number of slices}
 \\
-\begin{lstlisting}[language=Python, caption = PGeting part of image to segmentation]
-    for pitch in range (pitches):
-        if pitch < firstPitch:
-            continue
-        if pitch >= firstPitch:
-            if pitch < lastPitch:
-                imageToSeg [:,:,rPit] = skullFreeImage [:,:,pitch]
-                rPit = rPit+1
-            else:
-                break
+\begin{lstlisting}[language=Python, caption = Geting part of image to segmentation]
+for pitch in range (pitches):
+    if pitch < firstPitch:
+        continue
+    f pitch >= firstPitch:
+        if pitch < lastPitch:
+            mageToSeg [:,:,rPit] = skullFreeImage [:,:,pitch]
+            rPit = rPit+1
+        else:
+            break
 \end{lstlisting}
 
 
@@ -107,12 +107,12 @@ The function argument are: \textbf{image after skull stripping, number of first 
 The gmm function calculate mixture model gaussian distribution and and probability for each cluster of image data, based on mixture model initialize parameters
 The function argument are: \textbf{x - histogram values vestor, mu - expectation values vector, v - variance vector, p - probability}
 
-\begin{lstlisting}[language=Python, caption = PGeting part of image to segmentation]
+\begin{lstlisting}[language=Python, caption = gmm function]
 for i in range(mu.size):
-        differ=x-mu[i]
-        amplitude = p[i]/(math.sqrt(2*math.pi*v[i]))
-        app = amplitude*(np.exp((-0.5*(differ*differ))/v[i]))
-        probab[:,i] = app	
+    differ=x-mu[i]
+    mplitude = p[i]/(math.sqrt(2*math.pi*v[i]))
+    app = amplitude*(np.exp((-0.5*(differ*differ))/v[i]))
+    probab[:,i] = app	
 \end{lstlisting}
 
 
@@ -121,41 +121,41 @@ The segmentation function is the most important function in this module. It's ut
 
 The first step is inicialize Gaussian mixture model parameters vectors. They need to have the same numbers of element as numer of clusters. The initial parameters are choosen arbitrarily. It is important, to set different expected values to provide various algorithm starting points. 
 
-\begin{lstlisting}[language=Python, caption = PGeting part of image to segmentation]
+\begin{lstlisting}[language=Python, caption = Segmentation - inicialization parameters]
 # alghoritm inicialization parameters
 
-        clustersNum = 4										# number of clusters
-        mu = arange(1,clustersNum+1)*imMax/(clustersNum+1)	# expected value of each clusters
-        v = np.ones(clustersNum)*imMax						# variation of each clusters
-        p = np.ones(clustersNum)/clustersNum				# probability of each clusters
+    clustersNum = 4										# number of clusters
+    mu = arange(1,clustersNum+1)*imMax/(clustersNum+1)	# expected value of each clusters
+    v = np.ones(clustersNum)*imMax						# variation of each clusters
+    p = np.ones(clustersNum)/clustersNum				# probability of each clusters
 \end{lstlisting}
 
 After inicialization, the algorithm starts its operation. It consists of two steps. The first one - expectation (step E) - use gmm function to deremine the gaussian distribution and check relative density using inicialized (in the first time) or updated distribution parameters. It calculate also the log-likelihood based on histogram values. 
 
-\begin{lstlisting}[language=Python, caption = PGeting part of image to segmentation]
+\begin{lstlisting}[language=Python, caption = Segmentation - step E]
 #Expectation Step
 
-            probab = gmm(x,mu,v,p)							# use gmm function - get probability
-            distrDens = probab.sum(axis=1)					# relative density 
-            llh = (hx*np.log(distrDens)).sum()				# the log-likelihood base on histogram data
+    probab = gmm(x,mu,v,p)							# use gmm function - get probability
+    distrDens = probab.sum(axis=1)					# relative density 
+    llh = (hx*np.log(distrDens)).sum()				# the log-likelihood base on histogram data
 \end{lstlisting}\\
 
 The second step - maximization (step M) -  in which the model parameters are restimated using the distribution from step E
 
 
 
-\begin{lstlisting}[language=Python, caption = PGeting part of image to segmentation]
+\begin{lstlisting}[language=Python, caption = Segmentation - step M]
 #Maximization Step
 
-            for j in range(clustersNum):
-                hxsh = hx.shape
-                probabxh = probab.shape
-                distsh=distrDens.shape
-                resp = hx*probab[:,j]/distrDens				# compute the responsibilities
-                p[j]=resp.sum()
-                mu[j]=(x*resp/p[j]).sum()					# compute the weighted of expected values
-                differ=x-mu[j]
-                v[j]=(differ*differ*resp/p[j]).sum()		# compute the weighted varainces	
+    for j in range(clustersNum):
+        hxsh = hx.shape
+        probabxh = probab.shape
+        distsh=distrDens.shape
+        resp = hx*probab[:,j]/distrDens				# compute the responsibilities
+        p[j]=resp.sum()
+        mu[j]=(x*resp/p[j]).sum()					# compute the weighted of expected values
+        differ=x-mu[j]
+        v[j]=(differ*differ*resp/p[j]).sum()		# compute the weighted varainces	
 \end{lstlisting}\\
 
 The algorithm's operation is shown below 
