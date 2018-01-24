@@ -1,42 +1,16 @@
 \section{Module 8. Skull stripping}
-
- \begin{lstlisting}[language=Python, caption = Implemented tests.]
-
-class Module08Tests(unittest.TestCase):
-
-    def setUp(self):
-        dataset_name = DATASETS[0]
-        self.dwi = smns.load_object(file_path=DATASETS_ROOT + dataset_name)
-
-    def test_strel(self):
-        ss = SkullStripping(None)
-        se = ss.strel('disk', 1)
-        disk = numpy.array([[1., 0., 1.], [0., 0., 0.], [1., 0., 1.]])
-        self.assertEqual(type(se), type(disk))
-        numpy.testing.assert_array_equal(se, disk)
-
-    def test_radius_counting(self):
-        ss = SkullStripping(None)
-        se = ss.strel('disk', 6)
-        r, st = ss.radius_counting(se)
-        r_check = (6 * 2 + 1) / 2
-        st_check = 1.0
-        self.assertEqual(r, r_check)
-        self.assertEqual(st, st_check)
-
-    def test_binarization(self):
-        ss = SkullStripping(None)
-        image = numpy.array([[0.6, 0.7, 0.9], [0.2, 0.4, 0.3], [0.1, 0, 0.8]])
-        threshold = 0.5
-        bw_check = numpy.array([[1, 1, 1], [0, 0, 0], [0, 0, 1]])
-        bw = ss.binarization(image, threshold)
-        numpy.testing.assert_array_equal(bw, bw_check)
-
-    def test_main8_incorrect_input(self):
-        mri_input = None
-        result = main8(mri_input)
-        self.assertEqual(result, "Unexpected data format in module number 8!")
-
+Module 8 has implemented unit tests with consist of some methods required to skull strip the image. All of below mentioned tests were \textbf{passed}.
+Implemented methods:
+\begin{itemize}
+    \item {\textbf{def test strel(self)} - which tests working of strel method. It was checked input parameters return appropriate output.}
+    \item {\textbf{def test binarization(self)} - which tests working of binarization method. It was checked input parameters - image array return appropriate output - binary image.}
+    \item {\textbf{def test main8 incorrect input} - which tests working of main8 function. It was checked wrong input parameters return "Unexpected data format in module number 8!"}
+    \item {\textbf{def test run preprocessing frist condition} - which tests working of first condition. It was checked input with too small BR or too large ratio return appropriate output.}
+    \item {\textbf{def test main8 adding skull stripping mask(self)} - which tests working of main08 function. It was checked if mask are add to mri class.}
+    \item {\textbf{def test main08 not changing other inputs(self)} - which tests working of main08 function. It was checked if to mri class is add only skull stripping mask and other fields are the same as input.}
+    \item {\textbf{def test main08 mask length(self):} - which tests working of main08 function. It was checked if mask has the same length as input image in mri class.}
+\end{itemize}
+\begin{lstlisting}[language=Python, caption = Implemented tests examples.]
     @mock.patch("core.inc.module08.SkullStripping.preprocessing")
     def test_run_preprocessing_frist_condition(self, mock_obj):
         mock_obj.return_value = (None, None, None, 10, None)
@@ -45,29 +19,15 @@ class Module08Tests(unittest.TestCase):
         mock_obj.return_value = (None, None, None, 100, 2.0)
         self.assertEqual(ss.run(), 0)
 
-
     def test_main8_adding_skull_stripping_mask(self):
-         self.dwi.skull_stripping_mask = []
-         input_skull_stripping_mask = self.dwi.skull_stripping_mask
-         output_object = module08.main8(self.dwi)
-         self.assertNotEqual(output_object.skull_stripping_mask, input_skull_stripping_mask)
+        self.dwi.skull_stripping_mask = []
+        input_skull_stripping_mask = self.dwi.skull_stripping_mask
+        output_object = module08.main8(self.dwi)
+        self.assertNotEqual(output_object.skull_stripping_mask[:,:,0], input_skull_stripping_mask)
 
-    def test_main08_not_changing_other_inputs(self):
-         self.dwi.skull_stripping_mask = []
-         inputs = copy.deepcopy(self.dwi.__dict__)
-         output_object = module08.main8(self.dwi)
-         inputs['skull_stripping_mask'] = output_object.skull_stripping_mask
-         self.assertTrue(
-             all(
-                 [numpy.array_equal(inputs[key], getattr(output_object, key))
-                  for key in inputs.keys()]
-             )
-         )
-
-    def test_main08_mask_size(self):
-         self.dwi.skull_stripping_mask = numpy.zeros_like(self.dwi.mri_input.diffusion_data[:, :, 0, 0])
-         input_skull_stripping_mask = self.dwi.skull_stripping_mask
-         output_object = module08.main8(self.dwi)
-         numpy.testing.assert_equal(output_object.skull_stripping_mask.shape(), input_skull_stripping_mask.shape())
-
+    def test_main08_mask_length(self):
+        self.dwi.skull_stripping_mask = numpy.zeros_like(self.dwi.structural_data[:, :, 0])
+        input_skull_stripping_mask = self.dwi.skull_stripping_mask
+        output_object = module08.main8(self.dwi)
+        numpy.testing.assert_equal(len(output_object.skull_stripping_mask), len(input_skull_stripping_mask))
 \end{lstlisting}
