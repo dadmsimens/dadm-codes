@@ -1,23 +1,72 @@
 \section{Module 12. Oblique imaging}
 
-\indent The literature to this module is as useful as nipples on
-men. Everything is about inventing how to realize point 1. of the
-list. \\
  \indent Oblique Imaging is a technique to create non-perspective
-projections from 3D or multiple 2D images.\\
+projections from 3D or multiple 2D images. There is not much information about this technique in theoretical sources. \\
 
-\indent In order to create oblique image it is essential to: 
+
+\textbf{Algorithm}
+\newline\indent Input data is a 3D array, where index is X, Y or Z value and and value of the array in those indices is pixel value of the image. Proposed algorithm involves creating a grid, rotating and translating it, checking which points to interpolate and which can be taken from MRI slices directly and interpolating needed points.
+\newline Algorithm step by step:
 \begin{itemize}
-\item choose two angles under which the plane will be inclined, 
-\item create a matrix of points that this plane consists of, 
-\item from existing points pick those, which will be used in the image, 
-\item interpolate points that are not existing. 
+\item create a grid
+\item select 3 angles and rotate this grid relative to the X, Y and Z axes under those angles
+\item translate this grid relative to X, Y and Z axes - this grid gives information about x, y and z indices needed for the oblique image 
+\item based on created grid check points, that can be taken from MRI slices directly, and which to interpolate
+\item create an image base on interpolated points and points from MRI slices
 \end{itemize}
-\indent Type of interpolation can vary, but in this project interpolation
-based on mean will be used. To interpolate one pixel mean of all pixels
-around him with given proximity is taken.
+\begin{enumerate}
+\item \textbf{Creating a grid}
+\newline Grid is created based on normal vector $\vec{v1}=[0,0,1]$. Two vectors perpendicular to it are: $\vec{v2}=[1,0,0]$ and $\vec{v3}=[0,1,0]$ are used in grid generation. For given $i = [1,2,\ldots,m] $ and $j = [1,2,\ldots,m] $ every point can be designated from equotation:
+\begin{equation}
+[x,y,z] = \vec{v2}*i+\vec{v3}*j
+\end{equation}
+\item \textbf{Rotating grid}
+\newline\indent To rotate a grid rotation matrices are used.
+\begin{itemize}
+\item OX rotation:
 
-\begin{figure}[H]
-\centering{}\includegraphics[scale=0.7]{figures/m11_spherexyz}\caption{Visualization of pixels taken to interpolate}
-\label{fig:figures/m11_spherexyz } 
-\end{figure}
+\begin{equation}
+\left[ \begin{array}{c} X \\ Y \\Z \end{array} \right] = \begin{bmatrix} 1 & 0 & 0 \\ 0 & \cos\Phi & \sin\Phi \\ 0 & -\sin\Phi & \cos\Phi \end{bmatrix}  \left[ \begin{array}{c} X' \\ Y' \\ Z' \end{array} \right] 
+\end{equation}
+
+\item OY rotation:
+
+\begin{equation}
+\left[ \begin{array}{c} X \\ Y \\Z \end{array} \right] = \begin{bmatrix} \cos\Phi & 0 & -\sin\Phi \\ 0 & 1 & 0 \\ \sin\Phi & 0 & \cos\Phi \end{bmatrix} \left[ \begin{array}{c} X' \\ Y' \\ Z' \end{array} \right]
+\end{equation}
+
+\item OZ rotation:
+\begin{equation}
+\left[ \begin{array}{c} X \\ Y \\Z \end{array} \right] = \begin{bmatrix} \cos\Phi & \sin\Phi & 0 \\ -\sin\Phi & \cos\Phi & 0 \\ 0 & 0 & 1 \end{bmatrix} \left[ \begin{array}{c} X' \\ Y' \\ Z' \end{array} \right] 
+\end{equation}
+\end{itemize}
+\indent In order to save computational time, it is not the created grid itself, that is  being rotated, but two vectors $\vec{v2}$ and $\vec{v3}$
+
+\item \textbf{Translating grid}
+\newline\indent To translate every point of grid $i$ units in X direction, $j$ units in Y direction and $k$ units in Z direction given equotation is used:
+\begin{equation}
+[x,y,z] = x + [1,0,0]*i + y +[0,1,0]*j + [0,0,1]*k
+\end{equation}
+
+\item \textbf{Points interpolation}
+\indent If after grid rotation and translation any points can not be taken directly from MRI slices it is essential to interpolate them. Maximum number of points from slices taken to interpolate is 8. Their distance to the point to be interpolated is computed using:
+
+\begin{equation}
+d = \sqrt{(x_i-x_0)^2+(y_i-y_0)^2+(z_i-z_0)^2}
+\end{equation}
+\indent Where:
+\newline \indent$x_0$, $y_0$, $z_0$ are coordinates of point to be interpolated
+\newline \indent$x_i$, $y_i$, $z_i$ are coordinates of the point from surroundings
+
+\indent After that interpolated point value is computed using equotation:
+
+\begin{equation}
+p_v = s_p/n_p 
+\end{equation}
+\indent Where $p_v$ is point value and $s_p$ is sum of values of points in surroundings and $n_p$ is number of points
+
+\item \textbf{Module I/O}
+\newline\textbf{- Input -} the input of this module is structural data in form of 3D array $(x,y,slicenumber)$
+\newline\textbf{- Output -} the output of this module is one oblique image in form of 2D array
+
+\end{enumerate}
