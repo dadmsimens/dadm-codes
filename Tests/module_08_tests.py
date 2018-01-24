@@ -17,23 +17,11 @@ DATASETS = {
     0: 'diffusion_synthetic_normal_L8_r2_slices_41_50_gr15_b1200'
 }
 
-class Module08Tests(unittest.TestCase):
 
+class Module08Tests(unittest.TestCase):
     def setUp(self):
-        """
-        Called once during test class initialization.
-        Basically, you should place here your demo code (data loading). You should run your module in test methods.
-        """
         dataset_name = DATASETS[0]
         self.dwi = smns.load_object(file_path=DATASETS_ROOT + dataset_name)
-
-
-    def tearDown(self):
-        """
-        Called after each testing method.
-        Might be necessary if your module modifies object in place.
-        """
-        pass
 
     def test_strel(self):
         ss = SkullStripping(None)
@@ -72,32 +60,30 @@ class Module08Tests(unittest.TestCase):
         mock_obj.return_value = (None, None, None, 100, 2.0)
         self.assertEqual(ss.run(), 0)
 
-
     def test_main8_adding_skull_stripping_mask(self):
-        self.dwi.diff_skull_stripping_mask = []
-        input_skull_stripping_mask = self.dwi.diff_skull_stripping_mask
+        self.dwi.skull_stripping_mask = []
+        input_skull_stripping_mask = self.dwi.skull_stripping_mask
         output_object = module08.main8(self.dwi)
-        self.assertNotEqual(output_object.diff_skull_stripping_mask, input_skull_stripping_mask)
+        self.assertNotEqual(output_object.skull_stripping_mask[:,:,0], input_skull_stripping_mask)
 
     def test_main08_not_changing_other_inputs(self):
-         self.dwi.diff_skull_stripping = []
-         inputs = copy.deepcopy(self.dwi.__dict__)
-         output_object = module08.main8(self.dwi)
-         inputs['diff_skull_stripping_mask'] = output_object.diff_skull_stripping_mask
-         self.assertTrue(
-             all(
-                 [numpy.array_equal(inputs[key], getattr(output_object, key))
-                  for key in inputs.keys()]
-             )
-         )
-
-    def test_main08_mask_len_type(self):
-        self.dwi.diff_skull_stripping_mask = numpy.zeros_like(self.dwi.diffusion_data[:, :, 0, 0])
-        input_skull_stripping_mask = self.dwi.diff_skull_stripping_mask
+        self.dwi.skull_stripping_mask = []
+        inputs = copy.deepcopy(self.dwi.__dict__)
         output_object = module08.main8(self.dwi)
-        output_skull_stripping_mask = output_object.diff_skull_stripping_mask
-        self.assertEqual(type(output_skull_stripping_mask), type(input_skull_stripping_mask))
-        self.assertEqual(len(output_skull_stripping_mask), len(input_skull_stripping_mask))
+        inputs['skull_stripping_mask'] = output_object.skull_stripping_mask
+        self.assertTrue(
+            all(
+                [numpy.array_equal(inputs[key], getattr(output_object, key))
+                 for key in inputs.keys()]
+            )
+        )
+
+    def test_main08_mask_length(self):
+        self.dwi.skull_stripping_mask = numpy.zeros_like(self.dwi.structural_data[:, :, 0])
+        input_skull_stripping_mask = self.dwi.skull_stripping_mask
+        output_object = module08.main8(self.dwi)
+        numpy.testing.assert_equal(len(output_object.skull_stripping_mask), len(input_skull_stripping_mask))
+
 
 if __name__ == '__main__':
     unittest.main()
