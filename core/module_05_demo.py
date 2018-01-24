@@ -28,13 +28,14 @@ if __name__ == "__main__":
         smns.save_object(file_path=DATASETS_ROOT+'filtered', data_object=data2)
 
     real_example = 1
+
     if real_example:
         dataset_name = DATASETS[1]
         mri_data = smns.load_object(file_path=DATASETS_ROOT + dataset_name)
 
         noisy = data.diffusion_data[:, :, 1, 10]
         filtered = mri_data.diffusion_data[:, :, 1, 10]
-        noise_map = mri_data.noise_map[:, :, 1, 10]
+        noise_map = mri_data.diff_noise_map[:, :, 1, 10]
 
         fig = plt.figure()
         plt.subplot(1, 3, 1)
