@@ -134,8 +134,7 @@ After inicialization, the algorithm starts its operation. It consists of two ste
 probab = gmm(x,mu,v,p)							# use gmm function - get probability
 distrDens = probab.sum(axis=1)					# relative density 
 llh = (hx*np.log(distrDens)).sum()				# the log-likelihood base on histogram data
-\end{lstlisting}\\
-
+\end{lstlisting}
 The second step - maximization (step M) -  in which the model parameters are restimated using the distribution from step E
 
 \begin{lstlisting}[language=Python, caption = Segmentation - step M]
@@ -150,7 +149,7 @@ for j in range(clustersNum):
     mu[j]=(x*resp/p[j]).sum()					# compute the weighted of expected values
     differ=x-mu[j]
     v[j]=(differ*differ*resp/p[j]).sum()		# compute the weighted varainces	
-\end{lstlisting}\\
+\end{lstlisting}
 
 The algorithm's operation is shown below 
 
@@ -201,4 +200,3 @@ for i in range(rows):
 	\caption{Isolated barin structure: a) white matter, b) gray matter, c) cerebrospinal fluid} 
 	\label{fig:figures/m09_8910}
 \end{figure} 
-
