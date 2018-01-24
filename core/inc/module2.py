@@ -6,7 +6,7 @@ from scipy import signal
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 
-def gauss2D(shape=(170,170),sigma=2):
+def gauss2D(shape=(170,170),sigma=10):
     m,n = [(ss-1.)/2. for ss in shape]
     y,x = np.ogrid[-m:m+1,-n:n+1]
     h = np.exp( -(x*x + y*y) / (2.*sigma*sigma) )
@@ -18,7 +18,7 @@ def gauss2D(shape=(170,170),sigma=2):
 
 def func(data, a, b, c, d, e, f, g, h, i, j):
     return a+(b*data[:,0])+(c*data[:,1])+(d*(data[:,0]**2))+(e*(data[:,1]**2))+(f*(data[:,0]*data[:,1]))+(g*(data[:,0]**3))+(h*(data[:,1]**3))+(i*(data[:,0]**2)*data[:,1])+(j*(data[:,1]**2)*data[:,0])
-    
+ 
 def inhomogeneityCorrection(gray):
     sizex = gray.shape[0]
     sizey = gray.shape[1]
@@ -26,8 +26,8 @@ def inhomogeneityCorrection(gray):
     kernelSize = np.int(np.floor((2 *sizex)/3))
     blurred = signal.fftconvolve(gray, gauss2D((kernelSize,kernelSize),20), mode='same')
     
-    coordx = np.int64(np.ceil(np.random.random((1, 500)) * (sizex-1)))
-    coordy = np.int64(np.ceil(np.random.random((1, 500)) * (sizey-1)))
+    coordx = np.int64(np.ceil(np.random.random((1, 150)) * (sizex-1)))
+    coordy = np.int64(np.ceil(np.random.random((1, 150)) * (sizey-1)))
     values = blurred[coordx, coordy]
     data = np.vstack([coordx, coordy, values]).T
     
@@ -36,8 +36,9 @@ def inhomogeneityCorrection(gray):
     data2 = np.indices((sizex,sizey)).reshape(2,-1).T
     F = func(data2, *params)
     F = F.reshape(sizex, sizey)
-
-    result = np.divide(gray, F)
+    #gray[gray < 1] = 1
+    F[F < 1] = 1
+    result = np.divide(gray, F+1e-8)
     return result
   
 def main2(mri_input, other_arguments = None):
@@ -65,6 +66,6 @@ def main2(mri_input, other_arguments = None):
         mri_input.structural_data = data_out
         
     else:
-        return "Unexpected data format in module number 0!"
+        return "Unexpected data format in module number 2!"
     return mri_input
 
