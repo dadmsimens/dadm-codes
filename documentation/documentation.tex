@@ -37,6 +37,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
 
+
 \newcommand*\LyXZeroWidthSpace{\hspace{0pt}}
 %% Because html converters don't know tabularnewline
 \providecommand{\tabularnewline}{\\}
@@ -200,6 +201,15 @@ Klaudia Gugulska &23-Jan-2018 &  Module 2 implementation description added\tabul
 \hline
 Magdalena Kucharska &23-Jan-2018 &  Module 9 implementation description added\tabularnewline
 \hline
+Magdalena Kucharska &24-Jan-2018 &  Module 9 unity tests description added\tabularnewline
+\hline
+Klaudia Gugulska &24-Jan-2018 &  Final Module 2 documentation added\tabularnewline
+\hline
+Magdalena Rychlik &24-Jan-2018 &  Module 4 addition to tests\tabularnewline
+\hline
+\hline
+Anna Grzywa &24-Jan-2018 &  Module 8 Final documentation\tabularnewline
+\hline
 \end{tabular}
 
 \chapter{Assumptions}
@@ -228,7 +238,7 @@ Module 7. is excluded due to limited human resources and time.
 
 The input and output signals for each module are listed in the table. \\
 \begin{tabular}{|c|c|c|c|}
-\hline  Module  & Input  & Output  & Before that module\tabularnewline \hline  \hline  1 & \textbf{k}-space signals  &  \textbf{x}-space fully reconstructed data  & ——–\tabularnewline \hline  2 & reconstruccted image & image with intensity correction & image reconstruction \tabularnewline \hline  3  & reconstructed image  & estimated noise map  & reconstruction \tabularnewline \hline  4 & reconstructed, normalized image & Rician noise-free image & intensity correction \tabularnewline \hline  5 & image, noise map & Rician noise-free image & \makecell{reconstruction, \\ noise estimation} \tabularnewline \hline  6 & \makecell{reconstructed, normalized image;\\ gradient-sequence vectors} & \makecell{estimated diffusion tensor 3D \\ 6-channel image}& modules 1-5, 8* \tabularnewline \hline  8 & reconstructed, normalized, filtered image & image without non-brain tissues & modules 1- 4 or 5 \tabularnewline \hline  9 & image without non-brain tissues & segmentated image & skull stripping \tabularnewline \hline  10 & 320x240 image  & 640x480 image  & denoised data \tabularnewline \hline  11  &segmentated image & new window of application & segmentation \tabularnewline \hline  12& many images from one examination & one image from non-standard perspective & denoised data\tabularnewline \hline  \end{tabular}\\
+\hline  Module  & Input  & Output  & Before that module\tabularnewline \hline  \hline  1 & \textbf{k}-space signals  &  \textbf{x}-space fully reconstructed data  & ——–\tabularnewline \hline  2 & reconstruccted image & image with intensity correction & image reconstruction \tabularnewline \hline  3  & reconstructed image  & estimated noise map  & reconstruction \tabularnewline \hline  4 & reconstructed image & Rician noise-free image & noise estimation \tabularnewline \hline  5 & image, noise map & Rician noise-free image & \makecell{reconstruction, \\ noise estimation} \tabularnewline \hline  6 & \makecell{reconstructed, normalized image;\\ gradient-sequence vectors} & \makecell{estimated diffusion tensor 3D \\ 6-channel image}& modules 1-5, 8* \tabularnewline \hline  8 & image & skull stripping mask or image without non-brain tissues & reconstruction\tabularnewline \hline  9 & image without non-brain tissues & segmentated image & skull stripping \tabularnewline \hline  10 & 320x240 image  & 640x480 image  & denoised data \tabularnewline \hline  11  &segmentated image & new window of application & segmentation \tabularnewline \hline  12& many images from one examination & one image from non-standard perspective & denoised data\tabularnewline \hline  \end{tabular}\\
 
 Dependencies between modules are shown on the picture. 11th module is divided into two parts, because every part of module requires other pre-procesing activities.
 \begin{figure}[H]

@@ -1,1 +1,29 @@
 \section{Module 9. Segmentation}
+
+Unity tests are designed to checked if smaller unit of module is running correctly. In this module, the unity tests are using to test each function in module for different conditions. implemented unity test provide information, what happens in module after changing the source code. 
+
+\textbf{\textit{functionality of imHist function}} 
+Unity test is checking functionality for different data type, data with only 0 values, empty dataset. Module returns correctly data only for double data type. Unexpected result should be shown to the user.
+
+\textbf{\textit{functionality of gmm function}}
+Unity test is checking functionality for different data type, data with only 0 values, empty dataset and missing arguments. Checking the function behavior for different data sizes is also very important. Valid, because of using matrix operation. 
+Module returns correctly data only for double, nonzero array data, with the same size of expected values vector (mu), variation vector (v), probability vector (p). Unexpected result should be shown to the user.
+
+\textbf{\textit{functionality of imPart function}}
+\begin{itemize}
+	\item Checking value of lastPitch, if the value is greater than pitches or smaller than firstPitch, function returns an error.
+	\item Checking value of firstPitch, if the value is negative, greater than lastPitch or pitches, function returns an error.
+	\item Checking the correct size of image data for the selected part. If the separated part of the data does not have a size equal to [rows x column x difference between the lastPitch and the firstPitch], the function should not return the image and returns an error
+\end{itemize}
+
+
+\textit{\textbf{functionality of segmentation function}}
+\begin{itemize}
+	\item Loading an image automatically starts the algorithm and calls all functions.
+	\item An unexpected action of any of the functions immediately interrupts the program and the function returns an error.
+	\item Checking the size of initialized parameters vectors, if are not the same, function returns an error. 
+	\item Testing exit condition of while loop in function. If the loop operation repeats over 100 times, the function will be immediately interrupted and return an error. 
+	\item Checking the correct size of segmentation image mask. It should be the same as the size of the data after calling the function partIm, in other way function returns an error.
+	\item Checking mask contents after segmentation. The mask should contain four data clusters for: background, cerebrospinal fluid,  gray matter, white matter, with values, respectively, 1, 2, 3 and 4, which is corresponding to image histogram.
+\end{itemize}
+
