@@ -228,13 +228,13 @@ def skull_stripped_image(mri_input):
         [m, n, slices] = mri_input.structural_data.shape
         data_output_struct = np.zeros([m, n, slices])
         for i in range(slices):
-            data_output_struct = mri_input.skull_stripping_mask[:, :, i] * mri_input.structural_data[:, :, i]
+            data_output_struct[:, :, i] = mri_input.skull_stripping_mask[:, :, i] * mri_input.structural_data[:, :, i]
         mri_input.structural_data = data_output_struct
     elif isinstance(mri_input, smns.mri_struct):
         [m, n, slices] = mri_input.structural_data.shape
         data_output_struct = np.zeros([m, n, slices])
         for i in range(slices):
-            data_output_struct = mri_input.skull_stripping_mask[:, :, i] * mri_input.structural_data[:, :, i]
+            data_output_struct[:, :, i] = mri_input.skull_stripping_mask[:, :, i] * mri_input.structural_data[:, :, i]
         mri_input.structural_data = data_output_struct
     else:
         return "Unexpected data format in module number 8!"
