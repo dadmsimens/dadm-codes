@@ -19,17 +19,18 @@ class ImageDialog(QMainWindow):
         self.setMaximumSize(1920,1080)
         self.setWindowTitle("SieMRI")
         self.setWindowIcon(QIcon('ikona.jpg'))
+        self.TIMER_1 = QTimer()
+        self.mri_data = []
+        self.moelo11 = []
+        self.moelo12 = []
+        self.upsd = []
         self.init_ui(communicator)
 
     def closeEvent(self, a0: QCloseEvent):
         QCoreApplication.instance().quit()
 
     def init_ui(self, communicator):
-        self.TIMER_1 = QTimer()
-        self.mri_data = []
-        self.moelo11 = []
-        self.moelo12 = []
-        self.ups = []
+
 
         self.central = QStackedWidget()
         self.setCentralWidget(self.central)
@@ -94,7 +95,9 @@ class ImageDialog(QMainWindow):
         self.actionIntensity.triggered.connect(lambda: self.mb_actions_Intesity_triggered(communicator))
         self.actionNonStatLMMSE.triggered.connect(lambda: self.mb_actions_LMSE_triggered(communicator))
         self.actionNonStatUNLM.triggered.connect(lambda: self.mb_actions_UNLM_triggered(communicator))
+        self.actionTensor.triggered.connect(lambda: self.mb_action_Tensor_triggerd(communicator))
 
+        self.actionSegment.triggered.connect(lambda: self.mb_action_Segment_triggered(communicator))
         self.actionUpsamp.triggered.connect(lambda: self.mb_action_Upsample_triggered(communicator))
         self.action3d.triggered.connect(self.mb_actions_brain3D_triggered)
         self.actionOoqImag.triggered.connect(self.mb_action_OoqImag_triggered)
@@ -105,7 +108,6 @@ class ImageDialog(QMainWindow):
         self.TIMER_1.timeout.connect(lambda: self.receive_data(communicator))
 
         #DO USUNIĘCIA
-        self.action3d.setEnabled(True)
         self.actionOoqImag.setEnabled(True)
         self.actionUpsamp.setEnabled(True)
         ##First showing of the window
@@ -159,30 +161,38 @@ class ImageDialog(QMainWindow):
 
     def mb_action_Upsample_triggered(self, communicator):
 
-        self.ups = Upsample_dialog()
-        self.ups.show()
-       # ups.btn_acc.clicked.connect(lambda: self.mb_action_Upsample_send(communicator,2))
+        self.upsd = QDialog()
+
+        self.upsd.setWindowTitle('Dupa')
+        self.upsd.main_widget = QWidget()
+        self.upsd.btn_acc = QPushButton('Accept')
+
+        vlayout = QVBoxLayout()
+        vlayout.addWidget(self.upsd.main_widget)
+        vlayout.addWidget(self.upsd.btn_acc)
+        self.upsd.setLayout(vlayout)
+        self.upsd.show()
+        self.upsd.btn_acc.clicked.connect(lambda: self.mb_action_Upsample_send(communicator,2))
 
 
     def mb_action_Upsample_send(self,communicator, times):
-        communicator.gui_says(smns.simens_msg(MODULE_10_STR,times))
+
+        communicator.gui_says(smns.simens_msg(MODULE_10_STR, None))
         self.disable_menu()
         self.TIMER_1.start()
 
     def mb_actions_brain3D_triggered(self):
-        #do usunięcia - potrzba danych -
-        print('line 174: ustaw sobie swoją scieżkę')
+        #do usunięcia - potrzba danych!
         segmentation = sio.loadmat('C:/Users/Maciej/Desktop/MRI/segmentationMask.mat')
         segmentation = segmentation['imageMaskFull']
 
         struct = smns.mri_struct()
         struct.segmentation = segmentation
 
-        self.moelo11 = mod11.main11(struct)
+        self.moelo11 = mod11.main11(self.mri_data)
         self.moelo11.show()
 
     def mb_action_OoqImag_triggered(self):
-        print('line 185: ustaw sobie swoją scieżkę')
         data = sio.loadmat('C:/Users/Maciej/Desktop/MRI/Imavol.mat')
 
         Imavol = data['Imavol']
@@ -197,12 +207,16 @@ class ImageDialog(QMainWindow):
                 self.action_complete()
                 self.TIMER_1.stop()
                 self.mb_actions.setEnabled(True)
-                self.statusMsg.setText('Data is ready')
                 self.mri_data = x.arguments
                 if x.module == 'data':
                     if isinstance(self.mri_data,smns.mri_diff):
                         print('Dyfuzyjne')
                         read = basic_window(self.mri_data.structural_data.shape[2], 'read', self.mri_data.structural_data)
+                        self.actionNonStatLMMSE.setEnabled(True)
+                        self.actionNonStatUNLM.setEnabled(True)
+                        self.actionUpsamp.setEnabled(True)
+                        self.actionOoqImag.setEnabled(True)
+                        self.actionIntensity.setEnabled(True)
                     else:
                         read = basic_window(self.mri_data.structural_data.shape[2], 'read', self.mri_data.structural_data)
                         self.actionNonStatLMMSE.setEnabled(True)
@@ -210,8 +224,7 @@ class ImageDialog(QMainWindow):
                         self.actionUpsamp.setEnabled(True)
                         self.actionOoqImag.setEnabled(True)
                         self.actionIntensity.setEnabled(True)
-                        self.action3d.setEnabled(True)
-                        #
+                    read.btn_skull_strip.clicked.connect(lambda: self.skull_strip_clicked(communicator))
                     self.central.addWidget(read)
                     self.central.setCurrentWidget(read)
 
@@ -219,38 +232,85 @@ class ImageDialog(QMainWindow):
                     if isinstance(self.mri_data, smns.mri_diff):
                         print('Dyfuzyjne')
                         intens = basic_window(self.mri_data.structural_data.shape[2], 'intens', self.mri_data.structural_data)
+                        self.actionTensor.setEnabled(True)
                     else:
-                        #intens = QLabel()
                         intens = basic_window(self.mri_data.structural_data.shape[2], 'intens', self.mri_data.structural_data)
                         self.actionOoqImag.setEnabled(True)
-                        self.action3d.setEnabled(True)
+
+                    self.actionOoqImag.setEnabled(True)
                     self.central.addWidget(intens)
                     self.central.setCurrentWidget(intens)
 
                 elif x.module == MODULE_4_STR:
-                    LMMSE = basic_window(self.mri_data.structural_data.shape[2],'LMMSE', self.mri_data.structural_data)
+                    if isinstance(self.mri_data,smns.mri_diff):
+                        print('Dyfuzyjne')
+                        LMMSE = basic_window(self.mri_data.structural_data.shape[2], 'LMMSE',
+                                             self.mri_data.structural_data)
+                    else:
+                        LMMSE = basic_window(self.mri_data.structural_data.shape[2],'LMMSE', self.mri_data.structural_data)
+
+                    if self.mri_data.skull_stripping_mask is not []:
+                        self.actionIntensity.setEnabled(True)
                     self.actionUpsamp.setEnabled(True)
-                    self.actionIntensity.setEnabled(True)
                     self.actionOoqImag.setEnabled(True)
+                    LMMSE.btn_skull_strip.clicked.connect(lambda: self.skull_strip_clicked(communicator))
                     self.central.addWidget(LMMSE)
                     self.central.setCurrentWidget(LMMSE)
 
                 elif x.module == MODULE_5_STR:
-                    UNLM = basic_window(self.mri_data.structural_data.shape[2], 'ULM', self.mri_data.structural_data)
+                    if isinstance(self.mri_data,smns.mri_diff):
+                        print('Dyfuzyjne')
+                        UNLM = basic_window(self.mri_data.structural_data.shape[2], 'ULM',
+                                            self.mri_data.structural_data)
+                    else:
+                        UNLM = basic_window(self.mri_data.structural_data.shape[2], 'ULM', self.mri_data.structural_data)
+
                     self.actionUpsamp.setEnabled(True)
-                    self.actionIntensity.setEnabled(True)
                     self.actionOoqImag.setEnabled(True)
+                    if self.mri_data.skull_stripping_mask is not []:
+                        self.actionIntensity.setEnabled(True)
+                    UNLM.btn_skull_strip.clicked.connect(lambda: self.skull_strip_clicked(communicator))
                     self.central.addWidget(UNLM)
                     self.central.setCurrentWidget(UNLM)
 
                 elif x.module == MODULE_6_STR:
-                    print('Dyfuzyjne DTI')
+                    tensor = basic_window(self.mri_data.structural_data.shape[2],'tensor', self.mri_data)
+                    self.actionOoqImag.setEnabled(True)
+                    self.central.addWidget(tensor)
+                    self.central.setCurrentWidget(tensor)
+
                 elif x.module == MODULE_8_STR:
-                    pass
+                    if isinstance(self.mri_data,smns.mri_diff):
+                        pass
+                    else:
+                        skull = basic_window(self.mri_data.structural_data.shape[2], 'skull',
+                                            self.mri_data.structural_data)
+
+                    if self.mri_data.filtering_allowed:
+                        self.actionNonStatLMMSE.setEnabled(True)
+                        self.actionNonStatUNLM.setEnabled(True)
+                    if self.mri_data.inhomogenity_correction_allowed:
+                        self.actionIntensity.setEnabled(True)
+                    self.actionSegment.setEnabled(True)
+                    self.central.addWidget(skull)
+                    self.central.setCurrentWidget(skull)
+
                 elif x.module == MODULE_9_STR:
-                     pass
+                    segment = basic_window(self.mri_data.structural_data.shape[2], 'seg', self.mri_data.structural_data)
+                    self.actionOoqImag.setEnabled(True)
+                    self.action3d.setEnabled(True)
+                    self.central.addWidget(segment)
+                    self.central.setCurrentWidget(segment)
+
                 elif x.module == MODULE_10_STR:
-                     pass
+                    if isinstance(self.mri_data,smns.mri_diff):
+                        upsl = basic_window(self.mri_data.structural_data.shape[2], 'ups', self.mri_data.structural_data)
+                    else:
+                        upsl = basic_window(self.mri_data.structural_data.shape[2], 'ups', self.mri_data.structural_data)
+                    self.actionOoqImag.setEnabled(True)
+                    self.action3d.setEnabled(True)
+                    self.central.addWidget(upsl)
+                    self.central.setCurrentWidget(upsl)
 
             elif (isinstance(x,str)):
                 if x == READ_ERROR:
@@ -308,8 +368,8 @@ class basic_window(QWidget):
         left_Vlay.setAlignment(Qt.AlignCenter)
 
         right_Vlay = QVBoxLayout()
-        btn_skull_strip = QPushButton('Skull Striping')
-        btn_skull_strip.setFixedSize(200,50)
+        self.btn_skull_strip = QPushButton('Skull Striping')
+        self.btn_skull_strip.setFixedSize(200,50)
 
         slices_viewer = QScrollArea()
         slices_viewer.setMinimumHeight(550)
@@ -339,7 +399,7 @@ class basic_window(QWidget):
             scrollLayout.addWidget(temp)
         slices_viewer.setWidget(scrollContent)
         right_Vlay.addWidget(slices_viewer)
-        right_Vlay.addWidget(btn_skull_strip)
+        right_Vlay.addWidget(self.btn_skull_strip)
 
         main_layout.addSpacing(20)
         main_layout.addLayout(left_Vlay)
@@ -460,13 +520,14 @@ class segmented_window(basic_window):
 
 class Upsample_dialog(QDialog):
     def __int__(self):
-        super().__init__()
-        main_widget = QWidget()
+        super.__init__()
+        self.setWindowTitle('Dupa')
+        self.main_widget = QWidget()
         self.btn_acc = QPushButton('Accept')
-        print(self.btn_acc)
+        print('dupa')
         vlayout = QVBoxLayout()
-        main_widget.addWidget(self.btn_acc)
-        vlayout.addWidget(main_widget)
+        self.main_widget.addWidget(self.btn_acc)
+        vlayout.addWidget(self.main_widget)
         self.setLayout(vlayout)
 
 def launch_gui(communicator):
