@@ -37,22 +37,21 @@ These equations can be solved to obtain the unknown parameter vector $(a_{1}, a_
 \begin{equation}
 \begin{aligned}
 Q(\textbf{a})=\dfrac{1}{2} \sum_{i=1}^{n}(g_{i} - f(x_{i},y_{i}; a_{1},a_{2}, ...,a_{m}))^{2}
+\label{fig: eq2_1}
 \end{aligned}
 \end{equation}
-Let $r_{i}(\textbf{a}) = (g_{i} - f( x_{i}, y_{i}; a_{1}, a_{2}, ..., a_{m})$, which is the residual vector of point $i$, then equation(??) can be written as:
+Let $r_{i}(\textbf{a}) = (g_{i} - f( x_{i}, y_{i}; a_{1}, a_{2}, ..., a_{m})$, which is the residual vector of point $i$, then equation \ref{fig: eq2_1} can be written as:
 \begin{equation}
 \begin{aligned}
 Q(\textbf{a})=\dfrac{1}{2} \sum_{i=1}^{n}(r_{1}(\textbf{a}))^{2}
+\label{fig: eq2_2}
 \end{aligned}
 \end{equation}
-According to the Levenberg-Marquardt algorithm, Eq(??) can be solved iteratively to find the values of the parameters vector ($\textbf{a}$) starting from an initial estimate of the parameter vector $(\textbf{a}_{0})$ using:
+According to the Levenberg-Marquardt algorithm, eq.\ref{fig: eq2_2} can be solved iteratively to find the values of the parameters vector ($\textbf{a}$) starting from an initial estimate of the parameter vector $(\textbf{a}_{0})$ using:
 \begin{equation}
 \begin{aligned}
 \textbf{a}_{i+1} = \textbf{a}_{i} - (H + \lambda diag[H])^{-1} \bigtriangledown Q(\textbf{a}_{i})
+\label{fig: eq2_3}
 \end{aligned}
 \end{equation}
-where $H$ and $\bigtriangledown$Q($\textbf{a}_{1}$) are Hessian matrix and the gradient of Eq. ?? both evaluated at ai, diag is the diagonal elements of the Hessian matrix. At each iteration, the algorithm tests the value of the residual error  and adjusts $\lambda$ accordingly.
-
-\hfill{}\\
-\textbf{List of References}\\
-\cite{2a1}, \cite{2a2}
+where $H$ and $\bigtriangledown$Q($\textbf{a}_{1}$) are Hessian matrix and the gradient of Eq. \ref{fig: eq2_2} both evaluated at $a_{i}$, $diag[H]$ is the diagonal elements of the Hessian matrix. At each iteration, the algorithm tests the value of the residual error  and adjusts $\lambda$ accordingly. \cite{2a1}
