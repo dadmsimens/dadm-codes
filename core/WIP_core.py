@@ -86,7 +86,7 @@ def simens_core(communicator):
                 communicator.core_says.put('Obtaining skull stripping mask...')
                 data[current_instance] = module08.main8(data[current_instance])
                 communicator.core_says.put('Skull stripping complete')
-                communicator.core_says.put(smns.simens_msg(MODULE_8_STR, module8.skull_stripped_image(deepcopy(data[current_instance]))))
+                communicator.core_says.put(smns.simens_msg(MODULE_8_STR, module08.skull_stripped_image(deepcopy(data[current_instance]))))
 
 
             elif x.module == MODULE_9_STR: # Segmentation
