@@ -353,11 +353,12 @@ class basic_window(QWidget):
         main_layout = QHBoxLayout()
         self.button_list = []
         left_Vlay = QVBoxLayout()
-
+        self.data = data
         self.number = slices
 
         if data is not None:
-            self.main_slice = visualize(data[:,:,0])
+            self.main_slice = visualize()
+            self.main_slice.set_active(data[:,:,0])
         else:
             self.main_slice = QLabel()
         self.main_slice.setMinimumSize(400,400)
@@ -380,19 +381,19 @@ class basic_window(QWidget):
         scrollContent = QWidget(slices_viewer)
         scrollLayout = QVBoxLayout(scrollContent)
         scrollContent.setLayout(scrollLayout)
+        self.bufor = []
         for i in range (0,slices):
             temp = QPushButton()
             temp.setFixedSize(150,150)
             name_tmp = []
             name_tmp.append(btnname)
-            numero = str(i+1)
-            name_tmp.append(numero)
+            name_tmp.append(str(i+1))
             obj_name = ''.join(name_tmp)
             temp.setObjectName(obj_name)
             if i == 0:
                 temp.setEnabled(False)
             self.button_list.append(temp)
-            self.button_list[i].clicked.connect(lambda: self.slice_clicked(int(numero)))
+            self.button_list[i].clicked.connect(lambda: self.slice_clicked(i))
             scrollLayout.addWidget(temp)
         slices_viewer.setWidget(scrollContent)
         right_Vlay.addWidget(slices_viewer)
@@ -410,7 +411,7 @@ class basic_window(QWidget):
         self.enable_all()
         slice_ = self.button_list[number]
         slice_.setEnabled(False)
-        self.main_slice = visualize(self.data[:,:,number])
+        self.main_slice.set_active(self.data[:,:,number])
         self.main_slice.repaint()
 
 
@@ -422,8 +423,9 @@ class basic_window(QWidget):
         obj_name = ''.join(name_tmp)
         slice_ = self.findChild(QPushButton, obj_name)
         slice_.setEnabled(False)
-        self.main_slice = visualize(self.data[:,:,(self.slider.value()-1)])
-        self.main_slice.repaint()
+ 
+        self.main_slice.set_active(self.data[:,:,self.slider.value()-1])
+        self.main_slice.show()
 
     def enable_all(self):
         for i in range (0, self.number):
@@ -474,12 +476,11 @@ class basic_window_diffusive(QWidget):
             tempus.setFixedSize(150, 150)
             name_tmp = []
             name_tmp.append(btnname)
-            numero = str(i + 1)
-            name_tmp.append(numero)
+            name_tmp.append(i+1)
             obj_name = ''.join(name_tmp)
             tempus.setObjectName(obj_name)
             self.button_list.append(tempus)
-            self.button_list[i].clicked.connect(lambda: self.slice_clicked(int(numero)))
+            self.button_list[i].clicked.connect(lambda: self.slice_clicked(i))
             scrollLayout.addWidget(tempus)
             sndscrollLayout.addWidget(tempus)
         self.gradient_viewer.setWidget(sndscrollContent)
