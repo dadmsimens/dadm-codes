@@ -52,16 +52,85 @@ In application, the Gaussian Mixture Model (GMM) based on Expectation-Maximizati
 \textit{Daussian mixture model}
 Often the data we are trying to model is much more complex, then simple distributions, like Bernoulli or Gaussian.  For instance, it might be multimodal.  This means  that  there  are  several  different modes,  or  regions  of  high  probability  mass,  and regions of smaller probability mass in between. An excample can be image. In this case, it is possible to model the data in terms of a mixture of several components, where each component has a simple parametric form (such as a Gaussian).
 The Gaussian mixture model is simple linear superposition of Gaussian components, aimed at providing a richer class of density models than the single Gaussian. Mixture model i probabilistic model, which can represent the presence of subpopulations within an overall population. 
-The Gaussian distribution in mixture model (Fig. \ref{fig:figures/m09_4}) can be written in the form \ref{Eq: wz_1}.
+The Gaussian example (Fig. \ref{fig:figures/m09_4}) 
 
-
-The probability given in mixture of K Gaussians is 
-
-\begin{figure}[h]
+\begin{figure}[H]
 \centering{}\includegraphics[width=0.7\textwidth]{figures/Module_09/m09_4}\caption{Gaussian mixture model examples for 1 and 2 dimension  \label{fig:figures/m09_4}}
 \end{figure}
 
-Gaussaian mixture model can be attached to set of data  with an unknown distribution, by estimate the parameters (theta) of GMM model that fits the data. The solution is to maximize the likelihood p(X|theta) of the data with regard to the model parameters. 
+Gaussian mixture model s a linear superposition of Gaussian
+components in the form:
+
+\begin{figure}[H]
+\centering{}\includegraphics[width=0.4\textwidth]{figures/Module_09/m09_27}
+\end{figure}
+
+The main goal of this modeling is find maximum likelihood parameters: propabilities, means (expectated value) and variance (covariance) and also separating date into specific data clusters. A GMM is formulated in terms of discrete latent variables. This provides deeper insight into this distribution and serves to motivate the EM algorithm, Which gives a maximum likelihood solution to components and their means/covariances.
+
+\textit{Likelihood function for GMM}
+
+Mixture density function is: 
+
+\begin{figure}[H]
+\centering{}\includegraphics[width=0.4\textwidth]{figures/Module_09/m09_29} 
+\end{figure}
+
+Therefore Likelihood function is:
+
+\begin{figure}[H]
+\centering{}\includegraphics[width=0.4\textwidth]{figures/Module_09/m09_30}
+\end{figure}
+
+Therefore log-likelihood function, Which wish to be maximized is 
+
+\begin{figure}[H]
+\centering{}\includegraphics[width=0.4\textwidth]{figures/Module_09/m09_31}
+\end{figure}
+
+\textit{Exceptatiom minimalization algorithm}
+EM is a method for finding maximum likelihood solutions for models with latent variables.
+
+EM algorithm for GMM is iterations algorithm (Fig \ref{fig:figures/m09_20}), given a Gaussian mixture model. The goal is to maximize the likelihood function with reference to the Gaussian mixture model parameters: expectation value, covariance (variance) and probability (mixing coefficient). Algorithm evaluate for every data point, calculating Posterior probability of each component. Responsibility is associated with data point.
+
+\begin{figure}[H]
+\centering{}\includegraphics[width=0.3\textwidth]{figures/Module_09/m09_20}\caption{Algorithm operating scheme  \label{fig:figures/m09_20}}
+\end{figure}
+
+The algorithm's operation is based on 4 main steps:
+
+\begin{itemize}
+	\item Step 1: Parameters inicjalization - Initialize the expectation value (mu), covariances (v) and mixing coefficients (p) and evaluate initial value of log-likelihood.
+	\item Step 2: E step (expectation) - Evaluate responsibilities using current parameter values:
+\end{itemize}
+
+\begin{figure}[H]
+\centering{}\includegraphics[width=0.4\textwidth]{figures/Module_09/m09_21}
+\end{figure}
+
+\begin{itemize}
+	\item Step 3: M stem (maximization) - Re-estimate parameters using current responsibilities, based on the result from step E:
+\end{itemize}
+
+\begin{figure}[H]
+\centering{}\includegraphics[width=0.4\textwidth]{figures/Module_09/m09_22}
+\end{figure}
+\begin{figure}[H]
+\centering{}\includegraphics[width=0.4\textwidth]{figures/Module_09/m09_23}
+\end{figure}
+\begin{figure}[H]
+\centering{}\includegraphics[width=0.2\textwidth]{figures/Module_09/m09_24}
+\end{figure}
+\begin{figure}[H]
+\centering{}\includegraphics[width=0.3\textwidth]{figures/Module_09/m09_25}
+\end{figure}
+
+\begin{itemize}
+	\item Step 4: Evaluate the log likelihood. Depending on the result, convergence of either parameters or log likelihood is checked. If convergence not satisfied return to Step 2. As a result, data are divided into relevant clusters. The operation of the algorithm can be seen in the figure below (Fig. \ref{fig:figures/m09_19})
+\end{itemize}
+
+\begin{figure}[H]
+\centering{}\includegraphics[width=0.7\textwidth]{figures/Module_09/m09_19}\caption{Example of working algorithm  \label{fig:figures/m09_19}}
+\end{figure}
 
 \textit{\textbf{List of References}}\\
 \cite{09a1}
