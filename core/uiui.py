@@ -4,13 +4,14 @@ import scipy.io as sio
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, qApp, QApplication, QWidget, QLabel, QAction, QPushButton
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QStackedWidget, QStatusBar, QSlider, QScrollArea, QDialog
 from PyQt5.QtWidgets import QSpinBox
-from PyQt5.QtGui import QPixmap, QIcon, QCloseEvent, QIntValidator
-from PyQt5.QtCore import QTimer, Qt, QSize, QCoreApplication
+from PyQt5.QtGui import QPixmap, QIcon, QCloseEvent
+from PyQt5.QtCore import QTimer, Qt, QCoreApplication
 import inc.simens_dadm as smns
 import inc.module11 as mod11
-import inc.module12_ui as mod12
+import inc.module12 as mod12
 from inc.constants import *
 from inc.visualization import visualize
+from inc.visualize_6 import visualise6
 
 
 class ImageDialog(QMainWindow):
@@ -21,7 +22,7 @@ class ImageDialog(QMainWindow):
         self.setWindowTitle("SieMRI")
         self.setWindowIcon(QIcon('ikona.jpg'))
         self.TIMER_1 = QTimer()
-        self.mri_data = []
+        self.mri_data = smns.mri_struct
         self.moelo11 = []
         self.moelo12 = []
         self.upsd = QDialog()
@@ -104,7 +105,6 @@ class ImageDialog(QMainWindow):
         self.actionOoqImag.triggered.connect(self.mb_action_OoqImag_triggered)
 
         actionQuit.triggered.connect(lambda: self.mb_file_exit_trigger(communicator))
-
 
         self.TIMER_1.timeout.connect(lambda: self.receive_data(communicator))
 
@@ -199,11 +199,9 @@ class ImageDialog(QMainWindow):
         self.moelo11.show()
 
     def mb_action_OoqImag_triggered(self):
-        data = sio.loadmat('C:/Users/Maciej/Desktop/MRI/Imavol.mat')
-
-        Imavol = data['Imavol']
-
-        self.moelo12 =  mod12.Window(Imavol)
+        data = self.mri_data.structural_data
+        self.moelo12 =  mod12.main12(data)
+        self.moelo12.show()
 
     def receive_data(self, communicator):
         if not communicator.core_says.empty():
@@ -217,10 +215,9 @@ class ImageDialog(QMainWindow):
                 if x.module == 'data':
                     if isinstance(self.mri_data,smns.mri_diff):
                         print('Dyfuzyjne')
-                        read = basic_window(self.mri_data.structural_data.shape[2], 'read', self.mri_data.structural_data)
+                        read = basic_window_diffusive(self.mri_data.diffusion_data.shape[2],self.mri_data.diffusion_data.shape[3], 'read', self.mri_data.diffusion_data)
                         self.actionNonStatLMMSE.setEnabled(True)
                         self.actionNonStatUNLM.setEnabled(True)
-                        self.actionUpsamp.setEnabled(True)
                         self.actionOoqImag.setEnabled(True)
                         self.actionIntensity.setEnabled(True)
                     else:
@@ -234,15 +231,16 @@ class ImageDialog(QMainWindow):
                     self.central.addWidget(read)
                     self.central.setCurrentWidget(read)
 
+
                 elif x.module == MODULE_2_STR:
                     if isinstance(self.mri_data, smns.mri_diff):
                         print('Dyfuzyjne')
-                        intens = basic_window(self.mri_data.structural_data.shape[2], 'intens', self.mri_data.structural_data)
+                        intens = basic_window_diffusive(self.mri_data.diffusion_data_data.shape[2],self.mri_data.diffusion_data_data.shape[3], 'intens', self.mri_data.diffusion_data)
                         self.actionTensor.setEnabled(True)
                     else:
                         intens = basic_window(self.mri_data.structural_data.shape[2], 'intens', self.mri_data.structural_data)
 
-                    self.actionUpsamp.setEnabled(True)
+
                     self.actionOoqImag.setEnabled(True)
                     self.central.addWidget(intens)
                     self.central.setCurrentWidget(intens)
@@ -250,14 +248,12 @@ class ImageDialog(QMainWindow):
                 elif x.module == MODULE_4_STR:
                     if isinstance(self.mri_data,smns.mri_diff):
                         print('Dyfuzyjne')
-                        LMMSE = basic_window(self.mri_data.structural_data.shape[2], 'LMMSE',
-                                             self.mri_data.structural_data)
+                        LMMSE = basic_window_diffusive(self.mri_data.diffusion_data.shape[2],self.mri_data.diffusion_data.shape[3], 'LMMSE', self.mri_data.diffusion_data)
                     else:
                         LMMSE = basic_window(self.mri_data.structural_data.shape[2],'LMMSE', self.mri_data.structural_data)
-
+                        self.actionUpsamp.setEnabled(True)
                     if self.mri_data.skull_stripping_mask is not []:
                         self.actionIntensity.setEnabled(True)
-                    self.actionUpsamp.setEnabled(True)
                     self.actionOoqImag.setEnabled(True)
                     LMMSE.btn_skull_strip.clicked.connect(lambda: self.skull_strip_clicked(communicator))
                     self.central.addWidget(LMMSE)
@@ -266,12 +262,12 @@ class ImageDialog(QMainWindow):
                 elif x.module == MODULE_5_STR:
                     if isinstance(self.mri_data,smns.mri_diff):
                         print('Dyfuzyjne')
-                        UNLM = basic_window(self.mri_data.structural_data.shape[2], 'ULM',
-                                            self.mri_data.structural_data)
+                        UNLM = basic_window_diffusive(self.mri_data.diffusion_data.shape[2],self.mri_data.diffusion_data.shape[3], 'UNLM', self.mri_data.diffusion_data)
+
                     else:
                         UNLM = basic_window(self.mri_data.structural_data.shape[2], 'ULM', self.mri_data.structural_data)
+                        self.actionUpsamp.setEnabled(True)
 
-                    self.actionUpsamp.setEnabled(True)
                     self.actionOoqImag.setEnabled(True)
                     if self.mri_data.skull_stripping_mask is not []:
                         self.actionIntensity.setEnabled(True)
@@ -287,29 +283,31 @@ class ImageDialog(QMainWindow):
 
                 elif x.module == MODULE_8_STR:
                     if isinstance(self.mri_data,smns.mri_diff):
-                        skull = basic_window(self.mri_data.structural_data.shape[2], 'skull',
-                                             self.mri_data.structural_data)
-
+                        pass
                     else:
                         skull = basic_window(self.mri_data.structural_data.shape[2], 'skull',
                                             self.mri_data.structural_data)
+                        skull.btn_skull_strip.setEnabled(False)
+
+                        self.central.addWidget(skull)
+                        self.central.setCurrentWidget(skull)
 
                     if self.mri_data.filtering_allowed:
                         self.actionNonStatLMMSE.setEnabled(True)
                         self.actionNonStatUNLM.setEnabled(True)
                     if self.mri_data.inhomogenity_correction_allowed:
                         self.actionIntensity.setEnabled(True)
-                    skull.btn_skull_strip.setEnabled(False)
-                    self.actionSegment.setEnabled(True)
-                    self.central.addWidget(skull)
-                    self.central.setCurrentWidget(skull)
+                        self.actionSegment.setEnabled(True)
 
                 elif x.module == MODULE_9_STR:
-                    segment = basic_window(self.mri_data.structural_data.shape[2], 'seg', self.mri_data.structural_data)
+                    if isinstance(self.mri_data, smns.mri_diff):
+                        pass
+                    else:
+                        segment = basic_window(self.mri_data.structural_data.shape[2], 'seg', self.mri_data.structural_data)
+                        self.central.addWidget(segment)
+                        self.central.setCurrentWidget(segment)
                     self.actionOoqImag.setEnabled(True)
                     self.action3d.setEnabled(True)
-                    self.central.addWidget(segment)
-                    self.central.setCurrentWidget(segment)
 
                 elif x.module == MODULE_10_STR:
                     if isinstance(self.mri_data,smns.mri_diff):
@@ -367,7 +365,6 @@ class basic_window(QWidget):
         self.slider.setMinimum(1)
         self.slider.setMaximum(slices)
         self.slider.setSingleStep(1)
-
         left_Vlay.addWidget(self.main_slice)
         left_Vlay.addWidget(self.slider)
         left_Vlay.setAlignment(Qt.AlignCenter)
@@ -390,7 +387,6 @@ class basic_window(QWidget):
             name_tmp.append(btnname)
             name_tmp.append(str(i+1))
             obj_name = ''.join(name_tmp)
-            print(obj_name)
             temp.setObjectName(obj_name)
             if i == 0:
                 temp.set_active()
@@ -432,78 +428,58 @@ class basic_window(QWidget):
             slice_ = self.findChild(visualize, obj_name)
             slice_.setEnabled(True)
 
-# class basic_window_diffusive(basic_window):
-#     def __init__(self,slices):
-#         super().__init__()
-#         self.init_ui(slices)
-#
-#     def init_ui(self, slices):
-#         main_layout = QHBoxLayout()
-#
-#         left_Vlay = QVBoxLayout()
-#
-#         self.main_slice = QLabel()
-#         self.main_slice.setScaledContents(True)
-#         self.main_slice.setMinimumSize(500,650)
-#         if slices > 0:
-#             self.main_slice.setPixmap(QPixmap("tmp_images\slice_1"))
-#
-#         self.slider = QSlider(Qt.Horizontal)
-#         self.slider.setMinimum(1)
-#         self.slider.setMaximum(slices)
-#         self.slider.setSingleStep(1)
-#
-#         left_Vlay.addWidget(self.main_slice)
-#         left_Vlay.addWidget(self.slider)
-#         left_Vlay.setAlignment(Qt.AlignCenter)
-#
-#         right_Vlay = QVBoxLayout()
-#
-#         btn_skull_strip = QPushButton('Skull Striping')
-#         btn_skull_strip.setFixedSize(200,50)
-#
-#         slices_viewer = QScrollArea()
-#         slices_viewer.setMinimumHeight(550)
-#         slices_viewer.setFixedWidth(200)
-#         slices_viewer.setWidgetResizable(True)
-#         scrollContent = QWidget(slices_viewer)
-#         scrollLayout = QVBoxLayout(scrollContent)
-#         scrollContent.setLayout(scrollLayout)
-#         for i in range (0,slices):
-#             temp = QPushButton()
-#             temp.setFixedSize(150,150)
-#             name_tmp = []
-#             name_tmp.append('tmp_images\slice_')
-#             name_tmp.append(str(i+1))
-#             obj_name = ''.join(name_tmp)
-#             temp.setObjectName(obj_name)
-#             if i == 0:
-#                 temp.setEnabled(False)
-#             #path_tmp = []
-#             #path_tmp.append('tmp_images\slice_')
-#             #path_tmp.append(str(i+1))
-#             #path = ''.join(path_tmp)
-#             print(obj_name)
-#             current_slice = QPixmap(obj_name)
-#             temp.setIcon(QIcon(current_slice))
-#             temp.setIconSize(QSize(150,150))
-#             scrollLayout.addWidget(temp)
-#         slices_viewer.setWidget(scrollContent)
-#
-#         right_Vlay.addWidget(slices_viewer)
-#         right_Vlay.addWidget(btn_skull_strip)
-#
-#         main_layout.addSpacing(20)
-#         main_layout.addLayout(left_Vlay)
-#         main_layout.addSpacing(20)
-#         main_layout.addLayout(right_Vlay)
-#         self.setLayout(main_layout)
-#
-#         for i in range (0,slices):
-#             slice_ = self.findChild(QPushButton,"tmp_images\slice_{}".format(i+1))
-#             slice_.clicked.connect(lambda: self.slice_clicked(slice_.objectName()))
-#
-#         self.slider.valueChanged.connect(self.slider_change)
+
+class basic_window_diffusive(QWidget):
+    def __init__(self, slices, gradients, btnname, data):
+        super().__init__()
+        self.init_ui(slices, gradients, btnname, data)
+
+    def init_ui(self, slices, gradients, btnname, data):
+        main_layout = QHBoxLayout()
+        left_Vlay = QVBoxLayout()
+        main_widget = QScrollArea()
+        main_widget.setMinimumSize(500, 500)
+        main_widget.setWidgetResizable(False)
+        scrollContent = QWidget(main_widget)
+        scrollLayout = QHBoxLayout(scrollContent)
+        scrollLayout.setAlignment(Qt.AlignCenter)
+        scrollContent.setLayout(scrollLayout)
+        for i in range(0, slices):
+            new_data = data[:,:,i,0]
+            temp = visualize(new_data)
+            temp.setMinimumSize(500, 500)
+            scrollLayout.addWidget(temp)
+        main_widget.setWidget(scrollContent)
+        left_Vlay.addWidget(main_widget)
+        left_Vlay.setAlignment(Qt.AlignCenter)
+        right_Vlay = QVBoxLayout()
+
+        btn_skull_strip = QPushButton('Skull Striping')
+        btn_skull_strip.setFixedSize(200, 50)
+        #
+        gradient_viewer = QScrollArea()
+        gradient_viewer.setMinimumHeight(400)
+        gradient_viewer.setFixedWidth(200)
+        gradient_viewer.setWidgetResizable(True)
+        sndscrollContent = QWidget(gradient_viewer)
+        sndscrollLayout = QVBoxLayout(sndscrollContent)
+        sndscrollContent.setLayout(sndscrollLayout)
+        for i in range(0, gradients):
+            new_data = data[:,:,0,i]
+            tempus = visualize(new_data)
+            tempus.setFixedSize(150, 150)
+            sndscrollLayout.addWidget(tempus)
+        gradient_viewer.setWidget(sndscrollContent)
+
+        right_Vlay.addWidget(gradient_viewer)
+        right_Vlay.addWidget(btn_skull_strip)
+
+        main_layout.addSpacing(20)
+        main_layout.addLayout(left_Vlay)
+        main_layout.addSpacing(20)
+        main_layout.addLayout(right_Vlay)
+        self.setLayout(main_layout)
+        # self.slider.valueChanged.connect(self.slider_change)
 
 
 class segmented_window(basic_window):

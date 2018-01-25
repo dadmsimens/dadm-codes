@@ -26,7 +26,6 @@ class visualize(QWidget):
             layout.addWidget(self.canvas)
             self.figure.set_facecolor('black')
             self.setLayout(layout)
-            print('mam layout')
             self.im1 = self.axes.imshow(self.data,cmap='gray', interpolation='nearest', vmin=None)
             self.axes.axis('off')
 
@@ -34,8 +33,6 @@ class visualize(QWidget):
 
     def set_active(self):
         pass
-        # self.im1 = self.axes.imshow(self.data,cmap='map', interpolation='nearest')
-        # self.canvas.draw()
 
 if __name__ == '__main__':
     mat = scipy.io.loadmat('C:/Users/Maciej/Desktop/MRI/recon_T1_synthetic_multiple_sclerosis_lesions_1mm_L16_r2.mat')
