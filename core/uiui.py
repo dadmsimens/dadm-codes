@@ -6,12 +6,12 @@ from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QStackedWidget, QStatusBar
 from PyQt5.QtWidgets import QSpinBox
 from PyQt5.QtGui import QPixmap, QIcon, QCloseEvent, QImage
 from PyQt5.QtCore import QTimer, Qt, QCoreApplication, QSize
-import inc.simens_dadm as smns
-import inc.module11 as mod11
-import inc.module12 as mod12
-from inc.constants import *
-from inc.visualization import visualize
-from inc.visualize_6 import visualise6
+import MAIN.inc.simens_dadm as smns
+import MAIN.inc.module11 as mod11
+import MAIN.inc.module12 as mod12
+from MAIN.inc.constants import *
+from MAIN.inc.visualization import visualize
+from MAIN.inc.visualize_6 import visualise6
 
 
 class ImageDialog(QMainWindow):
@@ -108,6 +108,8 @@ class ImageDialog(QMainWindow):
 
         self.TIMER_1.timeout.connect(lambda: self.receive_data(communicator))
 
+        #DO USUNIĘCIA
+        self.actionOoqImag.setEnabled(True)
         ##First showing of the window
         self.show()
 
@@ -383,17 +385,14 @@ class basic_window(QWidget):
             temp.setFixedSize(150,150)
             name_tmp = []
             name_tmp.append(btnname)
-            name_tmp.append(str(i+1))
+            numero = str(i+1)
+            name_tmp.append(numero)
             obj_name = ''.join(name_tmp)
             temp.setObjectName(obj_name)
             if i == 0:
                 temp.setEnabled(False)
-            # img = QImage(data[:, :, i]*255, 256, 256, QImage.Format_RGB32)
-            # current_slice = QPixmap.fromImage(img)
-            # temp.setIcon(QIcon(current_slice))
-            # temp.setIconSize(QSize(150, 150))
             self.button_list.append(temp)
-            self.button_list[i].clicked.connect(lambda: self.slice_clicked(i))
+            self.button_list[i].clicked.connect(lambda: self.slice_clicked(int(numero)))
             scrollLayout.addWidget(temp)
         slices_viewer.setWidget(scrollContent)
         right_Vlay.addWidget(slices_viewer)
@@ -463,24 +462,29 @@ class basic_window_diffusive(QWidget):
         self.btn_skull_strip = QPushButton('Skull Striping')
         self.btn_skull_strip.setFixedSize(200, 50)
         #
-        gradient_viewer = QScrollArea()
-        gradient_viewer.setMinimumHeight(400)
-        gradient_viewer.setFixedWidth(200)
-        gradient_viewer.setWidgetResizable(True)
-        sndscrollContent = QWidget(gradient_viewer)
+        self.gradient_viewer = QScrollArea()
+        self.gradient_viewer.setMinimumHeight(400)
+        self.gradient_viewer.setFixedWidth(200)
+        self.gradient_viewer.setWidgetResizable(True)
+        sndscrollContent = QWidget(self.gradient_viewer)
         sndscrollLayout = QVBoxLayout(sndscrollContent)
         sndscrollContent.setLayout(sndscrollLayout)
         for i in range(0, gradients):
-            new_data = data[:,:,0,i]
-            tempus = visualize(new_data)
+            tempus = QPushButton()
             tempus.setFixedSize(150, 150)
+            name_tmp = []
+            name_tmp.append(btnname)
+            numero = str(i + 1)
+            name_tmp.append(numero)
+            obj_name = ''.join(name_tmp)
+            tempus.setObjectName(obj_name)
             self.button_list.append(tempus)
-            self.button_list[i].clicked.connect(lambda: self.slice_clicked(i))
+            self.button_list[i].clicked.connect(lambda: self.slice_clicked(int(numero)))
             scrollLayout.addWidget(tempus)
             sndscrollLayout.addWidget(tempus)
-        gradient_viewer.setWidget(sndscrollContent)
+        self.gradient_viewer.setWidget(sndscrollContent)
 
-        right_Vlay.addWidget(gradient_viewer)
+        right_Vlay.addWidget(self.gradient_viewer)
         right_Vlay.addWidget(self.btn_skull_strip)
 
         main_layout.addSpacing(20)
@@ -506,7 +510,7 @@ class basic_window_diffusive(QWidget):
             temp = visualize(new_data)
             temp.setMinimumSize(500, 500)
             scrollLayout.addWidget(temp)
-
+        self.gradient_viewer.setWidget(self.scrollContent)
 
 def launch_gui(communicator):
     app = QApplication(sys.argv)
