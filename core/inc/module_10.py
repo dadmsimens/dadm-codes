@@ -74,7 +74,7 @@ from . import simens_dadm as smns
 def main10(mri_input, N):
     if (isinstance(mri_input, smns.mri_struct)):
         [m, n, slices] = mri_input.structural_data.shape
-        data_out = np.zeros([m, n, slices])
+        data_out = np.zeros([N*m, N*n, slices])
         
         for i in range(slices):
             data_out[:, :, i] = module10(mri_input.structural_data[:, :, i], N)
