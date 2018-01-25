@@ -188,15 +188,15 @@ class ImageDialog(QMainWindow):
         self.TIMER_1.start()
 
     def mb_actions_brain3D_triggered(self):
-        #do usunięcia - potrzba danych!
-        segmentation = sio.loadmat('C:/Users/Maciej/Desktop/MRI/segmentationMask.mat')
-        segmentation = segmentation['imageMaskFull']
+        def mb_actions_brain3D_triggered(self):
+            segmentation = sio.loadmat('../Data/Module_11_test/testSegmentation.mat')
+            segmentation = segmentation['mri_segMask']
 
-        struct = smns.mri_struct()
-        struct.segmentation = segmentation
+            struct = smns.mri_struct()
+            struct.segmentation = segmentation
 
-        self.moelo11 = mod11.main11(self.mri_data)
-        self.moelo11.show()
+            self.moelo11 = mod11.main11(struct)
+            self.moelo11.show()
 
     def mb_action_OoqImag_triggered(self):
         data = self.mri_data.structural_data
@@ -339,7 +339,7 @@ class ImageDialog(QMainWindow):
         self.actionSegment.setEnabled(False)
         self.actionUpsamp.setEnabled(False)
         self.actionTensor.setEnabled(False)
-        self.action3d.setEnabled(False)
+        # self.action3d.setEnabled(False)
         self.actionOoqImag.setEnabled(False)
 
 
