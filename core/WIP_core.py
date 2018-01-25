@@ -90,10 +90,10 @@ def simens_core(communicator):
 
 
             elif x.module == MODULE_9_STR: # Segmentation
-            	communicator.core_says.put('Performing skull stripping for segmentation purposes...')
-            	data[current_instance] = module08.main8(data[current_instance])
-            	communicator.core_says.put('Stripping skull for segmentation...')
-            	data_to_send = module08.skull_stripped_image(deepcopy(data[current_instance]))
+                communicator.core_says.put('Performing skull stripping for segmentation purposes...')
+                data[current_instance] = module08.main8(data[current_instance])
+                communicator.core_says.put('Stripping skull for segmentation...')
+                data_to_send = module08.skull_stripped_image(deepcopy(data[current_instance]))
                 communicator.core_says.put('Segmentation running...')
                 data_to_send = module_09.main9(data_to_send)
                 communicator.core_says.put('Segmentation complete')
