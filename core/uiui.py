@@ -4,8 +4,8 @@ import scipy.io as sio
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, qApp, QApplication, QWidget, QLabel, QAction, QPushButton
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QStackedWidget, QStatusBar, QSlider, QScrollArea, QDialog
 from PyQt5.QtWidgets import QSpinBox
-from PyQt5.QtGui import QPixmap, QIcon, QCloseEvent
-from PyQt5.QtCore import QTimer, Qt, QCoreApplication
+from PyQt5.QtGui import QPixmap, QIcon, QCloseEvent, QImage
+from PyQt5.QtCore import QTimer, Qt, QCoreApplication, QSize
 import inc.simens_dadm as smns
 import inc.module11 as mod11
 import inc.module12 as mod12
@@ -22,7 +22,7 @@ class ImageDialog(QMainWindow):
         self.setWindowTitle("SieMRI")
         self.setWindowIcon(QIcon('ikona.jpg'))
         self.TIMER_1 = QTimer()
-        self.mri_data = smns.mri_struct
+        self.mri_data = smns.mri_diff
         self.moelo11 = []
         self.moelo12 = []
         self.upsd = QDialog()
@@ -108,8 +108,6 @@ class ImageDialog(QMainWindow):
 
         self.TIMER_1.timeout.connect(lambda: self.receive_data(communicator))
 
-        #DO USUNIĘCIA
-        self.actionOoqImag.setEnabled(True)
         ##First showing of the window
         self.show()
 
@@ -235,7 +233,7 @@ class ImageDialog(QMainWindow):
                 elif x.module == MODULE_2_STR:
                     if isinstance(self.mri_data, smns.mri_diff):
                         print('Dyfuzyjne')
-                        intens = basic_window_diffusive(self.mri_data.diffusion_data_data.shape[2],self.mri_data.diffusion_data_data.shape[3], 'intens', self.mri_data.diffusion_data)
+                        intens = basic_window_diffusive(self.mri_data.diffusion_data.shape[2],self.mri_data.diffusion_data.shape[3], 'intens', self.mri_data.diffusion_data)
                         self.actionTensor.setEnabled(True)
                     else:
                         intens = basic_window(self.mri_data.structural_data.shape[2], 'intens', self.mri_data.structural_data)
@@ -276,7 +274,7 @@ class ImageDialog(QMainWindow):
                     self.central.setCurrentWidget(UNLM)
 
                 elif x.module == MODULE_6_STR:
-                    tensor = basic_window(self.mri_data.structural_data.shape[2],'tensor', self.mri_data)
+                    tensor = visualise6(self.mri_data.biomarkes)
                     self.actionOoqImag.setEnabled(True)
                     self.central.addWidget(tensor)
                     self.central.setCurrentWidget(tensor)
@@ -351,7 +349,7 @@ class basic_window(QWidget):
 
     def init_ui(self, slices, btnname, data):
         main_layout = QHBoxLayout()
-
+        self.button_list = []
         left_Vlay = QVBoxLayout()
 
         self.number = slices
@@ -381,7 +379,7 @@ class basic_window(QWidget):
         scrollLayout = QVBoxLayout(scrollContent)
         scrollContent.setLayout(scrollLayout)
         for i in range (0,slices):
-            temp = visualize(data[:, :, i])
+            temp = QPushButton()
             temp.setFixedSize(150,150)
             name_tmp = []
             name_tmp.append(btnname)
@@ -389,7 +387,13 @@ class basic_window(QWidget):
             obj_name = ''.join(name_tmp)
             temp.setObjectName(obj_name)
             if i == 0:
-                temp.set_active()
+                temp.setEnabled(False)
+            # img = QImage(data[:, :, i]*255, 256, 256, QImage.Format_RGB32)
+            # current_slice = QPixmap.fromImage(img)
+            # temp.setIcon(QIcon(current_slice))
+            # temp.setIconSize(QSize(150, 150))
+            self.button_list.append(temp)
+            self.button_list[i].clicked.connect(lambda: self.slice_clicked(i))
             scrollLayout.addWidget(temp)
         slices_viewer.setWidget(scrollContent)
         right_Vlay.addWidget(slices_viewer)
@@ -400,32 +404,31 @@ class basic_window(QWidget):
         main_layout.addSpacing(20)
         main_layout.addLayout(right_Vlay)
         self.setLayout(main_layout)
-        # self.slider.valueChanged.connect(lambda: self.slider_change(btnname))
+        self.slider.valueChanged.connect(lambda: self.slider_change(btnname))
 
 
-    def slice_clicked(self, name):
+    def slice_clicked(self, number):
         self.enable_all()
-        slice_ = self.findChild(QPushButton, name)
+        slice_ = self.button_list[number]
         slice_.setEnabled(False)
-        self.main_slice.setPixmap(QPixmap(name))
+        self.main_slice = visualize(self.data[:,:,number])
+        self.main_slice.repaint()
+
 
     def slider_change(self, btnname):
-        self.enable_all(btnname)
+        self.enable_all()
         name_tmp = []
         name_tmp.append(btnname)
         name_tmp.append("{}".format(self.slider.value()))
         obj_name = ''.join(name_tmp)
-        slice_ = self.findChild(visualize, obj_name)
+        slice_ = self.findChild(QPushButton, obj_name)
         slice_.setEnabled(False)
         self.main_slice = visualize(self.data[:,:,(self.slider.value()-1)])
+        self.main_slice.repaint()
 
-    def enable_all(self, btnname):
+    def enable_all(self):
         for i in range (0, self.number):
-            name_tmp = []
-            name_tmp.append(btnname)
-            name_tmp.append("{}".format(i+1))
-            obj_name = ''.join(name_tmp)
-            slice_ = self.findChild(visualize, obj_name)
+            slice_ = self.button_list[i]
             slice_.setEnabled(True)
 
 
@@ -435,27 +438,30 @@ class basic_window_diffusive(QWidget):
         self.init_ui(slices, gradients, btnname, data)
 
     def init_ui(self, slices, gradients, btnname, data):
+        self.number = slices
+        self.button_list = []
+        self.data = data
         main_layout = QHBoxLayout()
         left_Vlay = QVBoxLayout()
         main_widget = QScrollArea()
         main_widget.setMinimumSize(500, 500)
         main_widget.setWidgetResizable(False)
-        scrollContent = QWidget(main_widget)
-        scrollLayout = QHBoxLayout(scrollContent)
+        self.scrollContent = QWidget(main_widget)
+        scrollLayout = QHBoxLayout(self.scrollContent)
         scrollLayout.setAlignment(Qt.AlignCenter)
-        scrollContent.setLayout(scrollLayout)
+        self.scrollContent.setLayout(scrollLayout)
         for i in range(0, slices):
             new_data = data[:,:,i,0]
             temp = visualize(new_data)
             temp.setMinimumSize(500, 500)
             scrollLayout.addWidget(temp)
-        main_widget.setWidget(scrollContent)
+        main_widget.setWidget(self.scrollContent)
         left_Vlay.addWidget(main_widget)
         left_Vlay.setAlignment(Qt.AlignCenter)
         right_Vlay = QVBoxLayout()
 
-        btn_skull_strip = QPushButton('Skull Striping')
-        btn_skull_strip.setFixedSize(200, 50)
+        self.btn_skull_strip = QPushButton('Skull Striping')
+        self.btn_skull_strip.setFixedSize(200, 50)
         #
         gradient_viewer = QScrollArea()
         gradient_viewer.setMinimumHeight(400)
@@ -468,28 +474,39 @@ class basic_window_diffusive(QWidget):
             new_data = data[:,:,0,i]
             tempus = visualize(new_data)
             tempus.setFixedSize(150, 150)
+            self.button_list.append(tempus)
+            self.button_list[i].clicked.connect(lambda: self.slice_clicked(i))
+            scrollLayout.addWidget(tempus)
             sndscrollLayout.addWidget(tempus)
         gradient_viewer.setWidget(sndscrollContent)
 
         right_Vlay.addWidget(gradient_viewer)
-        right_Vlay.addWidget(btn_skull_strip)
+        right_Vlay.addWidget(self.btn_skull_strip)
 
         main_layout.addSpacing(20)
         main_layout.addLayout(left_Vlay)
         main_layout.addSpacing(20)
         main_layout.addLayout(right_Vlay)
         self.setLayout(main_layout)
-        # self.slider.valueChanged.connect(self.slider_change)
 
+    def enable_all(self):
+        for i in range(0, self.number):
+            slice_ = self.button_list[i]
+            slice_.setEnabled(True)
 
-class segmented_window(basic_window):
+    def slice_clicked(self, number):
+        self.enable_all()
+        slice_ = self.button_list[number]
+        slice_.setEnabled(False)
+        scrollLayout = QHBoxLayout(self.scrollContent)
+        scrollLayout.setAlignment(Qt.AlignCenter)
+        self.scrollContent.setLayout(scrollLayout)
+        for i in range(0, self.number):
+            new_data = self.data[:, :, i, number]
+            temp = visualize(new_data)
+            temp.setMinimumSize(500, 500)
+            scrollLayout.addWidget(temp)
 
-    def __int__(self, slices, btnname):
-        super.__init__()
-        self.init_ui(slices,btnname)
-
-    def init_ui(self, slices, btnname):
-        pass
 
 def launch_gui(communicator):
     app = QApplication(sys.argv)

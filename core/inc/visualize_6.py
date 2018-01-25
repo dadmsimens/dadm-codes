@@ -1,15 +1,12 @@
-import sys
-from PyQt5.QtWidgets import QWidget, QApplication, QPushButton, QVBoxLayout
+from PyQt5.QtWidgets import QWidget,QPushButton, QVBoxLayout
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.misc
-import scipy.io
 
 class visualise6(QWidget):
     def __init__(self, data):
-        super(Window, self).__init__()
+        super().__init__()
 
         self.data = data
         self.figure = plt.figure()
@@ -53,20 +50,9 @@ class visualise6(QWidget):
             self.axes.title.set_text('FA (Fractional Anisotropy)')
             self.axes.imshow(np.squeeze(self.data['FA_rgb']))
             self.axes.axis('off')
-            self.axes.text(-30,20,'Prawo-Lewo',bbox={'facecolor': 'red','pad':8})
-            self.axes.text(-30,33,' Przod-Tyl   ',bbox={'facecolor': 'green','pad':8})
-            self.axes.text(-30,46,' Gora-Dol   ',bbox=dict(facecolor='blue',pad=8))
+            self.axes.text(-30,20,'Right-Left',bbox={'facecolor': 'red','pad':8})
+            self.axes.text(-30,33,' Front-Back   ',bbox={'facecolor': 'green','pad':8})
+            self.axes.text(-30,46,' Up-Down   ',bbox=dict(facecolor='blue',pad=8))
         self.canvas.draw()
 
-
-if __name__ == '__main__':
-
-    data = np.load('biomarkers.npy').item()
-
-    app = QApplication(sys.argv)
-
-    main = Window(data)
-    main.show()
-
-    sys.exit(app.exec_())
 
