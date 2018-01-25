@@ -6,12 +6,12 @@ from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QStackedWidget, QStatusBar
 from PyQt5.QtWidgets import QSpinBox
 from PyQt5.QtGui import QPixmap, QIcon, QCloseEvent, QImage
 from PyQt5.QtCore import QTimer, Qt, QCoreApplication, QSize
-import MAIN.inc.simens_dadm as smns
-import MAIN.inc.module11 as mod11
-import MAIN.inc.module12 as mod12
-from MAIN.inc.constants import *
-from MAIN.inc.visualization import visualize
-from MAIN.inc.visualize_6 import visualise6
+import inc.simens_dadm as smns
+import inc.module11 as mod11
+import inc.module12 as mod12
+from inc.constants import *
+from inc.visualization import visualize
+from inc.visualize_6 import visualise6
 
 
 class ImageDialog(QMainWindow):
