@@ -1,5 +1,4 @@
 from . import simens_dadm as smns
-from . import module08 as module08
 import numpy as np
 import scipy.linalg
 import scipy.io
@@ -62,7 +61,7 @@ def main2(mri_input, other_arguments = None):
         data_out = np.zeros([m, n, slices])
         
         for i in range(slices):
-            data_out[:, :, i] = inhomogeneityCorrection(mri_input.structural_data[:, :, i], mri_input.skull_stripping_mask[:, :, i, j])
+            data_out[:, :, i] = inhomogeneityCorrection(mri_input.structural_data[:, :, i], mri_input.skull_stripping_mask[:, :, i])
         	
         mri_input.structural_data = data_out
         
