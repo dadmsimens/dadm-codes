@@ -87,12 +87,31 @@ class Model3D():
             self.plane_widget.TextureVisibilityOff()
         self.renderer.AddActor(clip_actor)
         self.plane_widget.On()
+        textActor = vtk.vtkTextActor()
+        textActor.GetTextProperty().SetFontSize (20)
+        textActor.GetTextProperty().SetColor( 1, 1, 1)
+        text = self.getPlaneInfo(self.plane_widget)
+        textActor.SetInput(text)
+        self.renderer.AddActor2D(textActor)
 
         def detect_plane_intersection(obj, event):
             plane.SetNormal(obj.GetNormal())
             plane.SetOrigin(obj.GetCenter())
+            text = self.getPlaneInfo(obj)
+            textActor.SetInput(text)
 
         self.plane_widget.AddObserver("InteractionEvent", detect_plane_intersection)
-        self.iren.Initialize()
+        
 
+        self.iren.Initialize()
+        
+    def getPlaneInfo(self, plane):
+        normal_vector = str(plane.GetNormal())
+        normal_vector = normal_vector[1:-1].split(',')
+        normal_vector = [round(float(x),2) for x in normal_vector]
+        center_vector = str(plane.GetCenter())
+        center_vector = center_vector[1:-1].split(',')
+        center_vector = [round(float(x),2) for x in center_vector]
+        text = 'Intersection plane\'s normal vector ' + str(normal_vector) +'\nIntersection plane\'s center ' + str(center_vector)
+        return text
 

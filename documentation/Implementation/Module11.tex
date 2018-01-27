@@ -5,15 +5,14 @@
 11 th module is displayed in new window of application, so implementation includes not only functionality requirements but also design of graphical user interface.  \\
 \indent To prepare design of user interface used Qt Designer program. \\
 \indent Module is selected by user in main window of application. If input data is correct, new window is opened and reconstrucion of three-dimensional model is initialized automatically. \\
-\indent First input data – 3D array – is converted to vtkFloatArray, which makes vtkImageData object. Then basing on vtkImageData there is used vtkMarcingCubes class, which makes reconstruction. As a threshold there is used value equal to 1, because of fact that all values not equal to zero are included to cortex structure. \\
-\indent After reconstrucion model is displayed in BRAIN 3D window. To enable displaying VTK objects in Qt Application there is set frame in which is inserted the object of VTK library by using QVTKRenderWindowInteractor. It is dedicated vtkWidget to display VTK in QT ibrary.\\
+\indent First input data – 3D array – is converted to \textbf{vtkFloatArray}, which makes \textbf{vtkImageData} object. Then basing on vtkImageData there is used \textbf{vtkMarcingCubes} class, which makes reconstruction. As a threshold there is used value equal to 1, because of fact that all values not equal to zero are included to cortex structure. \\
+\indent After reconstrucion model is displayed in BRAIN 3D window. To enable displaying VTK objects in Qt Application there is set frame in which is inserted the object of VTK library by using \textbf{QVTKRenderWindowInteractor}. It is dedicated vtkWidget to display VTK in QT ibrary.\\
 \indent To visualization data there are used following classes:
 \begin{itemize}
-\item vtkRenderer – which enables rendering process: transforming geometry, light and camera view into an image
-\item 
-vtkMapper – which maps data to graphics primitives
-\item vtkActor – adjusting data to 3D scenery
-\item vtkInteractorStyleTrackballCamera – setting possibility of interaction with model
+\item \textbf{vtkRenderer} – which enables rendering process: transforming geometry, light and camera view into an image
+\item \textbf{vtkMapper} – which maps data to graphics primitives
+\item \textbf{vtkActor} – adjusting data to 3D scenery
+\item \textbf{vtkInteractorStyleTrackballCamera} – setting possibility of interaction with model
 \end{itemize}
 \indent BRAIN 3D window enables three options:
 \begin{itemize}
@@ -21,7 +20,10 @@ vtkMapper – which maps data to graphics primitives
 \item clip model 
 \item clip model and show plane.
 \end{itemize}
-\indent Automatically after initialization there is loaded firts mode: preview 3D model. 
-Mode: clip model, enables to set intersection plane and cut model in place of it. Intersection plane is vtkImagePlaneWidget object. It allows to interactive set the plane by computer mouse. Interaction of plane is activated whenever user presses „clip model” button. When interaction event is detected the model is automatically clipped by vtkCliPolyData class. \\
-\indent Mode:  clip model and show plane calls the same function as previous mode, but with input parameter planemode - True ( default – False). It expands functionality of diplaying the cross-section corresponding to the elected plane. It improves readability of intersection plane. It is based on the same objects of VTK library, but using additional methods of it.\\
-\indent User has possibility fluently switch modeLs by pressing appropriate buttons. Application has also help window, with short user guide.
+\indent Automatically after initialization there is loaded firt mode: preview 3D model. 
+Mode: clip model, enables to set intersection plane and cut model in place of it. Intersection plane is \textbf{vtkImagePlaneWidget} object. It allows to interactive set the plane by computer mouse. Interaction of plane is activated whenever user presses „clip model” button. When interaction event is detected the model is automatically clipped by \textbf{vtkCliPolyData} class. \\
+\indent Mode:  clip model and show plane calls the same function as previous mode, but with input parameter plane\_mode - True ( default – False). It expands functionality of diplaying the cross-section corresponding to the elected plane. It improves readability of intersection plane. It is based on the same objects of VTK library, but using additional methods of it.\\
+\indent During clipping in the corner is displayed information about intersection plane (normal vector and center), which determines location in space. The text is displayed by \textbf{vtkTextActor} object.\\
+\indent User has possibility fluently switch models by pressing appropriate buttons. Application has also help window, with short user guide. \\
+\indent Module is based on three classes: \textbf{Brain3D\_App}, \textbf{Model3D} and \textbf{Ui\_MainWindow}. \textbf{Ui\_MainWindow} class is automatically genereted by QtDesigner, and represents graphical user interface settings as location of icons or initial properties of GUI. \textbf{Model3D} class contains features based on VTK library. Methods of \textbf{Model3D} class are resposible for visualization adequate model and modification data according to user's interaction. \textbf{Brain3D\_App} is interface between \textbf{Model3D} and \textbf{Ui\_MainWindow}. Thanks to it, it is possible to transfer data between the \textbf{Model3D} class result and application window.
+
