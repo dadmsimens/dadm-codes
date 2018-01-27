@@ -35,8 +35,11 @@ def simens_core(communicator):
 
 
             elif x.module == MODULE_2_STR: # Intensity inhomogenity correction
+                if data[current_instance].skull_stripping_mask.shape != data[current_instance].structural_data.shape:
+                    communicator.core_says.put('Obtaining skull stripping mask...')
+                    data[current_instance] = module08.main8(data[current_instance])
                 communicator.core_says.put('Applying intensity inhomogenity correction...')
-                data[current_instance] = module2.main2(data[current_instance])
+                data[current_instance] = module2.main2(module08.skull_stripped_image(data[current_instance]))
                 data[current_instance].filtering_allowed = False
                 data[current_instance].inhomogenity_correction_allowed = False
                 communicator.core_says.put('Intensity inhomogenity correction applied')
@@ -91,7 +94,8 @@ def simens_core(communicator):
 
             elif x.module == MODULE_9_STR: # Segmentation
                 communicator.core_says.put('Performing skull stripping for segmentation purposes...')
-                data[current_instance] = module08.main8(data[current_instance])
+                if data[current_instance].skull_stripping_mask.shape == data[current_instance].structural_data.shape:
+                    data[current_instance] = module08.main8(data[current_instance])
                 communicator.core_says.put('Stripping skull for segmentation...')
                 data_to_send = module08.skull_stripped_image(deepcopy(data[current_instance]))
                 communicator.core_says.put('Segmentation running...')

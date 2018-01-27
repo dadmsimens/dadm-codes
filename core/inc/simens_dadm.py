@@ -28,9 +28,9 @@ class mri_struct:
         self.coils_n = coils_n
         self.sensitivity_maps = sensitivity_maps
 
-        self.struct_noise_map = []
-        self.skull_stripping_mask = []
-        self.segmentation = []
+        self.struct_noise_map = np.array([])
+        self.skull_stripping_mask = np.array([])
+        self.segmentation = np.array([])
 
         self.filtering_allowed = True
         self.inhomogenity_correction_allowed = True
@@ -69,9 +69,9 @@ class mri_diff(mri_struct):
         self.b_value = b_value
 
         self.biomarkers = list(dict())
-        self.struct_noise_map = []
-        self.diff_noise_map = []
-        self.skull_stripping_mask = []
+        self.struct_noise_map = np.array([])
+        self.diff_noise_map = np.array([])
+        self.skull_stripping_mask = np.array([])
 
 
 def mri_read(filename):
