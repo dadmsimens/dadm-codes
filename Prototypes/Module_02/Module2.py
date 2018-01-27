@@ -19,10 +19,10 @@ def gauss2D(shape=(170,170),sigma=10):
         h /= sumh
     return h
 
-#mat = scipy.io.loadmat('dane/test.mat')
-#gray = mat['I']
+#mat = scipy.io.loadmat('img/recon_T1_synthetic_normal_1mm_L8_r2.mat')
+#gray = mat['SENSE_LSE']
 
-img = scipy.misc.imread('dane/brain2.png')
+img = scipy.misc.imread('img/brain2.png')
 gray = rgb2gray(img)
 
 #plt.imshow(gray, cmap='gray')
@@ -31,7 +31,7 @@ gray = rgb2gray(img)
 sizex = gray.shape[0]
 sizey = gray.shape[1]
 
-size = np.int(np.floor((2 *sizex)/3))
+size = np.int(np.floor((2 *sizex)/3))+50
 blurred = signal.fftconvolve(gray, gauss2D((size, size),20), mode='same')
 
 coordx = np.int64(np.ceil(np.random.random((1, 150)) * (sizex-1)))
@@ -55,7 +55,7 @@ F = F.reshape(sizex, sizey)
 
 #gray[gray < 1] = 1
 F[F < 1] = 1
-result3 = np.divide(gray, F)-np.mean(F)
+result3 = np.divide(gray, F)
 print(result3.max())
 print(result3.min())
 plt.imshow(gray, cmap='gray')
