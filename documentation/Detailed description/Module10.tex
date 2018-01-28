@@ -52,8 +52,8 @@ is going to be twice as big. To be more specific 640x480 pixels. The
 process can be named as double upsampling.
 
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.7]{figures/Module_10/Module10_1}\caption{Diagram of the patch-based non-local algorithm \cite{9art1}}. 
-\label{fig: Module9_1}
+\centering{}\includegraphics[scale=0.5]{figures/Module_10/Module_10_1}\caption{Diagram of the patch-based non-local algorithm \cite{9art1}}. 
+\label{fig: Module10_1}
 \end{figure}
 
 In a nutshell, the first step of the algorithm is to divide every pixel of LR image into more pixels. Then the patch is designed. It is a rectangle which will be the area of interest. The pixels that are inside the area are taken into account during calculation the values of new points.
@@ -62,14 +62,14 @@ After that an appropriate estimator is used to correctly calculate the values of
 In order to show how the algorithm is designed the following pictured were generated using exemplary data. At the beginning there is an image 256x256 pixels. 
 
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.7]{figures/Module_10/Module10_2}\caption{DICOM Low Resolution image 256x256}. 
+\centering{}\includegraphics[scale=0.7]{figures/Module_10/Module10_2}\caption{Low Resolution image 256x256}. 
 \label{fig: Module9_2}
 \end{figure}
 
 The first step is to add new pixels to increase the resolution M times horizontally and N times vertically. The pixels are equal to zero. After this process an appropriate estimator has to be chosen to make a decision about the values of new points.
 
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.5]{figures/Module_10/Module10_3}\caption{DICOM image with new points with N=2 and M=2}. 
+\centering{}\includegraphics[scale=0.5]{figures/Module_10/Module10_3}\caption{Image with new points with N=2 and M=2}. 
 \label{fig: Module9_3}
 \end{figure}
 
@@ -85,7 +85,6 @@ $D$ is an operator that downsamples HR into original LR,
 
 The Regularization and Correction steps are repeated until no important difference between two consecutive reconstructions. Tolerance is determined by Mean Absolute Difference .
 
-\hfill{}\\
-\textbf{List of References}\\
-\cite{9art1}
-\cite{9art2}
+
+
+
