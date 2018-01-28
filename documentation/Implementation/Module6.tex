@@ -134,7 +134,7 @@ assuming our estimate is equivalent to:
 Tensor estimation results for a sample 126x126x55 slice are presented on Fig.\ref{fig:m6_pic_2}.
 
 \begin{figure}[H]
-	\includegraphics[width=16cm]{figures/Module_06/tensor_image}
+	\includegraphics[width=12cm]{figures/Module_06/tensor_image}
 	\centering
 	\caption{Diffusion tensor estimate using the WLS-ABS method for a 126x126x55 test image.}
 	\label{fig:m6_pic_2}
@@ -143,7 +143,7 @@ Tensor estimation results for a sample 126x126x55 slice are presented on Fig.\re
 We can then compute the eigenvalue decomposition of $\boldsymbol{D}$ and obtain eigenvalues and eigenvectors for each pixel of input image. Eigenvalues are sorted in descending order and saved for later computation (Fig.\ref{fig:m6_pic_3}). Moreover, eigenvectors corresponding to the highest eigenvalue are saved to separate variable, since they represent the direction of principal diffusion.
 
 \begin{figure}[H]
-	\includegraphics[width=16cm]{figures/Module_06/eig_image}
+	\includegraphics[width=12cm]{figures/Module_06/eig_image}
 	\centering
 	\caption{Diffusion tensor estimate eigenvalues of sample imgae; eigenvalues sorted in descending order from left to right.}
 	\label{fig:m6_pic_3}
@@ -166,7 +166,7 @@ VR = \frac{\lambda_{1}\lambda_{2}\lambda_{3}}{MD\,^3}
 Computed biomarkers of the sample image are presented on Fig.\ref{fig:m6_pic_4}. It is important to note that skull is visible because the brain area was selected by hand instead of relying on Module 08 output.
 
 \begin{figure}[H]
-	\includegraphics[width=12cm]{figures/Module_06/biomarkers_wls}
+	\includegraphics[width=10cm]{figures/Module_06/biomarkers_wls}
 	\centering
 	\caption{Diffusion biomarkers of sample image. Top left: MD, top right: RA, bottom left: FA, bottom right: VR.}
 	\label{fig:m6_pic_4}
@@ -175,11 +175,9 @@ Computed biomarkers of the sample image are presented on Fig.\ref{fig:m6_pic_4}.
 Figure \ref{fig:m6_pic_5} presents the fifth biomarker image present in output dictionary - FA-weighted principal direction of diffusion color map. Color-encoded direction for this slice is presented as follows:
 \begin{itemize}
 	\item 
-	red - transversal (left-right)
-	
+	red - transversal (left-right)	
 	\item 
 	green - anterior-posterior (front-back)
-	
 	\item
 	blue - cranio-caudal (head-feet)
 \end{itemize}
@@ -197,4 +195,19 @@ Module source code was implemented and tested on a single sample image outlined 
 
 It was difficult to determine which estimation method - WLS or NLS - is objectively better. WLS was significantly faster and it was not much different from NLS results. This might have been due to the fact, that the diffusion-encoding gradient matrix was unusually large (7 structural images and 48 DWIs). Testing on preprocessed raw data, supplied for application evaluation has shown differences between methods, although both estimates are valid (to the Author's best knowledge) as it is difficult to compare any estimation methods without reference.
 
-Initially developed using nested for-loops, DTI module has been vectorized to speed up computations. For a supplied 256x256x16 DWI stack a single slice is being processed in less than 3 seconds for WLS-ABS, while other methods scale linearily with chosen number of iterations (starting at 6 seconds, then 3 seconds per MFN iteration). It must be noted that the module was not tested with skull stripping mask, which could have drastically reduced computation time. Moreover computation time heavily depends on hardware constraints.
+Initially developed using nested for-loops, DTI module has been vectorized to speed up computations. For a supplied 256x256x16 DWI stack a single slice is being processed in less than 3 seconds for WLS-ABS, while other methods scale linearily with chosen number of iterations (starting at 6 seconds, then 3 seconds per MFN iteration).
+
+Figures \ref{fig:m6_pic_6}-\ref{fig:m6_pic_7} present the biomarkers computed using WLS-ABS estimation for a 256x256x16 slice selected from a different dataset than that chosen for algorithm development. Prior to diffusion tensor estimation, data was reconstructed, filtered and skull-stripped using Modules 01, 03, 05 and 08.
+
+\begin{figure}[H]
+	\includegraphics[width=9cm]{figures/Module_06/final_wls_biomarkers}
+	\centering
+	\caption{Diffusion biomarkers of sample 256x256x16 slice. Top left: MD, top right: RA, bottom left: FA, bottom right: VR. WLS-ABS estimation method.}
+	\label{fig:m6_pic_6}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=9cm]{figures/Module_06/final_wls_rgb}
+	\centering
+	\caption{FA-weighted principal direction of diffusion of sample 256x256x16 slice. \vbox{WLS-ABS estimation method.}}
+	\label{fig:m6_pic_7}
+\end{figure}
