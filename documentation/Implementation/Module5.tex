@@ -1,3 +1,4 @@
+\newpage
 \section{Module 5. Non-stationary noise filtering 2}
 
 Unbiased Non-Local Means algorithm was implemented based on \cite{5a1}. Some, it is believed, improvements to original idea were introduced and described below. Implementation of the UNLM algorithm was divided into several steps:
@@ -13,43 +14,62 @@ Because some works and further improvements were done in parallel it is hard to 
 \subsection*{Comparison of different Gaussian kernels}
 Once the main body of algorithm was ready, it was decided to run some tests to examine the influence of various Gaussian kernels on the output of the UNLM function. The main requirement for the Gaussian kernel was the fact that the overall sum of all elements within kernel should be equal to 1. Another, for sake of sanity, requirement built on the shape of the kernel surface - the slope should be gentle in order to avoid 'overfitting' to the central pixel.
 
-\begin{figure}[H]
-\centering{}
-\includegraphics[scale=0.7]{figures/module05/gk1}
-\caption{First tested Gaussian kernel.} 
-\end{figure}
 
 \begin{figure}[H]
 	\centering{}
-	\includegraphics[scale=1]{figures/module05/gk1results}
+	\includegraphics[scale=0.7]{figures/module05/gk1results}
 	\caption{Results obtained for first kernel.} 
 \end{figure}
 
-First kernel was presented in the article describing the algorithm \cite{5a1}. However, kernel was considered as not optimal due to its two-level shape. To overcome the problem of wrong shape another attempt took place. Second generated kernel had desired shape, yet values didn't meet the requirement of summing to 1.
+\begin{lstlisting}[language=Python, caption = Gaussian kernel proposed by authors of algorithm.]
+def gk1(rsim):
+
+	penalty = np.zeros([2 * rsim + 1, 2 * rsim + 1])
+	for d in range(1, (rsim + 1)):
+		value = 1 / (2*d+1)**2
+		for i in range(-d, d+1):
+			for j in range(-d, d+1):
+				penalty[rsim - i, rsim - j] = penalty[rsim - i, rsim - j] + value
+	penalty = penalty / rsim
+	return penalty
+\end{lstlisting}
+
+First kernel was presented in the article describing the algorithm \cite{5a1}. However, kernel was considered as not optimal due to its two-level shape. To overcome the problem of wrong shape another attempt took place. Second generated kernel had desired shape, yet values didn't meet the requirement of summing to 1. It was generated with following code snippet:
+
+\begin{lstlisting}[language=Python, caption = Second gaussian kernel used in tests.]
+def gk2(rsim):
+
+	sigma = 1
+	size = rsim * 2 + 1
+	gauss1d = signal.gaussian(size, std=sigma).reshape(size, 1)
+	gauss2d = np.outer(gauss1d, gauss1d)
+	return gauss2d
+\end{lstlisting}
 
 \begin{figure}[H]
 	\centering{}
-	\includegraphics[scale=0.7]{figures/module05/gk2}
-	\caption{Second tested Gaussian kernel.} 
-\end{figure}
-
-\begin{figure}[H]
-	\centering{}
-	\includegraphics[scale=0.8]{figures/module05/gk2results}
+	\includegraphics[scale=0.7]{figures/module05/gk2results}
 	\caption{Results obtained for second kernel.} 
-\end{figure}  
+\end{figure} 
 
-Third kernel, again was disappointing. It had a shape of first kernel, but represented different values, since it was generated in other manner.
+Third kernel, again was disappointing. It had a shape of first kernel, but represented different values, since it was generated in other manner. The code used for creation of it is presented below.
+
+\begin{lstlisting}[language=Python, caption = Third gaussian kernel used in tests.]
+def gk3(rsim):
+
+	penalty = np.zeros([2 * rsim + 1, 2 * rsim + 1])
+	for d in range(1, (rsim + 1)):
+		value = math.exp(-2*(d*d)/2) / (2 * 3.14)
+		for i in range(-d, d+1):
+			for j in range(-d, d+1):
+				penalty[rsim - i, rsim - j] = penalty[rsim - i, rsim - j] + value
+	penalty = penalty / rsim
+	return penalty
+\end{lstlisting}
 
 \begin{figure}[H]
 	\centering{}
-	\includegraphics[scale=0.7]{figures/module05/gk3}
-	\caption{Third tested Gaussian kernel.} 
-\end{figure}
-
-\begin{figure}[H]
-	\centering{}
-	\includegraphics[scale=0.8]{figures/module05/gk3results}
+	\includegraphics[scale=0.7]{figures/module05/gk3results}
 	\caption{Results obtained for third kernel.} 
 \end{figure}
 
@@ -57,13 +77,7 @@ Fourth kernel, had all properties that were desired. It was decided to use this 
 
 \begin{figure}[H]
 	\centering{}
-	\includegraphics[scale=0.7]{figures/module05/gk4}
-	\caption{Fourth, and final, tested Gaussian kernel.} 
-\end{figure}
-
-\begin{figure}[H]
-	\centering{}
-	\includegraphics[scale=1]{figures/module05/gk4results}
+	\includegraphics[scale=0.7]{figures/module05/gk4results}
 	\caption{Results obtained for fourth kernel.} 
 \end{figure}
 
