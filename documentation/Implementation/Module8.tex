@@ -7,7 +7,7 @@ Implemented methods:
     \item {\textbf{def csf counting(self)} - which estimates CSF based on histogram \textbf{input:} self - class SkullStripping object consisting of MRI image  \textbf{output:}  csf - estimated CSF parameter}
     \item {\textbf{def binarization(self, image, threshold, upper=1, lower=0)} - which changes grey image to binary image
     \textbf{input:} image - image to binarization, threshold - threshold for binarization, upper - value of pixels over the threshold, lower - value of pixels under the threshold, output: bin image - binary input image}
-    \item {\textbf{def radius counting(self, bin image} - which estimates BR and ratio diameter in axis x to diameters in axis y \textbf{input:} bin image - binary image \textbf{output:} r - BR estimated parameter, st - ratio}
+    \item {\textbf{def radius counting(self, bin image)} - which estimates BR and ratio diameter in axis x to diameters in axis y \textbf{input:} bin image - binary image \textbf{output:} r - BR estimated parameter, st - ratio}
     \item {\textbf{def preprocessing(self)} - which consist methods to estimate CSF, BR, ratio, and COG and cropp image based on BR parameter \textbf{input:} self - class SkullStripping object consisting of MRI image \textbf{output:} cropped image - image cropped based on BR parameters, csf - estimated CSF parameter, COG - coordinates of the centroid of the brain, r - estimated BR parameter, st - ratio diameters in axis x to diameters in axis y
     \item {\textbf{def grad mag sobel(self, image)} - which computes gradient magintude using the Sobel edge mask\textbf{input:} image - input image \textbf{output:}  gradmag - gradient magintude input image}
     \item {\textbf{def anisodiff(self, image, niter=1,kappa=50,gamma=0.1, step(1.,1.),option=1)} - which filter using of anisotropic diffusion filter \textbf{input:} image - input image, niter- amount of iteration, kappa, gamma, step - parameters of filter, option - method of filtering  \textbf{output:} image out - image after filtration}
@@ -31,21 +31,249 @@ Method \textbf{run()} scheme:
     \item {Checking skull stripping mask to eliminate too large mask based on BR parameters. If it is not too large return skull stripping mask.}
     \item {\textbf{(OPTIONAL if mask from BSE is too large.)} Marker-controlled watershed segmentation using of \textbf{watershed()}.}
 \end{enumerate}
+Parameter used in skull stripping are presented in table bellow:\\
+\begin{tabular}{ l | c | r }
+  \hline
+  Parameter name & Used in ... & Estimated?\\
+  \hline
+  CSF & binarization, preprocessing, foreground markers, backgound markers & Yes\\
+  \hline
+  Brain radius BR & preprocessing, max=97 min=56 checking input image and result of method BSE & Yes\\
+  \hline
+  Ratio st & preprocessing, max = 1.3 for checking input image & Yes\\
+  \hline
+  COG & preprocessing, watershed, bse & Yes\\
+  \hline
+  niter & anisodiff & value = 3\\
+  \hline
+  sigma & edges marr hildreth & value = 0.6\\
+  \hline
+\end{tabular}\\
+\\Evaluation of Module 8's results are presented on figures bellow for image with low-level noise (left side) and high-level noise (right side). Chosen methods doesn't have robustness for high-level noise.
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_1.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n1.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 0}
+	\label{fig:figures/m08_1}
+\end{figure}
 
-Evaluation of Module 8's results are presented on figures bellow:
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.3]{figures/M8_Figure_1.png}\caption{MRI image with eyes and input image with skull stripping mask}.
-\label{fig:figures/Module8_Figure_1}
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_2.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n2.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 10}
+	\label{fig:figures/m08_2}
 \end{figure}
+
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.8]{figures/M8_Figure_1-3.png}\caption{MRI image and input image with skull stripping mask}.
-\label{fig:figures/Module8_Figure_2}
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_3.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n3.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 20}
+	\label{fig:figures/m08_3}
 \end{figure}
+
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.8]{figures/M8_Figure_1-4.png}\caption{MRI image and input image with skull stripping mask}.
-\label{fig:figures/Module8_Figure_3}
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_4.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n4.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 30}
+	\label{fig:figures/m08_4}
 \end{figure}
+
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.8]{figures/M8_Figure_1-6.png}\caption{Image of upside part of brain and input image with skull stripping mask}.
-\label{fig:figures/Module8_Figure_4}
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_5.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n5.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high sclice nr 40}
+	\label{fig:figures/m08_5}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_6.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n6.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 50}
+	\label{fig:figures/m08_6}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_7.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n7.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 60}
+	\label{fig:figures/m08_7}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_8.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n8.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 70}
+	\label{fig:figures/m08_8}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_9.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n9.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 80}
+	\label{fig:figures/m08_9}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_10.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n10.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 90}
+	\label{fig:figures/m08_10}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_11.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n11.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 100}
+	\label{fig:figures/m08_11}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_12.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n12.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 110}
+	\label{fig:figures/m08_12}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_13.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n13.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 120}
+	\label{fig:figures/m08_13}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_14.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n14.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 130}
+	\label{fig:figures/m08_14}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_15.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n15.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 140}
+	\label{fig:figures/m08_15}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_16.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n16.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 150}
+	\label{fig:figures/m08_16}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_17.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n17.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 160}
+	\label{fig:figures/m08_17}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_18.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n18.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 170}
+	\label{fig:figures/m08_18}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_19.png}
+	\end{subfigure}
+		\begin{subfigure}[b]{0.35\linewidth}
+		\includegraphics[scale=0.35]{figures/Module_08/M8_n19.png}
+	\end{subfigure}
+	\caption{Skull stripped with low-level noise and high slice nr 180}
+	\label{fig:figures/m08_19}
 \end{figure}

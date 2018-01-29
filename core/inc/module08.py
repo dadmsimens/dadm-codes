@@ -182,7 +182,7 @@ class SkullStripping:
 
     def run(self, verbose=False, diff=False):
         preproc_image, csf, cog, r, st = self.preprocessing()
-        if r <= 56 or st > 1.3:
+        if r <= 56 or st > 1.3 or 97 <= r:
             skull_stripping_mask = np.zeros_like(self.image)
         else:
             skull_stripping_mask = self.bse(cog)
