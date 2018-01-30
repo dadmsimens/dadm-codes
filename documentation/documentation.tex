@@ -12,6 +12,7 @@
 \usepackage{amsmath}
 \usepackage{listings}
 \usepackage{graphicx}
+\usepackage{rotating}
 \usepackage[unicode=true,pdfusetitle,
  bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=3,
  breaklinks=false,pdfborder={0 0 1},backref=false,colorlinks=false]
@@ -224,6 +225,41 @@ Anna Grzywa &29-Jan-2018 &  Module 8 - final version \tabularnewline
 The aim of this project is to create the system for MRI data pre-processing and post-processing using Python, SciPy, Cython and Qt5 (detailed description of tools available in chapter {\it Implementation}, section {\it Tools}). The project is divided into 11 modules (more: chapter {\it Structure}). \\
 
 The application is called SieMRI (the abbreviation for Siemens MRI). It allows to recontruct MRI images, correct intensity inhomogenities, estimate non-stationary noise and remove it using one of two methonds, show diffusion tensors, strip the skull, show specific parts of human brain, upsample the image or visualize brain in 3D or using specific plane. MRI image reconstruction starts automatically when user choose the file with data. Other functionalities are non-obligatory - the user decide if specific functionality should be used.
+\chapter{Project Management}
+To organize this project we used CPM methodology (Critical Path Method). The methodology is basen on the concept taht there are some critical tasks which cannot be started until previousone has been finished. The following steps were taken:
+\begin{itemize}
+\item 1. Arrangements: python version, repo, communication platform.
+\item 2. Research. Initial dependencies scheme.
+\item 3. Out/in signals for each module. Initial version of core, visualization and GUI.
+\item 4. Initial documentation: theoretical descriptions. 
+\item 5. Prototyping (Matlab or Python).
+\item 6. Final version of dependencies scheme. Core- final version. 
+\item 7. Preparing functionality of each module - coding in Python.
+\item 8. Testing.
+\item9. Modules merging.
+\item10. Documentation - final version.
+\end{itemize}
+Each step was assigned to one ore more groups as follows: 
+\begin{itemize}
+\item D- developers
+\item CT - core team (software architect, visualization engineer, GUI engineer)
+\item PM - project manager
+
+
+\end{itemize}
+Critical path (in red) and other paths (in black) are shown in fig. 
+\begin{figure}[H]
+\centering{}\includegraphics[scale=0.7]{figures/schemacik}\caption{Critical path}
+\label{fig:figures/schemacik}
+\end{figure}
+Every member of the group was working remotely using his/her own computer. Team members took part in 4 meetings with following agenda:
+\begin{itemize}
+\item 1. 6.11.17 - initial dependencies scheme, discussion about communication, research results discussion, next steps
+\item 2. 11.12.17 - presentation scetches, first results, discussion about difficulties and potential problems, next steps
+\item 3. 14.11.17 - meeting with the supervisor - presentations, discussion about progress
+\item 4. 11.01.18 - meeting with supervisor - presentations, first results
+
+\end{itemize}
 
 \chapter{Structure}
 
@@ -244,12 +280,13 @@ As mentioned in chapter {\it Assumptions} the project is divided into 11 modules
 Module 7. is excluded due to limited human resources and time.
 
 The input and output signals for each module are listed in the table. \\
+\begin{sideways}
 \begin{tabular}{|c|c|c|c|}
-\hline  Module  & Input  & Output  & Before that module\tabularnewline \hline  \hline  1 & \textbf{k}-space signals  &  \textbf{x}-space fully reconstructed data  & ——–\tabularnewline \hline  2 & reconstruccted image & image with intensity correction & image reconstruction \tabularnewline \hline  3  & reconstructed image  & estimated noise map  & reconstruction \tabularnewline \hline  4 & reconstructed image & Rician noise-free image & noise estimation \tabularnewline \hline  5 & image, noise map & Rician noise-free image & \makecell{reconstruction, \\ noise estimation} \tabularnewline \hline  6 & \makecell{reconstructed, normalized image;\\ gradient-sequence vectors} & \makecell{estimated diffusion tensor 3D \\ 6-channel image}& modules 1-5, 8* \tabularnewline \hline  8 & image & skull stripping mask or image without non-brain tissues & reconstruction\tabularnewline \hline  9 & image without non-brain tissues & segmentated image & skull stripping \tabularnewline \hline  10 & 320x240 image  & 640x480 image  & denoised data \tabularnewline \hline  11  &segmentated image & new window of application & segmentation \tabularnewline \hline  12& many images from one examination & one image from non-standard perspective & denoised data\tabularnewline \hline  \end{tabular}\\
+\hline  Module  & Input  & Output  & Before that module\tabularnewline \hline  \hline  1 & \textbf{k}-space signals  &  \textbf{x}-space fully reconstructed data  & ——–\tabularnewline \hline  2 & reconstruccted image & image with intensity correction & image reconstruction \tabularnewline \hline  3  & reconstructed image  & estimated noise map  & reconstruction \tabularnewline \hline  4 & reconstructed image & Rician noise-free image & noise estimation \tabularnewline \hline  5 & image, noise map & Rician noise-free image & \makecell{reconstruction, \\ noise estimation} \tabularnewline \hline  6 & \makecell{reconstructed, normalized image;\\ gradient-sequence vectors} & \makecell{estimated diffusion tensor 3D \\ 6-channel image}& modules 1-5, 8* \tabularnewline \hline  8 & image & skull stripping mask or image without non-brain tissues & reconstruction\tabularnewline \hline  9 & image without non-brain tissues & segmentated image & skull stripping \tabularnewline \hline  10 & 320x240 image  & 640x480 image  & denoised data \tabularnewline \hline  11  &segmentated image & new window of application & segmentation \tabularnewline \hline  12& many images from one examination & one image from non-standard perspective & denoised data\tabularnewline \hline  \end{tabular}\end{sideways}\\
 
 Dependencies between modules are shown on the picture. 11th module is divided into two parts, because every part of module requires other pre-procesing activities.
 \begin{figure}[H]
-\centering{}\includegraphics[scale=0.7]{figures/drzewo3}\caption{Dependencies between modules}
+\centering{}\includegraphics[scale=0.7]{figures/Schemat_projektu}\caption{Dependencies between modules}
 \label{fig:figures/drzewo}
 \end{figure}
 
